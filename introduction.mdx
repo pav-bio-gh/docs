@@ -1,45 +1,80 @@
 ---
 title: "Introduction"
-description: "A concise overview of the Pav API and MCP server."
+description: "Structured biopharma pipeline, trial, deal and patent data over a read-only REST API and an MCP server."
 ---
 
-The Pav API is a read-only `/v1` API over Pav's curated biopharma
-intelligence: pipeline programs, companies, clinical trials, deals, patent
-families, pipeline changes, and dataset stats. The same data is available to AI
-agents through the [Pav MCP server](/mcp).
+Pav tracks drug development programs and the evidence around them: who is
+developing what, for which indication, at which phase, in which trials, under
+which deals, and protected by which patents. The Pav API serves that data as
+JSON. The same data is available to AI agents through the Pav MCP server.
 
-Start with [Quickstart](/quickstart) if you are making your first request.
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Create a key and make your first request in two minutes.
+  </Card>
+  <Card title="MCP server" icon="robot" href="/mcp">
+    Connect Claude, Cursor or any MCP client to Pav data.
+  </Card>
+  <Card title="API reference" icon="code" href="/api-reference/programs/list-and-search-pipeline-programs">
+    Every endpoint, parameter and response schema.
+  </Card>
+  <Card title="OpenAPI and agents" icon="file-code" href="/openapi-and-agents">
+    Machine-readable spec for client generation and tool wiring.
+  </Card>
+</CardGroup>
 
-## Core resources
+## What you can access
 
-- **Programs** — search drug pipeline assets by company, indication, target,
-  modality, phase, or free text.
-- **Companies** — find tracked biopharma companies and their pipeline ownership.
-- **Clinical trials** — search Pav's trial index, with Pav program/company links
-  where present.
-- **Deals** — M&A, licensing, collaborations and other transactions with their
-  terms, lifecycle state and source documents.
-- **Patents** — US patent families with owners resolved to companies, member
-  applications, ownership history and statutory term.
-- **Changes** — detected pipeline movement such as added assets and phase
-  changes.
-- **Stats** — high-level counts and facet coverage for the current dataset.
+| Dataset | What it is | Size (September 2026) |
+| --- | --- | --- |
+| [Programs](/datasets/programs) | Drug programs from company-published pipelines: drug, indication, phase, modality, target, mechanism, linked trials | 27,000+ programs |
+| [Companies](/datasets/companies) | Biopharma companies, with their programs, trials, deals, patents and changes | 6,500+ companies |
+| [Clinical trials](/datasets/clinical-trials) | ClinicalTrials.gov studies, linked to Pav programs and sponsor companies | ClinicalTrials.gov registry |
+| [Deals](/datasets/deals) | M&A, licensing, collaborations, options, joint ventures; terms, lifecycle, source documents | 3,100+ deals |
+| [Patents](/datasets/patents) | US patent families with owners, members, ownership history and statutory term | 122,000+ families |
+| [FDA records](/datasets/fda) | Orange Book products, patents and exclusivities; Purple Book biologics; orphan designations; warning letters; recalls, linked to companies | 87,000+ records |
+| [Changes](/datasets/changes) | Detected pipeline movement: programs added, removed, or changing phase | Continuous feed |
 
-## Base URL and shape
+Current program and company counts are available at any time from
+[`GET /v1/stats`](/api-reference/stats/dataset-summary-statistics).
 
-```text
-https://api.pav.bio
-```
+## How the data connects
 
-All endpoints are `GET`, return JSON, and authenticate with a Pav API key in
-the `Authorization: Bearer` header. List endpoints return a
-`{ data, pagination }` envelope. Each key may make 300 requests per minute; see
-[Rate Limits and Errors](/rate-limits).
+Every dataset joins through Pav ids.
 
-## Next
+- A **company** (`company_id`) owns **programs** (`id`).
+- A **program** lists its linked **clinical trials** (`nct_id`). A trial lists
+  the Pav programs and companies linked to it.
+- A **deal** lists its party companies; filter deals by `company_id`.
+- A **patent family** lists its owner companies; filter patents by
+  `company_id`.
+- An **FDA record** carries its linked company; filter FDA records by
+  `company_id`.
+- A **change** records a program's movement and carries its `company_id`.
 
-- [Quickstart](/quickstart) — create a key and make your first request.
-- [MCP Server](/mcp) — connect Claude, Cursor or any MCP client.
-- [Authentication](/authentication) — bearer keys, scopes, and errors.
-- **API Reference** — every endpoint, parameter, and schema generated from
-  OpenAPI.
+Resolve a name to an id once, with `GET /v1/companies?q=...`, then reuse the id
+across every dataset.
+
+## API at a glance
+
+- Base URL: `https://api.pav.bio`
+- All endpoints are `GET` and return JSON.
+- Authenticate with a Pav API key: `Authorization: Bearer <api_key>`.
+  See [Authentication](/authentication).
+- List endpoints return `{ "data": [...], "pagination": {...} }`.
+  See [Pagination](/concepts/pagination).
+- `q=` runs relevance-ranked search on programs, companies and trials, and
+  exact-term matching on deals and patents.
+  See [Search and filters](/concepts/search-and-filters).
+- 300 requests per minute per key. Errors share one envelope.
+  See [Rate limits and errors](/rate-limits).
+
+## Built for
+
+- Competitive landscapes by target, indication or modality.
+- Deal screening and comparable-transaction work.
+- Patent, exclusivity and loss-of-exclusivity checks.
+- Pipeline monitoring and alerting.
+- AI agents that answer biopharma questions with sourced data.
+
+Start with the [Quickstart](/quickstart).

@@ -1,51 +1,80 @@
 ---
 title: "Quickstart"
-description: "Make your first authenticated request against the Pav Enterprise API."
+description: "Create a Pav API key and make your first request in two minutes."
 ---
 
-## 1. Get an API key
+## 1. Create an API key
 
-Create a key from Pav developer settings:
-
-```text
-app.pav.bio -> Settings -> Developer
-```
-
-Keys are Clerk API keys; you can mint a personal key or an organization key.
-Copy the secret when it is shown because it is not retrievable later.
+Sign in at [app.pav.bio](https://app.pav.bio) and open
+**Settings → Developer**. Create a personal or organization key and copy the
+secret. It is shown once.
 
 ```bash
 export PAV_API_KEY="<your_api_key>"
 ```
 
-## 2. Make a request
+## 2. Make your first request
 
-Search programs with a free-text query. The `q` parameter runs hybrid search;
-the bearer header carries your key.
+Every request needs the key in the `Authorization` header. This call searches
+programs for oral GLP-1 agonists in obesity.
 
-```bash
+<CodeGroup>
+
+```bash cURL
 curl -G https://api.pav.bio/v1/programs \
   -H "Authorization: Bearer $PAV_API_KEY" \
   --data-urlencode "q=oral GLP-1 obesity" \
   --data-urlencode "limit=3"
 ```
 
+```python Python
+import os
+import requests
+
+resp = requests.get(
+    "https://api.pav.bio/v1/programs",
+    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
+    params={"q": "oral GLP-1 obesity", "limit": 3},
+)
+resp.raise_for_status()
+for program in resp.json()["data"]:
+    print(program["company"], "|", program["drug"], "|", program["phase_norm"])
+```
+
+```javascript JavaScript
+const params = new URLSearchParams({ q: "oral GLP-1 obesity", limit: "3" });
+const resp = await fetch(`https://api.pav.bio/v1/programs?${params}`, {
+  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
+});
+if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+const { data } = await resp.json();
+for (const program of data) {
+  console.log(program.company, "|", program.drug, "|", program.phase_norm);
+}
+```
+
+</CodeGroup>
+
 ## 3. Read the response
 
-List endpoints return a `data` array plus a `pagination` block. Relevance-ranked
-search responses may return `total: null`; `data` is ordered best-match first.
+List endpoints return a `data` array and a `pagination` block. Search results
+are ordered best match first.
 
-```json
+```json Example response (trimmed)
 {
   "data": [
     {
-      "id": 18342,
-      "company_id": 412,
-      "company": "Example Biotech",
-      "drug": "Example asset",
-      "indication": "Obesity",
-      "phase_norm": "phase_2",
-      "clinical_trials": []
+      "id": 33544,
+      "company_id": 671,
+      "company": "Schrödinger",
+      "drug": "GSBR-1290",
+      "indication": "Metabolic (Obesity)",
+      "phase_norm": "Phase 3",
+      "modality_norm": "small_molecule",
+      "target": "GLP-1R Selective",
+      "mechanism_of_action": "Oral small-molecule selective GLP-1R agonist (beta-arrestin-biased)",
+      "partners": ["Structure Therapeutics"],
+      "source_url": "https://www.schrodinger.com/pipeline/"
     }
   ],
   "pagination": { "limit": 3, "offset": 0 }
@@ -53,38 +82,77 @@ search responses may return `total: null`; `data` is ordered best-match first.
 ```
 
 <Note>
-Fields that are null on a row are omitted from the JSON rather than returned as
-`null`.
+Fields with no value are omitted from the JSON rather than returned as `null`.
+Check for a key before reading it.
 </Note>
 
-## 4. Try deals and patents
+## 4. Try more datasets
 
-Deals over $1B, largest first:
+<AccordionGroup>
+  <Accordion title="Find a company and list its Phase 3 programs">
+    ```bash
+    # Resolve the name to a company_id (Eli Lilly is 218)
+    curl -G https://api.pav.bio/v1/companies \
+      -H "Authorization: Bearer $PAV_API_KEY" \
+      --data-urlencode "q=Eli Lilly" --data-urlencode "limit=3"
 
-```bash
-curl -G https://api.pav.bio/v1/deals \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "min_value_usd=1000000000" \
-  --data-urlencode "sort=headline_value" \
-  --data-urlencode "limit=5"
-```
-
-Live patent families mentioning GLP-1, with their member applications:
-
-```bash
-curl -G https://api.pav.bio/v1/patents \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "q=GLP-1" \
-  --data-urlencode "state=live" \
-  --data-urlencode "include_members=true" \
-  --data-urlencode "limit=5"
-```
+    # List that company's Phase 3 programs
+    curl -G https://api.pav.bio/v1/companies/218/programs \
+      -H "Authorization: Bearer $PAV_API_KEY" \
+      --data-urlencode "phase=Phase 3" --data-urlencode "limit=5"
+    ```
+  </Accordion>
+  <Accordion title="Largest deals by headline value">
+    ```bash
+    curl -G https://api.pav.bio/v1/deals \
+      -H "Authorization: Bearer $PAV_API_KEY" \
+      --data-urlencode "min_value_usd=1000000000" \
+      --data-urlencode "sort=headline_value" \
+      --data-urlencode "limit=5"
+    ```
+  </Accordion>
+  <Accordion title="Recruiting Phase 3 obesity trials">
+    ```bash
+    curl -G https://api.pav.bio/v1/trials \
+      -H "Authorization: Bearer $PAV_API_KEY" \
+      --data-urlencode "q=obesity" \
+      --data-urlencode "phase=Phase 3" \
+      --data-urlencode "status=Recruiting" \
+      --data-urlencode "limit=5"
+    ```
+  </Accordion>
+  <Accordion title="Live patent families mentioning tirzepatide">
+    ```bash
+    curl -G https://api.pav.bio/v1/patents \
+      -H "Authorization: Bearer $PAV_API_KEY" \
+      --data-urlencode "q=tirzepatide" \
+      --data-urlencode "state=live" \
+      --data-urlencode "limit=5"
+    ```
+  </Accordion>
+  <Accordion title="Latest pipeline phase changes">
+    ```bash
+    curl -G https://api.pav.bio/v1/changes \
+      -H "Authorization: Bearer $PAV_API_KEY" \
+      --data-urlencode "change_type=update" \
+      --data-urlencode "limit=10"
+    ```
+  </Accordion>
+</AccordionGroup>
 
 ## Next
 
-- [MCP Server](/mcp) — give an agent the same data as tools.
-- Browse every endpoint in the **API Reference** tab.
-- [Authentication](/authentication) — keys, scopes, and error behavior.
-- [Entities](/concepts/entities) — the full field set for each object.
-- [Hybrid Search](/concepts/hybrid-search) — how free-text search and filters
-  combine.
+<CardGroup cols={2}>
+  <Card title="Datasets" icon="database" href="/datasets/programs">
+    What each dataset contains, its key fields and common queries.
+  </Card>
+  <Card title="MCP server" icon="robot" href="/mcp">
+    Give an agent the same data as tools.
+  </Card>
+  <Card title="Search and filters" icon="magnifying-glass" href="/concepts/search-and-filters">
+    How `q` and filters combine, and which values filters accept.
+  </Card>
+  <Card title="Guides" icon="book-open" href="/guides/competitive-landscape">
+    End-to-end workflows: landscapes, deals, patents, monitoring.
+  </Card>
+</CardGroup>

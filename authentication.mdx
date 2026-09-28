@@ -1,54 +1,57 @@
 ---
 title: "Authentication"
-description: "Authenticate with a Clerk API key using the Authorization bearer header."
+description: "Authenticate every request with a Pav API key in the Authorization header."
 ---
 
-Every `/v1` endpoint requires a valid Pav API key. Keys are
-[Clerk](https://clerk.com) API keys, sent as a bearer token.
+Every `/v1` endpoint and the MCP server require a Pav API key, sent as a bearer
+token.
 
-## The bearer header
-
-```
+```http
 Authorization: Bearer <your_api_key>
 ```
 
-The security scheme is `EnterpriseApiKey` (HTTP bearer) in the OpenAPI spec, so
-the **API Reference** playground accepts the same key.
+The **API Reference** playground accepts the same key.
 
-## Creating and scoping keys
+## Create a key
 
-Create keys from **app.pav.bio → Settings → Developer**. You can mint:
+1. Sign in at [app.pav.bio](https://app.pav.bio).
+2. Open **Settings → Developer**.
+3. Create a key. Choose a **personal** key (tied to your user) or an
+   **organization** key (tied to your organization).
+4. Copy the secret. It is shown once and cannot be retrieved later.
 
-- a **personal** key, scoped to your user, or
-- an **organization** key, scoped to your org.
+## Rotate and revoke
 
-Copy the secret at creation time — it is shown once and is not retrievable
-afterward. Rotate by creating a new key and revoking the old one; revocation
-takes effect within about a minute (verification is briefly cached server-side).
+Create a new key, move your clients to it, then revoke the old key in
+**Settings → Developer**. Revocation takes effect within a few minutes.
 
-### Scopes
+## Scopes
 
-The current API is read-only over pipeline data. If a key declares custom
-scopes, it must include `pav:pipeline:read`. Keys created without custom scopes
-are accepted for all current read endpoints. A key that declares scopes but
-omits `pav:pipeline:read` is rejected with `403`.
+The API is read-only. Keys created without custom scopes work on every
+endpoint. A key created with custom scopes must include `pav:pipeline:read`;
+otherwise requests return `403 forbidden`.
 
-## Error behavior
+## Authentication errors
 
-| Status | When | Body |
+| Status | `code` | When |
 | --- | --- | --- |
-| `401` | Missing, malformed, unknown, revoked, or expired key | `{ "error": { "code": "unauthorized", "message": "Missing or invalid API key", "request_id": "…" } }` |
-| `403` | Valid key, but missing the `pav:pipeline:read` scope | `{ "error": { "code": "forbidden", "message": "API key is missing pav:pipeline:read scope", "request_id": "…" } }` |
-| `429` | Over the key's rate limit (see [Rate Limits](/rate-limits)); honor `Retry-After` | `{ "error": { "code": "rate_limited", "message": "Rate limit exceeded for this API key; …", "request_id": "…" } }` |
-| `503` | Auth provider temporarily unreachable | `{ "error": { "code": "unavailable", "message": "authentication service temporarily unavailable", "request_id": "…" } }` |
+| `401` | `unauthorized` | Missing, malformed, unknown, revoked or expired key. The response carries `WWW-Authenticate: Bearer`. |
+| `403` | `forbidden` | The key declares scopes but not `pav:pipeline:read`. |
+| `503` | `unavailable` | Key verification is temporarily unavailable. Retry with backoff; your key is not rejected. |
 
-A `401` returns a `WWW-Authenticate: Bearer` header. The distinction between
-`401` and `503` is deliberate: an unreachable auth provider is reported as a
-transient `503`, not a misleading `401`, so retries are safe. Every error echoes
-a `request_id` (also in the `X-Request-ID` response header) — quote it when
-contacting Pav support.
+```json Example 401 response
+{
+  "error": {
+    "code": "unauthorized",
+    "message": "Missing or invalid API key",
+    "request_id": "77c9734bd1ed47d8bf126ebcf58dc393"
+  }
+}
+```
 
-<Note>
-Keep secrets out of source control, logs, and client-side bundles. Treat an API
-key like a password.
-</Note>
+See [Rate limits and errors](/rate-limits) for the full error list.
+
+<Warning>
+Treat a key like a password. Keep it out of source control, logs and
+client-side code. Read it from an environment variable or a secret store.
+</Warning>

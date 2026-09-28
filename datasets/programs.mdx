@@ -1,0 +1,309 @@
+---
+title: "Programs"
+description: "Drug development programs from company-published pipelines: drug, indication, phase, modality, target, mechanism and linked trials."
+---
+
+## Overview
+
+A program is one drug in one indication at one company, as the company
+publishes it in its pipeline. Each program carries a normalized phase, a
+modality, the molecular target and mechanism when disclosed, the clinical
+trials linked to it, and the page it was read from.
+
+Questions this dataset answers:
+
+- Which companies have an oral GLP-1 agonist in development for obesity?
+- Which KRAS G12C inhibitors are in Phase 3, and in which indications?
+- What else is being developed that looks like this program?
+- What is Eli Lilly's full Phase 3 pipeline?
+
+## Coverage
+
+| Programs | Companies | Normalized phases | Normalized modalities |
+| --- | --- | --- | --- |
+| 27,000+ | 6,500+ | 9 | 19 |
+
+Counts are from September 2026. Get current counts, and program counts per
+phase and modality, from
+[`GET /v1/stats`](/api-reference/stats/dataset-summary-statistics). Partial
+fields are listed in [Coverage and sources](/concepts/coverage-and-sources).
+
+## Key fields
+
+| Field | Description |
+| --- | --- |
+| `id` | Pav program id. Stable across updates; a phase change updates the program, it does not create a new one. |
+| `company_id`, `company`, `short_name` | Owning company: Pav id, display name, slug. |
+| `drug` | Drug or asset name as the company publishes it. |
+| `indication` | Indication as the company publishes it. |
+| `phase` / `phase_norm` | Phase as published, and the normalized phase (`Preclinical`, `Phase 1`, `Phase 1/2`, `Phase 2`, `Phase 2/3`, `Phase 3`, `Filed`, `Registration`, `Approved`). |
+| `modality` / `modality_norm` | Modality as published, and the normalized modality (`small_molecule`, `antibody`, `adc`, `cell_therapy`, ...). |
+| `target`, `mechanism_of_action` | Molecular target and mechanism, when disclosed. |
+| `partners` | Partner companies named with the program. |
+| `clinical_trials[]` | Linked ClinicalTrials.gov studies (`nct_id`, phase, status, sponsor). |
+| `indication_terms[]`, `target_terms[]` | Indication mapped to MONDO terms and target mapped to NCIT terms, when available. |
+| `source_url`, `source_checked_at` | The company page the program was read from, and when Pav last read it. |
+
+Full schema: [List and search pipeline programs](/api-reference/programs/list-and-search-pipeline-programs).
+
+## Endpoints
+
+| Endpoint | Use |
+| --- | --- |
+| `GET /v1/programs` | Search (`q`) or filter programs. |
+| `GET /v1/programs/{program_id}` | One program with its trials and ontology terms. |
+| `GET /v1/programs/{program_id}/similar-programs` | Programs most similar to a given program. |
+| `GET /v1/programs/autocomplete` | Search-as-you-type suggestions for a search box. |
+| `GET /v1/companies/{company_id}/programs` | One company's programs. |
+
+## Filters
+
+All filters are optional, repeatable, and combine with AND. Repeating a filter
+matches any of its values.
+
+| Parameter | Matches | Example |
+| --- | --- | --- |
+| `q` | Relevance-ranked search that matches meaning as well as exact words. | `oral GLP-1 obesity` |
+| `phase` | Normalized phase label, exactly as in `phase_norm`. | `Phase 3` |
+| `modality` | Modality token (as in `modality_norm`) or its display label. Unknown values return `422`. | `adc`, `Small molecule` |
+| `target` | Target, case-insensitive exact match. | `KRAS` |
+| `indication` | Indication, case-insensitive exact match. | `Obesity` |
+| `drug` | Drug name, case-insensitive exact match. | `Tirzepatide` |
+| `company` | Company display name. | `Eli Lilly` |
+| `short_name`, `company_id` | Company slug or Pav id. | `eli_lilly`, `218` |
+| `sort`, `direction` | Listing order (not with `q`): `company`, `drug`, `indication`, `target`, `phase`, `modality`, `source_checked_at`. | `sort=phase&direction=desc` |
+| `include_total` | Exact match count on filter-only listings. | `true` |
+| `limit`, `offset` | Page size (1–5000, default 50) and offset. | `limit=100` |
+
+<Warning>
+`phase` takes the label shown in `phase_norm` (`Phase 3`), not a token such as
+`phase_3`. A value that matches nothing returns an empty `data` array, not an
+error.
+</Warning>
+
+## Search programs by mechanism and phase
+
+`q` finds programs by meaning, not only by exact words. Add filters to narrow
+the ranked results.
+
+<CodeGroup>
+
+```bash cURL
+curl -G https://api.pav.bio/v1/programs \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "q=KRAS G12C inhibitor" \
+  --data-urlencode "phase=Phase 3" \
+  --data-urlencode "limit=3"
+```
+
+```python Python
+import os
+import requests
+
+resp = requests.get(
+    "https://api.pav.bio/v1/programs",
+    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
+    params={"q": "KRAS G12C inhibitor", "phase": "Phase 3", "limit": 3},
+)
+resp.raise_for_status()
+for p in resp.json()["data"]:
+    print(p["company"], "|", p["drug"], "|", p.get("indication", ""), "|", p.get("target"))
+```
+
+```javascript JavaScript
+const params = new URLSearchParams({ q: "KRAS G12C inhibitor", phase: "Phase 3", limit: "3" });
+const resp = await fetch(`https://api.pav.bio/v1/programs?${params}`, {
+  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
+});
+const { data } = await resp.json();
+for (const p of data) console.log(p.company, "|", p.drug, "|", p.indication, "|", p.target);
+```
+
+</CodeGroup>
+
+```json Example response (trimmed)
+{
+  "data": [
+    {
+      "id": 3407,
+      "company_id": 313,
+      "company": "Merck",
+      "drug": "calderasib",
+      "indication": "Colorectal cancer",
+      "phase_norm": "Phase 3",
+      "modality_norm": "small_molecule",
+      "target": "KRAS G12C"
+    },
+    {
+      "id": 3408,
+      "company_id": 313,
+      "company": "Merck",
+      "drug": "calderasib",
+      "indication": "Non-small cell lung cancer",
+      "phase_norm": "Phase 3",
+      "modality_norm": "small_molecule",
+      "target": "KRAS G12C"
+    }
+  ],
+  "pagination": { "limit": 3, "offset": 0 }
+}
+```
+
+## Filter and count
+
+Without `q`, the endpoint lists programs matching the filters. Pass
+`include_total=true` for the exact count. Repeat `phase` to match several
+phases.
+
+<CodeGroup>
+
+```bash cURL
+curl -G https://api.pav.bio/v1/programs \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "indication=Obesity" \
+  --data-urlencode "phase=Phase 2" \
+  --data-urlencode "phase=Phase 3" \
+  --data-urlencode "include_total=true" \
+  --data-urlencode "limit=3"
+```
+
+```python Python
+import os
+import requests
+
+resp = requests.get(
+    "https://api.pav.bio/v1/programs",
+    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
+    params={
+        "indication": "Obesity",
+        "phase": ["Phase 2", "Phase 3"],
+        "include_total": "true",
+        "limit": 3,
+    },
+)
+resp.raise_for_status()
+body = resp.json()
+print("total:", body["pagination"]["total"])
+for p in body["data"]:
+    print(p["company"], "|", p["drug"], "|", p["phase_norm"])
+```
+
+```javascript JavaScript
+const params = new URLSearchParams([
+  ["indication", "Obesity"],
+  ["phase", "Phase 2"],
+  ["phase", "Phase 3"],
+  ["include_total", "true"],
+  ["limit", "3"],
+]);
+const resp = await fetch(`https://api.pav.bio/v1/programs?${params}`, {
+  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
+});
+const body = await resp.json();
+console.log("total:", body.pagination.total);
+for (const p of body.data) console.log(p.company, "|", p.drug, "|", p.phase_norm);
+```
+
+</CodeGroup>
+
+```json Example response (trimmed)
+{
+  "data": [
+    { "id": 24517, "company": "Actelion", "drug": "Canagliflozin", "indication": "Obesity", "phase_norm": "Phase 2" },
+    { "id": 24695, "company": "Actelion", "drug": "JNJ-64565111", "indication": "Obesity", "phase_norm": "Phase 2" },
+    { "id": 24387, "company": "Actelion", "drug": "R256918", "indication": "Obesity", "phase_norm": "Phase 2" }
+  ],
+  "pagination": { "limit": 3, "offset": 0, "total": 77 }
+}
+```
+
+`indication` is an exact match on the published indication text. For broader
+recall across phrasings ("Metabolic (Obesity)", "Obesity / Metabolic
+Disease"), use `q` instead.
+
+## Find similar programs
+
+Given a program id, return the programs most similar to it, ranked by
+similarity. Useful for finding competitors and analogues.
+
+<CodeGroup>
+
+```bash cURL
+curl https://api.pav.bio/v1/programs/1833/similar-programs \
+  -H "Authorization: Bearer $PAV_API_KEY"
+```
+
+```python Python
+import os
+import requests
+
+resp = requests.get(
+    "https://api.pav.bio/v1/programs/1833/similar-programs",
+    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
+)
+resp.raise_for_status()
+for p in resp.json()["data"]:
+    print(p["company"], "|", p["drug"], "|", p.get("indication", ""))
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.pav.bio/v1/programs/1833/similar-programs", {
+  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
+});
+const { data } = await resp.json();
+for (const p of data) console.log(p.company, "|", p.drug, "|", p.indication);
+```
+
+</CodeGroup>
+
+```json Example response (trimmed)
+{
+  "program_id": 1833,
+  "data": [
+    { "id": 1834, "company": "Eli Lilly", "drug": "Tirzepatide", "indication": "Morbidity and Mortality in Obesity", "phase_norm": "Approved" },
+    { "id": 1835, "company": "Eli Lilly", "drug": "Tirzepatide", "indication": "Type 1 Diabetes", "phase_norm": "Phase 3" },
+    { "id": 1832, "company": "Eli Lilly", "drug": "Tirzepatide", "indication": "Higher Doses", "phase_norm": "Phase 2" }
+  ]
+}
+```
+
+## Get one program
+
+`GET /v1/programs/{program_id}` returns the full record, including linked
+trials and ontology terms.
+
+```json Example response (trimmed): GET /v1/programs/1833
+{
+  "id": 1833,
+  "company_id": 218,
+  "company": "Eli Lilly",
+  "drug": "Tirzepatide",
+  "indication": "Metabolic Dysfunction-Associated Steatotic Liver Disease",
+  "phase": "Phase 3",
+  "phase_norm": "Phase 3",
+  "modality_norm": "peptide",
+  "mechanism_of_action": "GIP/GLP-1 receptor agonist",
+  "clinical_trials": [
+    {
+      "nct_id": "NCT07165028",
+      "nct_url": "https://clinicaltrials.gov/study/NCT07165028",
+      "nct_phase": "PHASE3",
+      "nct_sponsor": "Eli Lilly and Company",
+      "nct_status": "RECRUITING"
+    }
+  ],
+  "indication_terms": [
+    { "ontology": "MONDO", "term_id": "MONDO:0013209", "term_label": "metabolic dysfunction-associated steatotic liver disease" }
+  ],
+  "target_terms": [
+    { "ontology": "NCIT", "term_id": "NCIT:C191844", "term_label": "Glucagon-Like Peptide 1 Receptor" }
+  ],
+  "source_url": "https://www.lilly.com/science/research-development/pipeline"
+}
+```
+
+## Related
+
+- [Competitive landscape guide](/guides/competitive-landscape)
+- [Companies](/datasets/companies) and [Clinical trials](/datasets/clinical-trials)
+- [Search and filters](/concepts/search-and-filters)

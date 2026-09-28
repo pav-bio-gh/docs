@@ -1,18 +1,18 @@
 ---
-title: "Rate Limits and Errors"
+title: "Rate limits and errors"
 description: "Request limits per API key, and the error envelope every endpoint returns."
 ---
 
 ## Rate limits
 
 Each API key may make **300 requests per minute**, with bursts up to 300. Every
-REST request to a `/v1` data endpoint and every MCP tool call counts as one
-request.
+REST request to a `/v1` endpoint and every MCP tool call counts as one request.
+Connecting an MCP client and listing its tools do not count.
 
 Over the limit, the API returns `429 Too Many Requests` with a `Retry-After`
-header (seconds) and a `rate_limited` error:
+header in seconds:
 
-```json
+```json Example 429 response (illustrative)
 {
   "error": {
     "code": "rate_limited",
@@ -22,8 +22,8 @@ header (seconds) and a `rate_limited` error:
 }
 ```
 
-Wait the `Retry-After` seconds (also stated in the message) before retrying. A separate per-IP limit protects
-the service from floods; it also returns `429`.
+Wait `Retry-After` seconds before the next request. Very high request volume
+from a single IP address can also return `429`.
 
 <Note>
 Need a higher limit? Contact Pav at [pav.bio](https://pav.bio).
@@ -31,15 +31,85 @@ Need a higher limit? Contact Pav at [pav.bio](https://pav.bio).
 
 ## Error envelope
 
-Every error returns the same shape and an `X-Request-ID` header. Quote the
-`request_id` when contacting Pav support.
+Every error has the same shape, and every response carries an `X-Request-ID`
+header with the same id. Quote the `request_id` when you contact Pav support.
 
-| Status | `code` | When |
-| --- | --- | --- |
-| `401` | `unauthorized` | Missing, malformed, unknown, revoked or expired key. |
-| `403` | `forbidden` | The key declares scopes but not `pav:pipeline:read`. |
-| `404` | `not_found` | Unknown id or route. |
-| `422` | `validation_error` | Invalid parameter (unknown enum value, bad id format, out-of-range limit). |
-| `429` | `rate_limited` | Over the per-key rate limit. |
-| `503` | `unavailable` | A dependency (auth provider or search index) is briefly unreachable. Safe to retry. |
-| `500` | `error` | Unexpected server error. |
+```json
+{
+  "error": {
+    "code": "validation_error",
+    "message": "query.limit: Input should be less than or equal to 100",
+    "request_id": "a97b7c36e40e445996d8f6b9d23690ca"
+  }
+}
+```
+
+| Status | `code` | When | Retry? |
+| --- | --- | --- | --- |
+| `401` | `unauthorized` | Missing, malformed, unknown, revoked or expired key. | No. Fix the key. |
+| `403` | `forbidden` | The key declares scopes but not `pav:pipeline:read`. | No. |
+| `404` | `not_found` | Unknown id or route. | No. |
+| `410` | `error` | A retired parameter (`active_since` on companies, `entity=trial` on changes). | No. Remove the parameter. |
+| `422` | `validation_error` | Invalid parameter: unknown enum value, bad id format, out-of-range `limit`, or a parameter the endpoint does not support. | No. Fix the request. |
+| `429` | `rate_limited` | Over the per-key rate limit. | Yes, after `Retry-After`. |
+| `503` | `unavailable` | The service is briefly unavailable. | Yes, with backoff. |
+| `500` | `error` | Unexpected server error. | Yes, with backoff. Report the `request_id` if it persists. |
+
+## Retry pattern
+
+Retry `429`, `500` and `503`. Do not retry `4xx` validation or auth errors.
+
+<CodeGroup>
+
+```python Python
+import os
+import time
+import requests
+
+API = "https://api.pav.bio"
+HEADERS = {"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"}
+
+
+def pav_get(path, params=None, attempts=5):
+    for attempt in range(attempts):
+        resp = requests.get(f"{API}{path}", headers=HEADERS, params=params, timeout=60)
+        if resp.status_code == 429:
+            time.sleep(int(resp.headers.get("Retry-After", "1")))
+            continue
+        if resp.status_code in (500, 503):
+            time.sleep(2**attempt)
+            continue
+        resp.raise_for_status()
+        return resp.json()
+    raise RuntimeError(f"gave up on {path} after {attempts} attempts")
+
+
+print(pav_get("/v1/stats")["assets"])
+```
+
+```javascript JavaScript
+const API = "https://api.pav.bio";
+const headers = { Authorization: `Bearer ${process.env.PAV_API_KEY}` };
+
+async function pavGet(path, params = {}, attempts = 5) {
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    const resp = await fetch(`${API}${path}?${new URLSearchParams(params)}`, { headers });
+    if (resp.status === 429) {
+      const wait = Number(resp.headers.get("Retry-After") ?? "1");
+      await new Promise((r) => setTimeout(r, wait * 1000));
+      continue;
+    }
+    if (resp.status === 500 || resp.status === 503) {
+      await new Promise((r) => setTimeout(r, 2 ** attempt * 1000));
+      continue;
+    }
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${await resp.text()}`);
+    return resp.json();
+  }
+  throw new Error(`gave up on ${path} after ${attempts} attempts`);
+}
+
+console.log((await pavGet("/v1/stats")).assets);
+```
+
+</CodeGroup>

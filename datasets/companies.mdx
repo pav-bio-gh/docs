@@ -1,0 +1,216 @@
+---
+title: "Companies"
+description: "Biopharma companies and the programs, trials, deals, patents and changes linked to them."
+---
+
+## Overview
+
+A company is a biopharma organization Pav tracks. Its `company_id` is the key
+that joins every other dataset: programs it owns, trials it sponsors or runs
+through its programs, deals it is party to, patents it owns, and changes to its
+pipeline.
+
+Questions this dataset answers:
+
+- What is Pav's id for Eli Lilly, and how many programs does it have?
+- Which clinical trials are linked to a company, as sponsor or through its programs?
+- What changed in a company's pipeline since last month?
+
+## Coverage
+
+| Companies | Countries | Updated |
+| --- | --- | --- |
+| 6,500+ (September 2026) | Headquarters country when known | Pipelines are re-read regularly; `last_checked_at` shows the latest read |
+
+## Key fields
+
+| Field | Description |
+| --- | --- |
+| `company_id` | Pav company id. Use it to filter programs, trials, deals, patents and changes. |
+| `short_name` | Company slug, e.g. `eli_lilly`. Stable. |
+| `name` | Display name. |
+| `country` | Headquarters country, when known. |
+| `asset_count` | Number of programs Pav tracks for the company. |
+| `last_checked_at` | When Pav last read the company's pipeline (UTC). |
+
+## Endpoints
+
+| Endpoint | Use |
+| --- | --- |
+| `GET /v1/companies` | Search by name (`q`) or list companies. |
+| `GET /v1/companies/{company_id}` | One company. |
+| `GET /v1/companies/{company_id}/programs` | The company's programs. Filters: `phase`, `modality`, `q`. |
+| `GET /v1/companies/{company_id}/trials` | Trials linked to the company. |
+| `GET /v1/companies/{company_id}/changes` | The company's pipeline changes. See [Changes](/datasets/changes). |
+
+Filters on `GET /v1/companies`: `q` (relevance-ranked name search),
+`has_pipeline` (`true` for companies with tracked programs), `limit` (1–5000,
+default 50), `offset`.
+
+## Resolve a company name to an id
+
+Search first, then reuse the `company_id` everywhere. Check the top result:
+name search is relevance-ranked, so similar names can appear below it.
+
+<CodeGroup>
+
+```bash cURL
+curl -G https://api.pav.bio/v1/companies \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "q=Eli Lilly" \
+  --data-urlencode "limit=3"
+```
+
+```python Python
+import os
+import requests
+
+resp = requests.get(
+    "https://api.pav.bio/v1/companies",
+    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
+    params={"q": "Eli Lilly", "limit": 3},
+)
+resp.raise_for_status()
+for c in resp.json()["data"]:
+    print(c["company_id"], c["name"], c.get("asset_count"))
+```
+
+```javascript JavaScript
+const params = new URLSearchParams({ q: "Eli Lilly", limit: "3" });
+const resp = await fetch(`https://api.pav.bio/v1/companies?${params}`, {
+  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
+});
+const { data } = await resp.json();
+for (const c of data) console.log(c.company_id, c.name, c.asset_count);
+```
+
+</CodeGroup>
+
+```json Example response (trimmed)
+{
+  "data": [
+    { "company_id": 218, "short_name": "eli_lilly", "name": "Eli Lilly", "country": "United States", "asset_count": 82 },
+    { "company_id": 10598, "short_name": "morphic", "name": "Morphic", "asset_count": 0 }
+  ],
+  "pagination": { "limit": 3, "offset": 0 }
+}
+```
+
+## List a company's programs
+
+<CodeGroup>
+
+```bash cURL
+curl -G https://api.pav.bio/v1/companies/218/programs \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "phase=Phase 3" \
+  --data-urlencode "limit=3"
+```
+
+```python Python
+import os
+import requests
+
+resp = requests.get(
+    "https://api.pav.bio/v1/companies/218/programs",
+    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
+    params={"phase": "Phase 3", "limit": 3},
+)
+resp.raise_for_status()
+for p in resp.json()["data"]:
+    print(p["drug"], "|", p.get("indication", ""), "|", p.get("modality_norm"))
+```
+
+```javascript JavaScript
+const params = new URLSearchParams({ phase: "Phase 3", limit: "3" });
+const resp = await fetch(`https://api.pav.bio/v1/companies/218/programs?${params}`, {
+  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
+});
+const { data } = await resp.json();
+for (const p of data) console.log(p.drug, "|", p.indication, "|", p.modality_norm);
+```
+
+</CodeGroup>
+
+```json Example response (trimmed)
+{
+  "data": [
+    { "id": 1766, "drug": "Baricitinib", "indication": "Type 1 Diabetes", "phase_norm": "Phase 3", "modality_norm": "small_molecule" },
+    { "id": 1768, "drug": "Brenipatide", "indication": "Alcohol Use Disorder", "phase_norm": "Phase 3", "modality_norm": "peptide" },
+    { "id": 1771, "drug": "Brenipatide", "indication": "Major Depressive Disorder", "phase_norm": "Phase 3", "modality_norm": "peptide" }
+  ],
+  "pagination": { "limit": 3, "offset": 0 }
+}
+```
+
+## List a company's trials
+
+A trial is linked to a company in two ways:
+
+- **`via=program`**: one of the company's Pav programs is linked to the trial.
+- **`via=sponsor`**: the company is a sponsor of the trial on ClinicalTrials.gov.
+
+`via=any` (the default) returns both. Pass `include_total=true` for an exact
+count. `limit` is 1–1000 (default 100).
+
+<CodeGroup>
+
+```bash cURL
+curl -G https://api.pav.bio/v1/companies/218/trials \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "via=program" \
+  --data-urlencode "include_total=true" \
+  --data-urlencode "limit=2"
+```
+
+```python Python
+import os
+import requests
+
+resp = requests.get(
+    "https://api.pav.bio/v1/companies/218/trials",
+    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
+    params={"via": "program", "include_total": "true", "limit": 2},
+)
+resp.raise_for_status()
+body = resp.json()
+print("total:", body["pagination"]["total"])
+for t in body["data"]:
+    print(t["nct_id"], t["phase"], t["status"], [p["drug"] for p in t["programs"]])
+```
+
+```javascript JavaScript
+const params = new URLSearchParams({ via: "program", include_total: "true", limit: "2" });
+const resp = await fetch(`https://api.pav.bio/v1/companies/218/trials?${params}`, {
+  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
+});
+const body = await resp.json();
+console.log("total:", body.pagination.total);
+for (const t of body.data) console.log(t.nct_id, t.phase, t.status, t.programs.map((p) => p.drug));
+```
+
+</CodeGroup>
+
+```json Example response (trimmed)
+{
+  "data": [
+    {
+      "nct_id": "NCT00867516",
+      "title": "Safety, Efficacy and Pharmacokinetics Study of ALD518 in Patients With Active Rheumatoid Arthritis",
+      "phase": "PHASE2",
+      "status": "COMPLETED",
+      "sponsor": "CSL Behring",
+      "company_ids": [218, 507],
+      "programs": [
+        { "program_id": 11277, "company_id": 218, "drug": "Clazakizumab", "indication": "Inflammatory Disorders" }
+      ]
+    }
+  ],
+  "pagination": { "limit": 2, "offset": 0, "total": 198 }
+}
+```
+
+## Related
+
+- [Programs](/datasets/programs), [Clinical trials](/datasets/clinical-trials), [Deals](/datasets/deals), [Patents](/datasets/patents)
+- [Track pipeline changes](/guides/track-pipeline-changes)

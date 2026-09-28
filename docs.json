@@ -19,7 +19,7 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Overview",
+        "tab": "Documentation",
         "groups": [
           {
             "group": "Get started",
@@ -27,16 +27,43 @@
               "introduction",
               "quickstart",
               "authentication",
-              "mcp",
               "rate-limits"
             ]
           },
           {
-            "group": "Core concepts",
+            "group": "Datasets",
             "pages": [
-              "concepts/entities",
-              "concepts/hybrid-search",
-              "concepts/data-quality-and-coverage"
+              "datasets/programs",
+              "datasets/companies",
+              "datasets/clinical-trials",
+              "datasets/deals",
+              "datasets/patents",
+              "datasets/fda",
+              "datasets/changes"
+            ]
+          },
+          {
+            "group": "Working with the API",
+            "pages": [
+              "concepts/search-and-filters",
+              "concepts/pagination",
+              "concepts/coverage-and-sources"
+            ]
+          },
+          {
+            "group": "Integrations",
+            "pages": [
+              "mcp",
+              "openapi-and-agents"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/competitive-landscape",
+              "guides/deal-screening",
+              "guides/patent-loe-check",
+              "guides/track-pipeline-changes"
             ]
           }
         ]
@@ -53,6 +80,10 @@
       }
     ]
   },
+  "redirects": [
+    { "source": "/concepts/entities", "destination": "/datasets/programs" },
+    { "source": "/concepts/data-quality-and-coverage", "destination": "/concepts/coverage-and-sources" }
+  ],
   "navbar": {
     "links": [
       {

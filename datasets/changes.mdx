@@ -1,0 +1,193 @@
+---
+title: "Changes"
+description: "A feed of detected pipeline movement: programs added, removed, or changing phase."
+---
+
+## Overview
+
+The changes feed records movement in company pipelines as Pav detects it: a
+program appears, a program disappears, or a program's phase changes. Each
+event names the company, drug and indication, the phase before and after, and
+when Pav detected it. Poll the feed instead of diffing pipeline snapshots
+yourself.
+
+Questions this dataset answers:
+
+- Which programs moved phase this week?
+- What did a company add to or drop from its pipeline since a given date?
+- Which programs entered Phase 1 across the industry this month?
+
+## Coverage
+
+| Scope | Order | Retractions |
+| --- | --- | --- |
+| Programs of every tracked company | Newest first by `detected_at` | Retracted events are hidden unless `include_invalidated=true` |
+
+## Key fields
+
+| Field | Description |
+| --- | --- |
+| `id` | Change event id. |
+| `company_id`, `company`, `short_name` | The company whose pipeline changed. |
+| `drug`, `indication`, `territory` | The program that changed, as published. |
+| `change_type` | `insert` (program added), `delete` (program removed), `update` (phase changed). |
+| `prev_phase`, `new_phase` | Phase before and after, as published. `insert` has only `new_phase`; `delete` has only `prev_phase`. |
+| `detected_at` | When Pav detected the change (UTC). |
+| `invalidated_at`, `invalidation_reason` | Set when a change was later retracted, for example because a removed program reappeared. Returned only with `include_invalidated=true`. |
+
+## Endpoints
+
+| Endpoint | Use |
+| --- | --- |
+| `GET /v1/changes` | The feed across all companies. |
+| `GET /v1/companies/{company_id}/changes` | One company's feed. |
+
+## Filters
+
+| Parameter | Matches | Example |
+| --- | --- | --- |
+| `change_type` | `insert`, `update`, `delete`. Repeatable. | `update` |
+| `company_id` | Companies (on `/v1/changes`). Repeatable. | `218` |
+| `since` | Changes detected at or after this ISO 8601 timestamp. | `2026-09-01T00:00:00Z` |
+| `include_invalidated` | Include retracted changes. | `true` |
+| `cursor` | Opaque cursor from the previous response's `next_cursor`. | |
+| `limit` | Page size (1–5000, default 50). | `100` |
+
+Page with `cursor`, not `offset`. The cursor stays correct while new events
+arrive. See [Pagination](/concepts/pagination).
+
+## Latest phase changes
+
+<CodeGroup>
+
+```bash cURL
+curl -G https://api.pav.bio/v1/changes \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "change_type=update" \
+  --data-urlencode "limit=3"
+```
+
+```python Python
+import os
+import requests
+
+resp = requests.get(
+    "https://api.pav.bio/v1/changes",
+    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
+    params={"change_type": "update", "limit": 3},
+)
+resp.raise_for_status()
+for c in resp.json()["data"]:
+    print(c["detected_at"][:10], "|", c["company"], "|", c["drug"], "|", c.get("prev_phase", "-"), "->", c.get("new_phase", "-"))
+```
+
+```javascript JavaScript
+const params = new URLSearchParams({ change_type: "update", limit: "3" });
+const resp = await fetch(`https://api.pav.bio/v1/changes?${params}`, {
+  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
+});
+const { data } = await resp.json();
+for (const c of data) {
+  console.log(c.detected_at.slice(0, 10), "|", c.company, "|", c.drug, "|", c.prev_phase ?? "-", "->", c.new_phase ?? "-");
+}
+```
+
+</CodeGroup>
+
+```json Example response (trimmed)
+{
+  "data": [
+    {
+      "id": 20126,
+      "company_id": 804,
+      "company": "Ona Therapeutics",
+      "drug": "ONA-389",
+      "indication": "Prevalent solid tumors",
+      "change_type": "update",
+      "prev_phase": "Preclinical",
+      "new_phase": "Clinical",
+      "detected_at": "2026-09-28T06:18:11.815077Z"
+    },
+    {
+      "id": 20122,
+      "company_id": 809,
+      "company": "Elicio Therapeutics",
+      "drug": "ELI-008",
+      "indication": "GI tumors",
+      "change_type": "update",
+      "prev_phase": "Preclinical",
+      "new_phase": "Phase 1",
+      "detected_at": "2026-09-28T06:18:11.815077Z"
+    }
+  ],
+  "pagination": { "limit": 3, "offset": 0 },
+  "next_cursor": "<opaque cursor>"
+}
+```
+
+## One company since a date
+
+<CodeGroup>
+
+```bash cURL
+curl -G https://api.pav.bio/v1/companies/218/changes \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "since=2026-06-01T00:00:00Z" \
+  --data-urlencode "limit=3"
+```
+
+```python Python
+import os
+import requests
+
+resp = requests.get(
+    "https://api.pav.bio/v1/companies/218/changes",
+    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
+    params={"since": "2026-06-01T00:00:00Z", "limit": 3},
+)
+resp.raise_for_status()
+for c in resp.json()["data"]:
+    print(c["change_type"], "|", c["drug"], "|", c.get("indication", ""), "|", c.get("prev_phase", "-"), "->", c.get("new_phase", "-"))
+```
+
+```javascript JavaScript
+const params = new URLSearchParams({ since: "2026-06-01T00:00:00Z", limit: "3" });
+const resp = await fetch(`https://api.pav.bio/v1/companies/218/changes?${params}`, {
+  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
+});
+const { data } = await resp.json();
+for (const c of data) console.log(c.change_type, "|", c.drug, "|", c.indication, "|", c.prev_phase ?? "-", "->", c.new_phase ?? "-");
+```
+
+</CodeGroup>
+
+```json Example response (trimmed)
+{
+  "data": [
+    {
+      "id": 12363,
+      "company_id": 218,
+      "company": "Eli Lilly",
+      "drug": "Orforglipron",
+      "indication": "Obesity",
+      "change_type": "delete",
+      "prev_phase": "Regulatory Approval Achieved",
+      "detected_at": "2026-08-05T17:11:13.732374Z"
+    }
+  ],
+  "pagination": { "limit": 3, "offset": 0 },
+  "next_cursor": "<opaque cursor>"
+}
+```
+
+<Note>
+A `delete` means the program no longer appears in the company's published
+pipeline. It can reflect a discontinuation, an approval moving the asset off
+the pipeline page, or a relabeling that pairs with an `insert` under a new
+name. Read `delete` and `insert` events for the same company together.
+</Note>
+
+## Related
+
+- [Track pipeline changes guide](/guides/track-pipeline-changes)
+- [Webhook Reference](/webhooks/introduction): push delivery is planned; poll this feed today.

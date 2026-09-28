@@ -1,0 +1,93 @@
+---
+title: "Search and filters"
+description: "How q and filters behave on each dataset, and which values filters accept."
+---
+
+Every list endpoint takes an optional free-text `q` and a set of structured
+filters. How `q` behaves depends on the dataset.
+
+## Two kinds of `q`
+
+| Dataset | `q` behavior | Ordering |
+| --- | --- | --- |
+| Programs, companies, clinical trials | **Relevance search.** Finds records by meaning as well as by exact words: `oral GLP-1 obesity` ranks an "oral small-molecule selective GLP-1R agonist" in "Metabolic (Obesity)" first. | Best match first. `pagination.total` is `null`. |
+| Deals | **Exact terms.** Every term must appear (word forms such as plurals also match) in the deal name, event headline, summary or rights, or `q` is a substring of a party's name. | The chosen `sort` (latest activity by default). |
+| Patents | **Substring.** Matches the title, an owner name, or a member's patent number. | The chosen `sort` (latest status date by default). |
+| FDA records | **Substring**, case-insensitive. Matches the title, description, company name, FDA organization name or an FDA identifier. | The chosen `sort` (issue date by default). |
+
+Deal, patent and FDA search do not expand synonyms or aliases. Search each drug
+name, code name, target alias or spelling you care about, for example
+`tirzepatide` and `LY3298176`.
+
+Short queries carry less meaning. For relevance search, prefer a phrase such as
+`KRAS G12C inhibitor` over `KRAS`, or use the `target=KRAS` filter.
+
+## Filters combine with AND
+
+- Different filters combine with **AND**.
+- Repeating one filter matches **any** of its values:
+  `phase=Phase 2&phase=Phase 3`.
+- `q` and filters combine with **AND**: filters narrow the ranked results.
+
+```bash
+curl -G https://api.pav.bio/v1/programs \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "q=antibody-drug conjugate" \
+  --data-urlencode "phase=Phase 2" \
+  --data-urlencode "phase=Phase 3" \
+  --data-urlencode "limit=5"
+```
+
+## Accepted filter values
+
+| Filter | Accepts | Unknown value |
+| --- | --- | --- |
+| Program `phase` | Normalized labels: `Preclinical`, `Phase 1`, `Phase 1/2`, `Phase 2`, `Phase 2/3`, `Phase 3`, `Filed`, `Registration`, `Approved` | Empty result |
+| Program `modality` | Modality token or display label: `small_molecule` or `Small molecule` | `422` |
+| Program `target`, `indication`, `drug`, `company` | Exact text, case-insensitive | Empty result |
+| Trial `phase`, `status` | Any case and format: `Phase 3`, `PHASE3`, `Recruiting` | Empty result |
+| Trial `sponsor` | Lead sponsor name exactly as registered, case-sensitive | Empty result |
+| Deal `deal_type`, `event_type`, patent `state`, sorts | Closed lists in the [API Reference](/api-reference/deals/list-and-search-deals) | `422` |
+
+List the modalities, and program counts for each phase and modality,
+with [`GET /v1/stats`](/api-reference/stats/dataset-summary-statistics):
+
+```json Example response (trimmed): GET /v1/stats
+{
+  "assets": 27296,
+  "companies": 6576,
+  "distinct_phases": 9,
+  "distinct_modalities": 19,
+  "by_phase": { "Phase 1": 7315, "Phase 2": 6890, "Phase 3": 4954, "Phase 1/2": 3199, "Approved": 1701 },
+  "by_modality": { "small_molecule": 2896, "antibody": 1729, "adc": 588, "cell_therapy": 418, "peptide": 302 }
+}
+```
+
+<Warning>
+Filters on partially populated fields (`target`, `modality`) return only
+programs where the field is set. A program with no published target never
+matches `target=KRAS`, even if it is a KRAS program. When recall matters, run
+`q` as well and merge. See [Coverage and sources](/concepts/coverage-and-sources).
+</Warning>
+
+## Exact filters vs. search
+
+Exact filters (`indication=Obesity`) match one spelling. Companies publish the
+same indication many ways: `Obesity`, `Metabolic (Obesity)`,
+`Obesity / Metabolic Disease`. Use `q` to collect every phrasing, then filter
+the results in your code. Each program also carries `indication_terms` (MONDO)
+and `target_terms` (NCIT) where mapped; group by `term_id` to merge
+phrasings.
+
+## Typeahead
+
+`GET /v1/programs/autocomplete?q=tirzep` returns up to 25 suggested programs
+(company, drug, indication) for a search box. It accepts the `phase`,
+`modality`, `company`, `drug`, `indication` and `target` filters.
+
+```json Example response (trimmed)
+[
+  { "id": 1831, "company": "Eli Lilly", "company_id": 218, "drug": "Tirzepatide", "indication": "Cardiovascular Outcomes", "phase_norm": "Registration" },
+  { "id": 1833, "company": "Eli Lilly", "company_id": 218, "drug": "Tirzepatide", "indication": "Metabolic Dysfunction-Associated Steatotic Liver Disease", "phase_norm": "Phase 3" }
+]
+```

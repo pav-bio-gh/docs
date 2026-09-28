@@ -1,0 +1,119 @@
+---
+title: "Build a competitive landscape"
+description: "Collect every program against a target, count it by phase, and pull its trials and nearest competitors."
+---
+
+This guide builds a landscape of KRAS-directed programs: who is developing
+them, how far along each is, and which trials back them. The same pattern
+works for an indication or a modality.
+
+## Prerequisites
+
+- A Pav API key in `PAV_API_KEY`. See [Quickstart](/quickstart).
+- Python 3.9+ and `pip install requests`.
+
+## Approach
+
+1. **Search by meaning.** `q` finds programs whose text describes the
+   mechanism, including ones with no structured `target`.
+2. **Add exact target matches.** The `target` filter catches programs that
+   state the target but word their description differently.
+3. **Merge by program `id`, then filter.** Relevance search returns weaker
+   matches further down the list; keep only programs that name the target.
+4. **Rank by phase** and read the linked trials.
+
+Running both searches matters: only about a quarter of programs publish a
+target (see [Coverage and sources](/concepts/coverage-and-sources)).
+
+## Script
+
+```python landscape.py
+import collections
+import os
+
+import requests
+
+API = "https://api.pav.bio"
+HEADERS = {"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"}
+
+
+def get(path, **params):
+    resp = requests.get(f"{API}{path}", headers=HEADERS, params=params, timeout=60)
+    resp.raise_for_status()
+    return resp.json()
+
+
+# 1. Search by meaning, then add exact target matches.
+found = {}
+for query in ["KRAS G12C inhibitor", "pan-KRAS inhibitor"]:
+    for p in get("/v1/programs", q=query, limit=200)["data"]:
+        found[p["id"]] = p
+for target in ["KRAS G12C", "KRAS"]:
+    for p in get("/v1/programs", target=target, limit=500)["data"]:
+        found[p["id"]] = p
+
+
+# 2. Keep programs that name KRAS in their target, mechanism or drug.
+def mentions_kras(p):
+    text = " ".join([p.get("target", ""), p.get("mechanism_of_action", ""), p["drug"]])
+    return "KRAS" in text.upper()
+
+
+landscape = [p for p in found.values() if mentions_kras(p)]
+
+# 3. Count by phase and list the most advanced programs.
+RANK = ["Approved", "Registration", "Filed", "Phase 3", "Phase 2/3", "Phase 2",
+        "Phase 1/2", "Phase 1", "Preclinical", "Unknown"]
+by_phase = collections.Counter(p.get("phase_norm", "Unknown") for p in landscape)
+print(f"{len(landscape)} KRAS programs across {len({p['company_id'] for p in landscape})} companies")
+for phase in RANK:
+    if by_phase[phase]:
+        print(f"  {phase:<12} {by_phase[phase]}")
+
+landscape.sort(key=lambda p: RANK.index(p.get("phase_norm", "Unknown")))
+print()
+for p in landscape[:8]:
+    trials = len(p.get("clinical_trials", []))
+    print(f"{p.get('phase_norm', 'Unknown'):<10} | {p['company']} | {p['drug']} | {p.get('indication', '')[:40]} | trials={trials}")
+```
+
+```text Example output (September 2026)
+50 KRAS programs across 27 companies
+  Approved     2
+  Registration 1
+  Phase 3      16
+  Phase 2      6
+  Phase 1/2    9
+  Phase 1      12
+  Preclinical  4
+
+Approved   | Shanghai Allist Pharmaceuticals | Glecirasib | 2nd Line Treatment for NSCLC | trials=10
+Approved   | Innovent Biologics | DUPERT (Fulzerasib) |  | trials=15
+Registration | Royalty Pharma | Rasonque | RAS mutant pancreatic cancer | trials=13
+Phase 3    | Merck | calderasib | Colorectal cancer | trials=1
+Phase 3    | Merck | calderasib | Non-small cell lung cancer | trials=5
+Phase 3    | Bristol Myers Squibb | KRAZATI® (adagrasib) | 1L Non-Small Cell Lung Cancer PD-L1≥50% | trials=1
+Phase 3    | Roche | divarasib (KRAS G12C) | 1L non small cell lung cancer (1L NSCLC) | trials=5
+Phase 3    | Roche | divarasib (KRAS G12C) | 2L non small cell lung cancer (2L NSCLC) | trials=5
+```
+
+A program is one drug in one indication, so a drug developed in several
+indications appears once per indication. Count distinct `drug` per company for
+an asset-level view.
+
+## Extend it
+
+- **Nearest competitors of one asset.** `GET /v1/programs/{id}/similar-programs`
+  returns the programs most similar to a given program. Run it on the leading
+  assets to catch programs your query terms missed.
+- **Trial detail.** Each program lists `clinical_trials[]` with `nct_id`,
+  phase, status and sponsor. Fetch `GET /v1/trials/{nct_id}` for enrollment,
+  dates and primary outcomes.
+- **By indication.** Replace the searches with `q="obesity"` plus
+  `indication=Obesity`, and group by `indication_terms[].term_id` to merge
+  phrasings such as "Obesity" and "Metabolic (Obesity)".
+- **Deals and patents around the landscape.** Pass each company's
+  `company_id` to [`/v1/deals`](/datasets/deals) and [`/v1/patents`](/datasets/patents).
+
+With the [MCP server](/mcp), an agent can do the same from one prompt:
+"Build a landscape of KRAS inhibitors by phase with their lead indications and trial counts."
