@@ -1,0 +1,101 @@
+---
+title: "Hybrid Search"
+description: "How free-text and structured filters combine to rank results."
+---
+
+When a list endpoint receives a free-text `q`, it runs **hybrid search**: a
+keyword leg and a semantic leg, fused into one ranking.
+
+## How ranking works
+
+- **Keyword leg** — BM25 full-text over the indexed document for each row.
+- **Semantic leg** — the query is embedded with the BioLORD model (768-dim) and
+  matched by cosine ANN. Queries shorter than 5 characters skip this leg (too
+  little signal to embed).
+- **Fusion** — the two result lists are combined with Reciprocal Rank Fusion
+  (RRF). The semantic leg lets you find assets by mechanism and indication
+  phrasing even when the wording does not lexically match the drug name.
+
+`data` is returned best-match first. Scores are RRF/BM25 ranking scores, not
+calibrated probabilities — use them for ordering, not as a confidence metric.
+
+## Filters are ANDed
+
+Structured filters combine with `q` and with each other using **AND**. On the
+search path they are applied as exact attribute filters on the index. Filter-only
+program and company listings use the relational read path; trial listings use the
+product trial index in TurboPuffer.
+
+```bash
+# EGFR programs in phase 2, ranked by relevance to the query
+curl -G https://api.pav.bio/v1/programs \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "q=EGFR inhibitor" \
+  --data-urlencode "target=EGFR" \
+  --data-urlencode "phase=phase_2"
+```
+
+Program filters: `phase`, `modality`, `company`, `drug`, `indication`, `target`.
+Trial filters: `phase`, `status`, `sponsor`, `study_type`. Repeat a parameter to
+pass multiple values (they are ORed within one facet, ANDed across facets).
+
+<Warning>
+Closed-vocabulary filters (modality, phase) reject unknown values with `422`. The
+`modality` filter accepts either the display label (`Small molecule`) or the
+canonical token (`small_molecule`); both resolve to the same normalized value. A
+value that is valid but matches no rows simply returns an empty `data` array.
+</Warning>
+
+## Pagination on search
+
+Search uses top-k pagination: it requests `offset + limit` ranked results (capped
+at 1000) and returns that window. **Relevance-ranked search responses report
+`total = null`** — there is no exact count for a ranked query. Use `limit`/
+`offset` to page; deep offsets are bounded by the top-k cap.
+
+Filter-only and column-sorted program listings can return an exact `total` when
+you pass `include_total=true`. Trial search and listing responses report
+`total = null` because they are served from the product trial index.
+
+## Trials: product trial index
+
+Trials are served from one product trial index in TurboPuffer. The index is
+built from ClinicalTrials.gov data in the Pav data lake plus Pav's Postgres
+program/company mappings.
+
+- **`q=` present** → hybrid semantic + keyword search over the product trial
+  index, ranked by relevance. Explicit `sort` is rejected because relevance owns
+  ordering.
+- **No `q=`** → browse the product trial index with supported exact filters and
+  TurboPuffer-backed sorts.
+
+<Warning>
+Trial endpoints do not expose the raw ClinicalTrials.gov registry as a
+Postgres-style listing surface. Exact totals, condition substring filters,
+start-date ranges, and deep browse windows are rejected with `422` rather than
+served from a stale copy.
+</Warning>
+
+Program and company search always cover their full indexed sets (every tracked
+program and company is indexed).
+
+## Deals and patents: exact-term search
+
+`q` on `/v1/deals` and `/v1/patents` is not hybrid and not ranked by relevance:
+
+- **Deals** — a full-text match with English stemming (every term must appear)
+  over the deal name, event headline, summary and rights, or a substring of a
+  party's name. Results keep the chosen `sort` (latest activity by default).
+- **Patents** — a substring of the family title, an owner name, or a member's
+  patent number.
+
+Neither expands synonyms or aliases. Search each drug name, target alias or
+spelling you care about, and combine with filters such as `company_id`,
+`deal_type` or `cpc`.
+
+## Related endpoints
+
+- **`GET /v1/programs/autocomplete`** — search-as-you-type suggestions: the top
+  matching programs (company, drug, indication) for a partial query.
+- **`GET /v1/programs/{id}/similar-programs`** — programs most similar to a given
+  program, ranked by a precomputed similarity.

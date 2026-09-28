@@ -1,33 +1,10 @@
-> **First-time setup**: Customize this file for your project. Prompt the user to customize this file for their project.
-> For Mintlify product knowledge (components, configuration, writing standards),
-> install the Mintlify skill: `npx skills add https://mintlify.com/docs`
+# Agent notes for the Pav API docs
 
-# Documentation project instructions
-
-## About this project
-
-- This is a documentation site built on [Mintlify](https://mintlify.com)
-- Pages are MDX files with YAML frontmatter
-- Configuration lives in `docs.json`
-- Use the Mintlify MCP server, `https://mcp.mintlify.com`, to edit content and settings via MCP
-- Use the Mintlify docs MCP server, `https://www.mintlify.com/docs/mcp`, to query information about using Mintlify via MCP
-
-## Terminology
-
-{/* Add product-specific terms and preferred usage */}
-{/* Example: Use "workspace" not "project", "member" not "user" */}
-
-## Style preferences
-
-{/* Add any project-specific style rules below */}
-
-- Use active voice and second person ("you")
-- Keep sentences concise — one idea per sentence
-- Use sentence case for headings
-- Bold for UI elements: Click **Settings**
-- Code formatting for file names, commands, paths, and code references
-
-## Content boundaries
-
-{/* Define what should and shouldn't be documented */}
-{/* Example: Don't document internal admin features */}
+- This is a public repo. Never add secrets, internal hostnames, database or
+  bucket names, internal commands, or unreleased features.
+- `openapi.json` is copied from `https://api.pav.bio/v1/openapi.json` with
+  `npm run refresh-openapi`. Do not hand-edit it, and do not hand-list API
+  reference pages in `docs.json` — the `openapi` tab generates them.
+- State what the API does today. Mark planned features as planned (see
+  `webhooks/introduction.mdx`).
+- Run `mint validate` and `mint broken-links` before opening a PR.

@@ -1,0 +1,45 @@
+---
+title: "Rate Limits and Errors"
+description: "Request limits per API key, and the error envelope every endpoint returns."
+---
+
+## Rate limits
+
+Each API key may make **300 requests per minute**, with bursts up to 300. Every
+REST request to a `/v1` data endpoint and every MCP tool call counts as one
+request.
+
+Over the limit, the API returns `429 Too Many Requests` with a `Retry-After`
+header (seconds) and a `rate_limited` error:
+
+```json
+{
+  "error": {
+    "code": "rate_limited",
+    "message": "Rate limit exceeded for this API key; retry after 12 seconds",
+    "request_id": "3f2b9c1d8a7e4f6b9c0d1e2f3a4b5c6d"
+  }
+}
+```
+
+Wait the `Retry-After` seconds (also stated in the message) before retrying. A separate per-IP limit protects
+the service from floods; it also returns `429`.
+
+<Note>
+Need a higher limit? Contact Pav at [pav.bio](https://pav.bio).
+</Note>
+
+## Error envelope
+
+Every error returns the same shape and an `X-Request-ID` header. Quote the
+`request_id` when contacting Pav support.
+
+| Status | `code` | When |
+| --- | --- | --- |
+| `401` | `unauthorized` | Missing, malformed, unknown, revoked or expired key. |
+| `403` | `forbidden` | The key declares scopes but not `pav:pipeline:read`. |
+| `404` | `not_found` | Unknown id or route. |
+| `422` | `validation_error` | Invalid parameter (unknown enum value, bad id format, out-of-range limit). |
+| `429` | `rate_limited` | Over the per-key rate limit. |
+| `503` | `unavailable` | A dependency (auth provider or search index) is briefly unreachable. Safe to retry. |
+| `500` | `error` | Unexpected server error. |

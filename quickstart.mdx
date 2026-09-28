@@ -1,47 +1,90 @@
 ---
 title: "Quickstart"
-description: "Begin with a guide on the fastest path to a successful outcome"
+description: "Make your first authenticated request against the Pav Enterprise API."
 ---
 
-Describe how someone begins using your product. What is the first thing they need to do? Are there any prerequisites?
+## 1. Get an API key
 
-A quickstart should take someone from zero to using your product. They'll get a quick win and a sense of what they can accomplish.
+Create a key from Pav developer settings:
 
-## Prerequisites
+```text
+app.pav.bio -> Settings -> Developer
+```
 
-Before you begin, you must have:
+Keys are Clerk API keys; you can mint a personal key or an organization key.
+Copy the secret when it is shown because it is not retrievable later.
 
-- Requirement one (for example, Node.js 18+, a free account, an API key)
-- Requirement two (for example, a compatible device, a compatible browser, a compatible operating system)
+```bash
+export PAV_API_KEY="<your_api_key>"
+```
 
-## Get started
+## 2. Make a request
 
-<Steps>
-  <Step title="Install">
-    Describe how to install your product or sign up.
+Search programs with a free-text query. The `q` parameter runs hybrid search;
+the bearer header carries your key.
 
-    ```bash
-    npm install your-package
-    ```
-  </Step>
-  <Step title="Configure">
-    Describe any setup or configuration needed before first use.
+```bash
+curl -G https://api.pav.bio/v1/programs \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "q=oral GLP-1 obesity" \
+  --data-urlencode "limit=3"
+```
 
-    ```bash
-    your-cli init
-    ```
-  </Step>
-  <Step title="Run it">
-    Show the first thing a user does to see it working.
+## 3. Read the response
 
-    ```bash
-    your-cli start
-    ```
-  </Step>
-</Steps>
+List endpoints return a `data` array plus a `pagination` block. Relevance-ranked
+search responses may return `total: null`; `data` is ordered best-match first.
 
-<Tip>
-  Give people a way to get help. This could be a link to a support page, a chat with a customer support agent, or a forum for your product.
+```json
+{
+  "data": [
+    {
+      "id": 18342,
+      "company_id": 412,
+      "company": "Example Biotech",
+      "drug": "Example asset",
+      "indication": "Obesity",
+      "phase_norm": "phase_2",
+      "clinical_trials": []
+    }
+  ],
+  "pagination": { "limit": 3, "offset": 0 }
+}
+```
 
-  Example: Need help? Reach out to us at [support@yourcompany.com](mailto:support@yourcompany.com).
-</Tip>
+<Note>
+Fields that are null on a row are omitted from the JSON rather than returned as
+`null`.
+</Note>
+
+## 4. Try deals and patents
+
+Deals over $1B, largest first:
+
+```bash
+curl -G https://api.pav.bio/v1/deals \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "min_value_usd=1000000000" \
+  --data-urlencode "sort=headline_value" \
+  --data-urlencode "limit=5"
+```
+
+Live patent families mentioning GLP-1, with their member applications:
+
+```bash
+curl -G https://api.pav.bio/v1/patents \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "q=GLP-1" \
+  --data-urlencode "state=live" \
+  --data-urlencode "include_members=true" \
+  --data-urlencode "limit=5"
+```
+
+## Next
+
+- [MCP Server](/mcp) — give an agent the same data as tools.
+- Browse every endpoint in the **API Reference** tab.
+- [Authentication](/authentication) — keys, scopes, and error behavior.
+- [Entities](/concepts/entities) — the full field set for each object.
+- [Hybrid Search](/concepts/hybrid-search) — how free-text search and filters
+  combine.

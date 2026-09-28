@@ -1,72 +1,74 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mintlify Starter Kit",
+  "name": "Pav API",
+  "description": "The Pav API and MCP server: biopharma programs, companies, clinical trials, deals, patents, and change feeds.",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#4C7CFF",
+    "light": "#7B9CFF",
+    "dark": "#2B4DBF"
+  },
+  "appearance": {
+    "default": "light"
+  },
+  "logo": {
+    "light": "/logo/pav-api-light.svg",
+    "dark": "/logo/pav-api-dark.svg"
   },
   "favicon": "/favicon.svg",
   "navigation": {
-    "pages": [
+    "tabs": [
       {
-        "group": "Getting Started",
+        "tab": "Overview",
+        "groups": [
+          {
+            "group": "Get started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "authentication",
+              "mcp",
+              "rate-limits"
+            ]
+          },
+          {
+            "group": "Core concepts",
+            "pages": [
+              "concepts/entities",
+              "concepts/hybrid-search",
+              "concepts/data-quality-and-coverage"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "openapi": "openapi.json"
+      },
+      {
+        "tab": "Webhook Reference",
         "pages": [
-          "index",
-          "quickstart"
+          "webhooks/introduction"
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    ]
   },
   "navbar": {
     "links": [
       {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "label": "Production API",
+        "href": "https://api.pav.bio"
       }
     ],
     "primary": {
       "type": "button",
-      "label": "Dashboard",
-      "href": "https://app.mintlify.com"
+      "label": "Get API key",
+      "href": "https://app.pav.bio/settings/developer"
     }
-  },
-  "contextual": {
-    "options": [
-      "copy",
-      "view",
-      "chatgpt",
-      "claude",
-      "perplexity",
-      "mcp",
-      "cursor",
-      "vscode"
-    ]
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "website": "https://pav.bio"
     }
   }
 }

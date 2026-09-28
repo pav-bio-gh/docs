@@ -1,0 +1,76 @@
+---
+title: "Data Quality and Coverage"
+description: "Sourcing, normalization, and coverage posture for Pav data."
+---
+
+Pav data is aggregated and normalized from public sources. This page states the
+coverage posture plainly so you can reason about what a filter or facet will and
+will not return.
+
+## Sourcing
+
+- **Programs / companies** — scraped from company pipeline pages, then
+  normalized into canonical phase and modality vocabularies at load time.
+- **Clinical trials** — ClinicalTrials.gov records served from Pav's product
+  trial index, with Pav program/company links attached where present.
+- **Deals** — extracted from SEC filings and company press releases. Each deal
+  keeps its source documents, so every term can be traced to a filing or release.
+- **Patents** — US applications and grants from the USPTO, grouped into families
+  (a root application with its continuations, divisionals and provisionals).
+- **Ontology terms** — program indication text is resolved to MONDO terms where
+  possible.
+
+## Field coverage
+
+Some fields are sparsely populated at the source. A filter on a sparse field is
+honest but narrowing: it can only return rows where that field is present, so
+**filtering on a sparse field silently shrinks your result set** to the covered
+subset. Measured on the program corpus (2026-06-22):
+
+| Field | Populated | Note |
+| --- | --- | --- |
+| `phase_norm` | ~97% | Normalized phase; a small tail of unrecognized labels stays null. |
+| `modality_norm` | ~81% | ~19% of programs have no canonical modality and are invisible to a `modality` filter. |
+| `target` | ~45% | Many programs publish no target; a `target` filter excludes the majority of the corpus. |
+| MONDO `indication_terms` | ~16% of programs | Ontology resolution is partial; most programs have no MONDO term yet. |
+
+Phase and modality use closed, normalized vocabularies (pass canonical tokens,
+e.g. `small_molecule`). A handful of programs carry `drug = "Undisclosed"` where
+the asset is not named.
+
+### Deals
+
+- Many deals disclose no value. `min_value_usd` only matches deals with a stated
+  **USD** headline value, so it excludes undisclosed and non-USD deals.
+- `companies` lists the parties Pav has resolved to tracked companies. A party
+  Pav does not track is named in the deal text but is not in `companies`.
+
+### Patents
+
+- Ownership comes from USPTO assignment records. About a quarter of families
+  map to a tracked Pav company, so **no patents for a company does not mean the
+  company holds none** — its assignee name may not be mapped yet.
+- `statutory_term_end` is the earliest nonprovisional filing plus 20 years. It
+  does not apply patent term adjustments or extensions.
+
+<Note>
+These rates drift as scrapers and enrichment run. Treat them as orders of
+magnitude, not contract guarantees — verify current coverage against the live
+API.
+</Note>
+
+## Checking coverage yourself
+
+`GET /v1/stats` returns live totals and `by_phase` / `by_modality` /
+`distinct_*` breakdowns — a quick way to see facet population without scanning
+pages. On deals and patents, pass `include_total=true` to get the exact match
+count for a filter.
+
+## Freshness and changes
+
+Programs refresh on Pav's scrape cadence; `source_scraped_at` and
+`last_scraped_at` carry the per-row timestamps. Deals update as new filings and
+releases arrive; `latest_update_at` and `activity_date` show the latest source.
+The [changes feed](/concepts/entities#changes) records detected pipeline changes
+(phase moves, added/removed programs) so you can track movement rather than
+re-diffing snapshots yourself.

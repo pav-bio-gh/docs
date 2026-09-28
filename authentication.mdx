@@ -1,0 +1,54 @@
+---
+title: "Authentication"
+description: "Authenticate with a Clerk API key using the Authorization bearer header."
+---
+
+Every `/v1` endpoint requires a valid Pav API key. Keys are
+[Clerk](https://clerk.com) API keys, sent as a bearer token.
+
+## The bearer header
+
+```
+Authorization: Bearer <your_api_key>
+```
+
+The security scheme is `EnterpriseApiKey` (HTTP bearer) in the OpenAPI spec, so
+the **API Reference** playground accepts the same key.
+
+## Creating and scoping keys
+
+Create keys from **app.pav.bio → Settings → Developer**. You can mint:
+
+- a **personal** key, scoped to your user, or
+- an **organization** key, scoped to your org.
+
+Copy the secret at creation time — it is shown once and is not retrievable
+afterward. Rotate by creating a new key and revoking the old one; revocation
+takes effect within about a minute (verification is briefly cached server-side).
+
+### Scopes
+
+The current API is read-only over pipeline data. If a key declares custom
+scopes, it must include `pav:pipeline:read`. Keys created without custom scopes
+are accepted for all current read endpoints. A key that declares scopes but
+omits `pav:pipeline:read` is rejected with `403`.
+
+## Error behavior
+
+| Status | When | Body |
+| --- | --- | --- |
+| `401` | Missing, malformed, unknown, revoked, or expired key | `{ "error": { "code": "unauthorized", "message": "Missing or invalid API key", "request_id": "…" } }` |
+| `403` | Valid key, but missing the `pav:pipeline:read` scope | `{ "error": { "code": "forbidden", "message": "API key is missing pav:pipeline:read scope", "request_id": "…" } }` |
+| `429` | Over the key's rate limit (see [Rate Limits](/rate-limits)); honor `Retry-After` | `{ "error": { "code": "rate_limited", "message": "Rate limit exceeded for this API key; …", "request_id": "…" } }` |
+| `503` | Auth provider temporarily unreachable | `{ "error": { "code": "unavailable", "message": "authentication service temporarily unavailable", "request_id": "…" } }` |
+
+A `401` returns a `WWW-Authenticate: Bearer` header. The distinction between
+`401` and `503` is deliberate: an unreachable auth provider is reported as a
+transient `503`, not a misleading `401`, so retries are safe. Every error echoes
+a `request_id` (also in the `X-Request-ID` response header) — quote it when
+contacting Pav support.
+
+<Note>
+Keep secrets out of source control, logs, and client-side bundles. Treat an API
+key like a password.
+</Note>
