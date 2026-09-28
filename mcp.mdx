@@ -1,20 +1,19 @@
 ---
-title: "MCP Server"
-description: "Connect Claude, Cursor, or any MCP client to Pav data."
+title: "MCP server"
+description: "Connect Claude, Cursor or any MCP client to Pav data with one URL and your API key."
 ---
 
 Pav runs a remote [Model Context Protocol](https://modelcontextprotocol.io)
-server. Every read endpoint of the API is available as an MCP tool, so an agent
-can search programs, deals, patents and trials directly.
+server. Every read endpoint of the API is an MCP tool, so an agent can search
+programs, trials, deals, patents and FDA records and cite the records it used.
 
-```text
-https://api.pav.bio/mcp
-```
-
-- **Transport:** streamable HTTP.
-- **Auth:** the same Pav API key as the REST API, sent as
-  `Authorization: Bearer <api_key>`. See [Authentication](/authentication).
-- **Access:** read-only. Every tool is marked `readOnlyHint`.
+| | |
+| --- | --- |
+| URL | `https://api.pav.bio/mcp` |
+| Transport | Streamable HTTP |
+| Auth | Your Pav API key: `Authorization: Bearer <api_key>`. See [Authentication](/authentication). |
+| Access | Read-only. Every tool is marked read-only. |
+| Tools | 18, one per API endpoint |
 
 ## Connect a client
 
@@ -24,11 +23,43 @@ https://api.pav.bio/mcp
     claude mcp add --transport http pav https://api.pav.bio/mcp \
       --header "Authorization: Bearer $PAV_API_KEY"
     ```
+
+    Verify with `claude mcp list`, or type `/mcp` inside Claude Code.
+  </Tab>
+  <Tab title="Claude Desktop">
+    Claude Desktop reaches remote servers that need a header through the
+    [`mcp-remote`](https://www.npmjs.com/package/mcp-remote) adapter (requires
+    Node.js 18+). Open **Settings → Developer → Edit Config** and add:
+
+    ```json claude_desktop_config.json
+    {
+      "mcpServers": {
+        "pav": {
+          "command": "npx",
+          "args": [
+            "-y",
+            "mcp-remote",
+            "https://api.pav.bio/mcp",
+            "--header",
+            "Authorization:${PAV_AUTH_HEADER}"
+          ],
+          "env": {
+            "PAV_AUTH_HEADER": "Bearer <your_api_key>"
+          }
+        }
+      }
+    }
+    ```
+
+    Restart Claude Desktop. The Pav tools appear under the tools menu in a new
+    chat. Keep `Authorization:${PAV_AUTH_HEADER}` without a space after the
+    colon; the value comes from `env`.
   </Tab>
   <Tab title="Cursor">
-    Add to `~/.cursor/mcp.json`:
+    Add to `~/.cursor/mcp.json` (all projects) or `.cursor/mcp.json` (one
+    project):
 
-    ```json
+    ```json mcp.json
     {
       "mcpServers": {
         "pav": {
@@ -38,10 +69,16 @@ https://api.pav.bio/mcp
       }
     }
     ```
+
+    Check **Settings → MCP** shows `pav` with its tools.
   </Tab>
-  <Tab title="Python (FastMCP)">
+  <Tab title="Python">
+    Use the [FastMCP](https://gofastmcp.com) client: `pip install fastmcp`.
+
     ```python
-    import asyncio, os
+    import asyncio
+    import os
+
     from fastmcp import Client
     from fastmcp.client.transports import StreamableHttpTransport
 
@@ -50,53 +87,82 @@ https://api.pav.bio/mcp
         headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
     )
 
+
     async def main():
         async with Client(transport) as client:
+            tools = await client.list_tools()
+            print(len(tools), "tools")
             result = await client.call_tool(
-                "list_deals", {"min_value_usd": 1e9, "sort": "headline_value", "limit": 5}
+                "list_deals",
+                {"min_value_usd": 1_000_000_000, "sort": "headline_value", "limit": 3},
             )
             for deal in result.structured_content["data"]:
-                print(deal["deal_name"])
+                print(deal["deal_name"], "|", deal["total_value"]["raw_text"])
+
 
     asyncio.run(main())
+    ```
+
+    ```text Output
+    18 tools
+    Pfizer acquisition of Seagen | approximately $43 billion
+    Amgen acquisition of Horizon Therapeutics plc | transaction equity value of approximately $27.8 billion
+    Abbott acquisition of Exact Sciences | enterprise value of ~$23 billion
     ```
   </Tab>
 </Tabs>
 
+Any other MCP client that supports streamable HTTP and custom headers works
+with the same URL and header.
+
 ## Tools
 
 Each tool is one API endpoint. Its arguments are the endpoint's parameters and
-its result is the endpoint's JSON response.
+its result is the endpoint's JSON response. The dataset pages describe the
+fields and filters.
 
-| Tool | Endpoint |
-| --- | --- |
-| `list_programs` | `GET /v1/programs` |
-| `get_program` | `GET /v1/programs/{program_id}` |
-| `get_similar_programs` | `GET /v1/programs/{program_id}/similar-programs` |
-| `list_companies` | `GET /v1/companies` |
-| `get_company` | `GET /v1/companies/{company_id}` |
-| `list_company_programs` | `GET /v1/companies/{company_id}/programs` |
-| `list_company_trials` | `GET /v1/companies/{company_id}/trials` |
-| `list_company_changes` | `GET /v1/companies/{company_id}/changes` |
-| `list_trials` | `GET /v1/trials` |
-| `get_trial` | `GET /v1/trials/{nct_id}` |
-| `list_deals` | `GET /v1/deals` |
-| `get_deal` | `GET /v1/deals/{deal_id}` |
-| `list_patents` | `GET /v1/patents` |
-| `get_patent_family` | `GET /v1/patents/{family_id}` |
-| `list_changes` | `GET /v1/changes` |
-| `get_stats` | `GET /v1/stats` |
+| Tool | Endpoint | Use |
+| --- | --- | --- |
+| `list_programs` | `GET /v1/programs` | Search and filter programs. |
+| `get_program` | `GET /v1/programs/{program_id}` | One program with trials and ontology terms. |
+| `get_similar_programs` | `GET /v1/programs/{program_id}/similar-programs` | Competitors and analogues of a program. |
+| `list_companies` | `GET /v1/companies` | Resolve a company name to `company_id`. |
+| `get_company` | `GET /v1/companies/{company_id}` | One company. |
+| `list_company_programs` | `GET /v1/companies/{company_id}/programs` | A company's pipeline. |
+| `list_company_trials` | `GET /v1/companies/{company_id}/trials` | Trials linked to a company. |
+| `list_company_changes` | `GET /v1/companies/{company_id}/changes` | A company's pipeline changes. |
+| `list_trials` | `GET /v1/trials` | Search and browse clinical trials. |
+| `get_trial` | `GET /v1/trials/{nct_id}` | One trial. |
+| `list_deals` | `GET /v1/deals` | Search and filter deals. |
+| `get_deal` | `GET /v1/deals/{deal_id}` | One deal with terms, events and sources. |
+| `list_patents` | `GET /v1/patents` | Search and filter patent families. |
+| `get_patent_family` | `GET /v1/patents/{family_id}` | One family with members, ownership and term. |
+| `list_fda_records` | `GET /v1/fda` | Search Orange Book, Purple Book, orphan, warning-letter and recall records. |
+| `get_fda_record` | `GET /v1/fda/{record_key}` | One FDA record. |
+| `list_changes` | `GET /v1/changes` | The pipeline change feed. |
+| `get_stats` | `GET /v1/stats` | Dataset counts by phase and modality. |
 
 <Tip>
-Resolve a company name to its `company_id` with `list_companies` first, then pass
-that id to `list_deals`, `list_patents` or `list_programs`.
+Resolve a company name with `list_companies` first, then pass its `company_id`
+to `list_company_programs`, `list_deals`, `list_patents`, `list_fda_records` or
+`list_changes`.
 </Tip>
+
+## Example prompts
+
+- "Which KRAS G12C inhibitors are in Phase 3, and who owns them?"
+- "List recruiting Phase 3 obesity trials and their sponsors."
+- "What are the five largest biopharma acquisitions by headline value? Cite the source filing for each."
+- "Which live US patent families does Eli Lilly own that mention tirzepatide, and when do their statutory terms end?"
+- "List the Orange Book patents and exclusivities for Mounjaro and when each expires."
+- "What changed in Eli Lilly's pipeline since June 1?"
+- "Find programs similar to Merck's calderasib."
 
 ## Errors and limits
 
-- A missing or invalid key returns HTTP `401` before any MCP message is handled.
-- An API error inside a tool (for example an unknown `deal_id`) comes back as an
-  MCP tool error carrying the API's `{ error: { code, message, request_id } }`
-  body.
-- Each tool call counts as one API request toward your key's
+- A missing or invalid key returns HTTP `401` before any MCP message is
+  handled.
+- An API error inside a tool, such as an unknown `deal_id`, returns an MCP tool
+  error that carries the API's `{ error: { code, message, request_id } }` body.
+- Each tool call counts as one request toward your key's
   [rate limit](/rate-limits). Connecting and listing tools do not count.

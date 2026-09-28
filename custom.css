@@ -1,8 +1,4 @@
-/* Mintlify auto-loads custom.css from the project root.
-   Tabs cannot carry a `tag` badge in docs.json (only groups/dropdowns/versions
-   can), so the "coming soon" superscript on the Webhook Reference tab is added
-   here. The `.nav-tabs-item` class scopes this to the top tab strip, so the
-   sidebar/page links to the same route are not badged. */
+/* "Soon" badge on the Webhook Reference tab in the top tab strip. */
 a.nav-tabs-item[href="/webhooks/introduction"]::after {
   content: "Soon";
   display: inline-block;

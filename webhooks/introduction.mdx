@@ -4,28 +4,28 @@ description: "Push delivery of pipeline change events. Coming soon."
 ---
 
 <Note>
-Webhooks are not available yet. This page is a placeholder for the upcoming
-push-delivery surface. Today, read pipeline movement from the
-[Changes](/concepts/entities#changes) feed.
+Webhooks are not available yet. This page describes the planned push-delivery
+surface. Today, read pipeline movement from the [changes feed](/datasets/changes).
 </Note>
 
-## What is coming
+## What is planned
 
-Webhooks will push pipeline change events to an endpoint you register, so you do
-not have to poll. Planned coverage mirrors the [Changes](/concepts/entities#changes)
-feed:
+Webhooks will push pipeline change events to an endpoint you register, so you
+do not have to poll. Planned coverage mirrors the changes feed:
 
-- **Added / removed programs** — a company gains or drops a pipeline asset.
-- **Phase changes** — a program moves between development phases.
+- **Programs added** (`insert`): a company adds a program to its pipeline.
+- **Programs removed** (`delete`): a program leaves a company's pipeline.
+- **Phase changes** (`update`): a program moves between phases.
 
-Each delivery will carry the same change record the API returns today, signed so
-you can verify it came from Pav.
+Each delivery will carry the same change record the API returns today, signed
+so you can verify it came from Pav.
 
 ## Until then: poll the changes feed
 
-The [`GET /v1/changes`](/api-reference/changes/list-pipeline-change-events)
-endpoint returns the same events a webhook would push. Page it on a schedule and
-filter by `change_type` or company to track movement.
+`GET /v1/changes` returns the same events a webhook would push. Page it with
+`next_cursor` on a schedule and filter by `change_type` or `company_id`. The
+[Track pipeline changes](/guides/track-pipeline-changes) guide has a complete
+polling script.
 
 ```bash
 curl -G https://api.pav.bio/v1/changes \

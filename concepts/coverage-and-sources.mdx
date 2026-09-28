@@ -1,0 +1,99 @@
+---
+title: "Coverage and sources"
+description: "Where each dataset comes from, what it covers, and which fields are partial."
+---
+
+Pav data is built from public sources. Every record links back to where it
+came from, so any value can be checked against its source.
+
+## Sources
+
+| Dataset | Source | Provenance on each record |
+| --- | --- | --- |
+| Programs | Pipelines published by the companies themselves | `source_url` (the company page) and `source_checked_at` |
+| Companies | Company pipelines, ClinicalTrials.gov sponsors, SEC filings and USPTO records, linked to one Pav company id | `last_checked_at` for the pipeline |
+| Clinical trials | ClinicalTrials.gov | `nct_url` |
+| Deals | SEC filings and company press releases | `events[].source_url`, `source_documents[]`, and an `evidence` sentence for each stated value |
+| Patents | USPTO applications, grants, prosecution and maintenance events, and assignment records | Application and patent numbers on every member and event |
+| FDA records | FDA Orange Book, Purple Book, orphan drug designations, warning letters and recalls | `source`, `source_version`, and `source_url` where FDA publishes a page |
+| Ontology terms | MONDO (indications), NCIT (targets) | `term_id` on each term |
+
+## Program field coverage
+
+Some fields are not disclosed by every company. Measured on all 27,296
+programs on 28 September 2026:
+
+| Field | Programs with a value |
+| --- | --- |
+| Normalized phase (`phase_norm` other than `Unknown`) | 97% |
+| At least one linked clinical trial (`clinical_trials`) | 90% |
+| Indication mapped to MONDO (`indication_terms`) | 51% |
+| Normalized modality (`modality_norm`) | 29% |
+| Mechanism of action (`mechanism_of_action`) | 28% |
+| Target (`target`) | 26% |
+| Target mapped to NCIT (`target_terms`) | 23% |
+
+<Warning>
+A filter on a partial field returns only programs where the field is set.
+`target=KRAS` cannot return a KRAS program whose company publishes no target.
+For complete landscapes, combine filters with relevance search (`q`). See
+[Search and filters](/concepts/search-and-filters).
+</Warning>
+
+A small number of programs have `drug` set to `Undisclosed`, where the company
+publishes a program without naming the asset.
+
+Check current phase and modality counts at any time with
+[`GET /v1/stats`](/api-reference/stats/dataset-summary-statistics).
+
+## Deals
+
+- Many deals disclose no value. `min_value_usd` and `sort=headline_value`
+  consider only deals with a stated USD headline value.
+- `companies` lists parties linked to Pav companies. A party that is not a
+  Pav company is named in the deal text but is not in `companies`.
+- Each stated value carries `raw_text` and the `evidence` sentence it was read
+  from. Read `raw_text` for qualifiers such as "up to" or "approximately".
+
+## Patents
+
+- Coverage is US families only.
+- About a quarter of families are linked to a Pav company. No rows for a
+  `company_id` does not mean the company holds no patents; search its owner
+  name with `q`.
+- `statutory_term_end` is the earliest nonprovisional filing date plus 20
+  years, with no term adjustments or extensions.
+
+## FDA records
+
+- Orange Book, Purple Book and orphan-designation records reflect FDA's
+  current published edition. Their `record_key` changes with each FDA edition; use
+  `application_key`, `product_key`, `patent_number` or `designation_id` as
+  stable handles.
+- Company links cover about 68% of Orange Book products, 74% of orphan
+  designations, 27% of recalls and about 5% of warning letters. Search the FDA
+  organization name with `q` as well as filtering by `company_id`.
+- Warning letters start in 2021 and recalls in 2017.
+
+## Clinical trials
+
+- Trials are ClinicalTrials.gov studies only.
+- `programs` and `company_ids` list only the links Pav has made. A trial with
+  no linked program can still belong to a tracked company; check
+  `lead_sponsor.company_id`.
+
+## Freshness
+
+| Dataset | How to see freshness |
+| --- | --- |
+| Programs | `source_checked_at` on each program; `last_checked_at` on the company |
+| Clinical trials | `last_update_post_date` from the registry |
+| Deals | `latest_update_at` and `activity_date` |
+| Patents | `latest_status_date` on the family and `status_date` on each member |
+| FDA records | `source_version` (edition) and `document_date` |
+| Changes | `detected_at` on each event |
+
+## Report a data issue
+
+Send the record id and the `request_id` of the response to Pav at
+[pav.bio](https://pav.bio).

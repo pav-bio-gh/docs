@@ -1,0 +1,50 @@
+---
+title: "OpenAPI and agents"
+description: "The machine-readable API spec, and how to give agents and code generators what they need."
+---
+
+## OpenAPI spec
+
+The API publishes an OpenAPI 3.1 spec. It needs no key.
+
+<Card title="openapi.json" icon="file-code" href="https://api.pav.bio/v1/openapi.json">
+  https://api.pav.bio/v1/openapi.json
+</Card>
+
+It covers every `/v1` endpoint with parameters, enums, limits, response
+schemas and the bearer security scheme. Use it to:
+
+- Generate a typed client with [openapi-generator](https://openapi-generator.tech)
+  or [openapi-typescript](https://openapi-ts.dev).
+- Import the API into Postman, Insomnia or Bruno.
+- Validate requests and responses in tests.
+- Give an agent a complete, current description of every endpoint.
+
+```bash
+curl -s https://api.pav.bio/v1/openapi.json | jq '.paths | keys'
+```
+
+The **API Reference** tab of this site is generated from the same spec.
+
+## Agents: MCP or REST
+
+| Use | Choose |
+| --- | --- |
+| An assistant such as Claude, Cursor or an agent framework with MCP support | The [MCP server](/mcp). Tools, arguments and descriptions come from the server; no client code. |
+| Your own code or agent loop with explicit HTTP calls | The REST API with the OpenAPI spec. |
+
+Both use the same Pav API key, return the same JSON, and share the same
+[rate limit](/rate-limits).
+
+## Tips for agent builders
+
+- Resolve names to ids first: `list_companies` (or `GET /v1/companies?q=`)
+  returns `company_id`, which every other dataset filters on.
+- Pass phases as labels (`Phase 3`), not tokens. See
+  [Search and filters](/concepts/search-and-filters).
+- Keep `limit` small (5–25) in agent loops. Responses for programs and trials
+  carry nested trials and outcomes and can be large.
+- Cite `source_url`, `nct_url`, deal `events[].source_url` and patent numbers
+  back to the user. Every record carries its source.
+- Treat a missing field as "not disclosed", not as `false` or zero. Fields with
+  no value are omitted.

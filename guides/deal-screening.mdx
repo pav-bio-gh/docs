@@ -1,0 +1,120 @@
+---
+title: "Screen deals for comparables"
+description: "Find comparable licensing and collaboration deals, rank them by stated economics, and trace each term to its source."
+---
+
+This guide screens antibody-drug conjugate (ADC) licensing and collaboration
+deals announced since 2024, ranks them by stated upfront payment, and opens
+the top deal for its full terms and source filings.
+
+## Prerequisites
+
+- A Pav API key in `PAV_API_KEY`. See [Quickstart](/quickstart).
+- Python 3.9+ and `pip install requests`.
+
+## Approach
+
+1. **Search every phrasing.** Deal `q` matches exact terms with no synonym
+   expansion, so search `antibody-drug conjugate` and `ADC` separately and
+   merge by `deal_id`.
+2. **Filter by type and date** with `deal_type` and `announced_from`.
+3. **Rank by a stated term.** List rows carry `total_value`, `upfront` and
+   milestone values. Many deals disclose no figure; skip those rather than
+   treating them as zero.
+4. **Open the deal** with `GET /v1/deals/{deal_id}` for royalties,
+   territories, rights and the source of each lifecycle event.
+
+## Script
+
+```python deal_screen.py
+import os
+
+import requests
+
+API = "https://api.pav.bio"
+HEADERS = {"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"}
+
+
+def get(path, **params):
+    resp = requests.get(f"{API}{path}", headers=HEADERS, params=params, timeout=60)
+    resp.raise_for_status()
+    return resp.json()
+
+
+# 1. Search each phrasing: deal search matches exact terms, with no synonyms.
+deals = {}
+for phrase in ["antibody-drug conjugate", "ADC"]:
+    offset = 0
+    while True:
+        page = get(
+            "/v1/deals",
+            q=phrase,
+            deal_type=["licensing", "collaboration"],
+            announced_from="2024-01-01",
+            limit=100,
+            offset=offset,
+        )["data"]
+        for d in page:
+            deals[d["deal_id"]] = d
+        if len(page) < 100:
+            break
+        offset += 100
+
+
+# 2. Keep deals with a stated upfront, largest first.
+def amount(value):
+    return (value or {}).get("amount") or 0
+
+
+priced = [d for d in deals.values() if amount(d.get("upfront"))]
+priced.sort(key=lambda d: amount(d.get("upfront")), reverse=True)
+print(f"{len(deals)} ADC licensing/collaboration deals since 2024; {len(priced)} state an upfront")
+for d in priced[:5]:
+    total = (d.get("total_value") or {}).get("raw_text", "total not stated")
+    print(f"{d['announced_at'][:10]} | {d['deal_name'][:70]} | upfront: {d['upfront']['raw_text']} | total: {total}")
+
+# 3. Open the top deal for its full terms and sources.
+top = get(f"/v1/deals/{priced[0]['deal_id']}")
+print()
+print(top["deal_name"])
+for key in ["upfront", "milestones", "royalties"]:
+    term = top.get("terms", {}).get(key)
+    if term:
+        print(f"  {key}: {term['raw_text']}")
+for event in top.get("events", [])[:3]:
+    print(f"  {event['event_type']}: {event.get('source_url')}")
+```
+
+```text Example output (September 2026)
+8 ADC licensing/collaboration deals since 2024; 4 state an upfront
+2024-12-20 | Exclusive license for three-asset ADC portfolio | upfront: $44M in upfront payments | total: total not stated
+2024-01-08 | Exclusive worldwide license of ZPC-21 and Zentalis’ ADC platform techn | upfront: up-front payment of $35 million in cash and Immunome common stock | total: total not stated
+2026-04-09 | C4 Therapeutics and Roche enter DAC research and development collabora | upfront: an upfront payment of $20 million | total: total not stated
+2025-10-08 | Lisata and Catalent worldwide non-exclusive certepetide license agreem | upfront: $70 thousand in connection with an upfront license fee | total: total not stated
+
+Exclusive license for three-asset ADC portfolio
+  upfront: $44M in upfront payments
+  milestones: cumulative development milestone payments of up to $265 million, cumulative commercial milestone payments of up to $540 million
+  royalties: single-digit royalties
+  announced: https://www.sec.gov/Archives/edgar/data/1422142/000119312524282407/d891246dex991.htm
+```
+
+Exact-term search can also match deals that mention the term in passing. Read
+`summary` and `rights_summary` before treating a hit as a comparable.
+
+## Reading deal terms
+
+- `amount` is in base currency units with an ISO `currency`. `raw_text` keeps
+  the source wording, including qualifiers such as "up to".
+- `not_disclosed: true` means the source explicitly withheld the term. A
+  missing term means none was stated.
+- `evidence` is the source sentence each value was read from; each lifecycle
+  event carries the `source_url` that reported it.
+- `latest_event_type` is the deal's current state. Filter with
+  `event_type=completed` for closed deals, or `terminated` for failed ones.
+
+## Variations
+
+- **One company's deal history:** `company_id=<id>` with `sort=announced_at`.
+- **Large M&A:** `deal_type=acquisition&min_value_usd=1000000000&sort=headline_value`.
+- **Exact count for a screen:** add `include_total=true`.

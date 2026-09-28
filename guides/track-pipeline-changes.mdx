@@ -1,0 +1,110 @@
+---
+title: "Track pipeline changes"
+description: "Poll the changes feed for a watchlist of companies and report additions, removals and phase moves."
+---
+
+This guide builds a small monitor: each run reads every new pipeline change
+for a watchlist of companies since the last run, prints it, and saves a
+checkpoint. Schedule it with cron or any job runner.
+
+## Prerequisites
+
+- A Pav API key in `PAV_API_KEY`. See [Quickstart](/quickstart).
+- Python 3.9+ and `pip install requests`.
+- The `company_id` of each company to watch, from `GET /v1/companies?q=<name>`.
+
+## How the feed works
+
+- `change_type` is `insert` (program added), `delete` (program removed) or
+  `update` (phase changed).
+- `since` returns events detected at or after a timestamp. It is inclusive.
+- `next_cursor` pages through the results; the last page has none. Cursor
+  paging never skips or repeats an event while new events arrive.
+- Retracted events are hidden by default.
+
+See [Changes](/datasets/changes) for fields and filters.
+
+## Script
+
+```python track_changes.py
+import json
+import os
+import pathlib
+
+import requests
+
+API = "https://api.pav.bio"
+HEADERS = {"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"}
+STATE = pathlib.Path("pav_changes_state.json")
+WATCHLIST = [218, 313, 506]  # Eli Lilly, Merck, Pfizer company_ids
+
+# 1. Resume from the last checkpoint; start from a fixed date on the first run.
+if STATE.exists():
+    state = json.loads(STATE.read_text())
+else:
+    state = {"since": "2026-06-01T00:00:00Z", "seen": []}
+
+# 2. Read every new event, following next_cursor.
+params = {"company_id": WATCHLIST, "since": state["since"], "limit": 500}
+events = []
+while True:
+    resp = requests.get(f"{API}/v1/changes", headers=HEADERS, params=params, timeout=60)
+    resp.raise_for_status()
+    body = resp.json()
+    events.extend(e for e in body["data"] if e["id"] not in state["seen"])
+    if not body.get("next_cursor"):
+        break
+    params["cursor"] = body["next_cursor"]
+
+# 3. Report, oldest first.
+LABEL = {"insert": "ADDED", "delete": "REMOVED", "update": "PHASE"}
+for e in sorted(events, key=lambda e: e["detected_at"]):
+    phases = f"{e.get('prev_phase', '-')} -> {e.get('new_phase', '-')}"
+    print(f"{e['detected_at'][:10]} {LABEL[e['change_type']]:<7} {e['company']} | {e['drug']} | {e.get('indication', '')[:40]} | {phases}")
+
+# 4. Save the checkpoint. `since` is inclusive, so also keep the ids seen at the
+#    newest timestamp and skip them on the next run.
+if events:
+    newest = max(e["detected_at"] for e in events)
+    seen = [e["id"] for e in events if e["detected_at"] == newest]
+    if newest == state["since"]:
+        seen += state["seen"]
+    state = {"since": newest, "seen": seen}
+    STATE.write_text(json.dumps(state))
+print(f"{len(events)} new events; next run starts at {state['since']}")
+```
+
+First run (trimmed):
+
+```text Example output (September 2026)
+2026-08-05 REMOVED Pfizer | IBRANCE (palbociclib) | ER+/HER2+ Metastatic Breast Cancer (PATI | Registration -> -
+2026-08-05 REMOVED Pfizer | PF-07976016 | Chronic Weight Management | Phase 2 -> -
+...
+2026-08-13 PHASE   Merck | doravirine + islatravir | HIV-1 infection (EU) | Phase 3 -> Under Review
+2026-08-13 ADDED   Merck | remigromig | Diabetic macular edema | - -> Phase 3
+2026-08-13 ADDED   Merck | alimatravir | HIV-1 PrEP | - -> Phase 3
+57 new events; next run starts at 2026-08-13T06:12:06.530525Z
+```
+
+Second run, with no new changes:
+
+```text Example output
+0 new events; next run starts at 2026-08-13T06:12:06.530525Z
+```
+
+## Interpreting events
+
+- Phases in the feed are the company's own labels (`Under Review`,
+  `Clinical`), not normalized phases. Fetch the program for `phase_norm`.
+- A `delete` means the program left the company's published pipeline: a
+  discontinuation, an approval moving it off the page, or a rename. A rename
+  shows as a `delete` and an `insert` for the same company on the same day;
+  pair them before alerting.
+- To see every company, drop `company_id`. To follow only phase moves, add
+  `change_type=update`.
+
+## Push delivery
+
+Webhooks for change events are planned. See the
+[Webhook Reference](/webhooks/introduction). Until then, poll this feed; a few
+requests per run fit well inside the [rate limit](/rate-limits).
