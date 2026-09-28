@@ -1,0 +1,11 @@
+{
+  "name": "pav-enterprise-api-docs",
+  "private": true,
+  "description": "Mintlify documentation site for the Pav Enterprise API.",
+  "scripts": {
+    "dev": "mint dev",
+    "validate": "mint validate",
+    "broken-links": "mint broken-links",
+    "refresh-openapi": "curl -sfS https://api.pav.bio/v1/openapi.json -o openapi.json"
+  }
+}

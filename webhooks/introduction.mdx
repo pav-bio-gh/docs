@@ -1,0 +1,36 @@
+---
+title: "Webhook Reference"
+description: "Push delivery of pipeline change events. Coming soon."
+---
+
+<Note>
+Webhooks are not available yet. This page is a placeholder for the upcoming
+push-delivery surface. Today, read pipeline movement from the
+[Changes](/concepts/entities#changes) feed.
+</Note>
+
+## What is coming
+
+Webhooks will push pipeline change events to an endpoint you register, so you do
+not have to poll. Planned coverage mirrors the [Changes](/concepts/entities#changes)
+feed:
+
+- **Added / removed programs** — a company gains or drops a pipeline asset.
+- **Phase changes** — a program moves between development phases.
+
+Each delivery will carry the same change record the API returns today, signed so
+you can verify it came from Pav.
+
+## Until then: poll the changes feed
+
+The [`GET /v1/changes`](/api-reference/changes/list-pipeline-change-events)
+endpoint returns the same events a webhook would push. Page it on a schedule and
+filter by `change_type` or company to track movement.
+
+```bash
+curl -G https://api.pav.bio/v1/changes \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "limit=50"
+```
+
+Want webhooks sooner? Tell us at [pav.bio](https://pav.bio).

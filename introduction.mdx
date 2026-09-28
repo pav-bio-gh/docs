@@ -1,0 +1,45 @@
+---
+title: "Introduction"
+description: "A concise overview of the Pav API and MCP server."
+---
+
+The Pav API is a read-only `/v1` API over Pav's curated biopharma
+intelligence: pipeline programs, companies, clinical trials, deals, patent
+families, pipeline changes, and dataset stats. The same data is available to AI
+agents through the [Pav MCP server](/mcp).
+
+Start with [Quickstart](/quickstart) if you are making your first request.
+
+## Core resources
+
+- **Programs** — search drug pipeline assets by company, indication, target,
+  modality, phase, or free text.
+- **Companies** — find tracked biopharma companies and their pipeline ownership.
+- **Clinical trials** — search Pav's trial index, with Pav program/company links
+  where present.
+- **Deals** — M&A, licensing, collaborations and other transactions with their
+  terms, lifecycle state and source documents.
+- **Patents** — US patent families with owners resolved to companies, member
+  applications, ownership history and statutory term.
+- **Changes** — detected pipeline movement such as added assets and phase
+  changes.
+- **Stats** — high-level counts and facet coverage for the current dataset.
+
+## Base URL and shape
+
+```text
+https://api.pav.bio
+```
+
+All endpoints are `GET`, return JSON, and authenticate with a Pav API key in
+the `Authorization: Bearer` header. List endpoints return a
+`{ data, pagination }` envelope. Each key may make 300 requests per minute; see
+[Rate Limits and Errors](/rate-limits).
+
+## Next
+
+- [Quickstart](/quickstart) — create a key and make your first request.
+- [MCP Server](/mcp) — connect Claude, Cursor or any MCP client.
+- [Authentication](/authentication) — bearer keys, scopes, and errors.
+- **API Reference** — every endpoint, parameter, and schema generated from
+  OpenAPI.

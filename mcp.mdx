@@ -1,0 +1,102 @@
+---
+title: "MCP Server"
+description: "Connect Claude, Cursor, or any MCP client to Pav data."
+---
+
+Pav runs a remote [Model Context Protocol](https://modelcontextprotocol.io)
+server. Every read endpoint of the API is available as an MCP tool, so an agent
+can search programs, deals, patents and trials directly.
+
+```text
+https://api.pav.bio/mcp
+```
+
+- **Transport:** streamable HTTP.
+- **Auth:** the same Pav API key as the REST API, sent as
+  `Authorization: Bearer <api_key>`. See [Authentication](/authentication).
+- **Access:** read-only. Every tool is marked `readOnlyHint`.
+
+## Connect a client
+
+<Tabs>
+  <Tab title="Claude Code">
+    ```bash
+    claude mcp add --transport http pav https://api.pav.bio/mcp \
+      --header "Authorization: Bearer $PAV_API_KEY"
+    ```
+  </Tab>
+  <Tab title="Cursor">
+    Add to `~/.cursor/mcp.json`:
+
+    ```json
+    {
+      "mcpServers": {
+        "pav": {
+          "url": "https://api.pav.bio/mcp",
+          "headers": { "Authorization": "Bearer <your_api_key>" }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Python (FastMCP)">
+    ```python
+    import asyncio, os
+    from fastmcp import Client
+    from fastmcp.client.transports import StreamableHttpTransport
+
+    transport = StreamableHttpTransport(
+        "https://api.pav.bio/mcp",
+        headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
+    )
+
+    async def main():
+        async with Client(transport) as client:
+            result = await client.call_tool(
+                "list_deals", {"min_value_usd": 1e9, "sort": "headline_value", "limit": 5}
+            )
+            for deal in result.structured_content["data"]:
+                print(deal["deal_name"])
+
+    asyncio.run(main())
+    ```
+  </Tab>
+</Tabs>
+
+## Tools
+
+Each tool is one API endpoint. Its arguments are the endpoint's parameters and
+its result is the endpoint's JSON response.
+
+| Tool | Endpoint |
+| --- | --- |
+| `list_programs` | `GET /v1/programs` |
+| `get_program` | `GET /v1/programs/{program_id}` |
+| `get_similar_programs` | `GET /v1/programs/{program_id}/similar-programs` |
+| `list_companies` | `GET /v1/companies` |
+| `get_company` | `GET /v1/companies/{company_id}` |
+| `list_company_programs` | `GET /v1/companies/{company_id}/programs` |
+| `list_company_trials` | `GET /v1/companies/{company_id}/trials` |
+| `list_company_changes` | `GET /v1/companies/{company_id}/changes` |
+| `list_trials` | `GET /v1/trials` |
+| `get_trial` | `GET /v1/trials/{nct_id}` |
+| `list_deals` | `GET /v1/deals` |
+| `get_deal` | `GET /v1/deals/{deal_id}` |
+| `list_patents` | `GET /v1/patents` |
+| `get_patent_family` | `GET /v1/patents/{family_id}` |
+| `list_changes` | `GET /v1/changes` |
+| `get_stats` | `GET /v1/stats` |
+
+<Tip>
+Resolve a company name to its `company_id` with `list_companies` first, then pass
+that id to `list_deals`, `list_patents` or `list_programs`.
+</Tip>
+
+## Errors and limits
+
+- A missing or invalid key returns HTTP `401` before any MCP message is handled.
+- An API error inside a tool (for example an unknown `deal_id`) comes back as an
+  MCP tool error carrying the API's `{ error: { code, message, request_id } }`
+  body.
+- Each tool call counts as one API request toward your key's
+  [rate limit](/rate-limits). Connecting and listing tools do not count.

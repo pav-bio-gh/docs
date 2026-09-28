@@ -1,55 +1,45 @@
-# Mintlify Starter Kit
+# Pav API docs
 
-Use the starter kit to get your docs deployed and ready to customize.
+Source for the public Pav API and MCP server documentation, built with
+[Mintlify](https://mintlify.com). This repo is the single source of the public
+docs; the API itself lives at `https://api.pav.bio`.
 
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
+## Layout
 
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
+- `docs.json` — site config and navigation.
+- `introduction.mdx`, `quickstart.mdx`, `authentication.mdx`, `mcp.mdx`,
+  `rate-limits.mdx` — Get started.
+- `concepts/` — entities, hybrid search, data quality and coverage.
+- `webhooks/` — placeholder for push delivery.
+- `openapi.json` — a copy of the live `https://api.pav.bio/v1/openapi.json`. The
+  **API Reference** tab is generated from it; never hand-edit it.
 
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
+## Local preview
 
-## AI-assisted writing
-
-Set up your AI coding tool to work with Mintlify:
+Requires Node LTS (20.17–24; the `mint` CLI refuses Node 25+).
 
 ```bash
-npx skills add https://mintlify.com/docs
-```
-
-This command installs Mintlify's documentation skill for your configured AI tools like Claude Code, Cursor, Windsurf, and others. The skill includes component reference, writing standards, and workflow guidance.
-
-See the [AI tools guides](/ai-tools) for tool-specific setup.
-
-## Development
-
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
-
-```
 npm i -g mint
+mint dev            # http://localhost:3000
+mint validate       # strict build check
+mint broken-links   # internal link check
 ```
 
-Run the following command at the root of your documentation, where your `docs.json` is located:
+## Updating after an API change
 
+The API's OpenAPI schema is the source of truth for endpoints, parameters and
+response shapes. After an API deploy:
+
+```bash
+npm run refresh-openapi   # re-pulls openapi.json from api.pav.bio
+mint validate && mint broken-links
 ```
-mint dev
-```
 
-View your local preview at `http://localhost:3000`.
+Then commit `openapi.json` together with any prose that mentions the change
+(new entities go in `concepts/entities.mdx`; new MCP tools in the table in
+`mcp.mdx`).
 
-## Publishing changes
+## Deployment
 
-Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
-
-## Need help?
-
-### Troubleshooting
-
-- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
-- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
-
-### Resources
-- [Mintlify documentation](https://mintlify.com/docs)
+The Mintlify GitHub app deploys pushes to `main`. The site is served at the
+custom domain configured in the Mintlify dashboard.
