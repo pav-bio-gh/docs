@@ -53,7 +53,7 @@
           {
             "group": "Integrations",
             "pages": [
-              "mcp",
+              "mcp-server",
               "openapi-and-agents"
             ]
           },

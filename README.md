@@ -13,7 +13,7 @@ Source for the public Pav API and MCP server documentation, built with
   deals, patents, changes): overview, coverage, key fields, filters, and
   example queries with real trimmed responses.
 - `concepts/`: search and filters, pagination, coverage and sources.
-- `mcp.mdx`, `openapi-and-agents.mdx`: Integrations.
+- `mcp-server.mdx`, `openapi-and-agents.mdx`: Integrations.
 - `guides/`: task walkthroughs with runnable scripts and example output.
 - `webhooks/`: placeholder for planned push delivery.
 - `openapi.json`: a copy of the live `https://api.pav.bio/v1/openapi.json`.
@@ -41,7 +41,7 @@ mint validate && mint broken-links
 ```
 
 Then update any prose that mentions the change: the dataset page under
-`datasets/`, the tool table in `mcp.mdx` for a new endpoint, and any guide that
+`datasets/`, the tool table in `mcp-server.mdx` for a new endpoint, and any guide that
 uses it. Re-run every code sample you touched against the live API with a real
 key, and paste real trimmed responses labeled as examples.
 
