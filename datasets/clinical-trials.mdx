@@ -1,89 +1,59 @@
 ---
 title: "Clinical trials"
-description: "ClinicalTrials.gov studies with their sponsors, conditions, outcomes and links to Pav programs and companies."
+description: "ClinicalTrials.gov studies linked to Pav programs and companies."
 icon: "stethoscope"
 ---
 
-## Overview
+A trial is one ClinicalTrials.gov study, with its sponsors and the Pav
+programs and companies linked to it.
 
-Each trial is a ClinicalTrials.gov study, keyed by its NCT id, with the
-registry's title, phase, status, dates, conditions, enrollment and primary
-outcomes. Pav adds the links: the Pav programs of the same drug in the same
-disease, and the Pav companies that sponsor the trial or own those programs.
-
-Questions this dataset answers:
-
-- Which Phase 3 obesity trials are recruiting now, and who sponsors them?
-- Which ulcerative colitis trials started this year?
-- Which trials back a given program, and what are their primary endpoints?
-- Which trials changed status or posted results this week? See
-  [Changes](/datasets/changes#clinical-trial-changes).
-
-## Coverage
-
-| Source | Links | Total counts |
-| --- | --- | --- |
-| ClinicalTrials.gov registry | Pav programs and sponsor companies, where matched | `include_total=true` on listings without `q`; `null` on relevance search |
+| Endpoint | Returns |
+| --- | --- |
+| `GET /v1/trials` | Trials, filtered or searched with `q`. |
+| `GET /v1/trials/{nct_id}` | One trial. |
+| `GET /v1/companies/{company_id}/trials` | One company's trials. |
 
 ## Key fields
 
 | Field | Description |
 | --- | --- |
-| `nct_id`, `nct_url` | Registry id and study URL. |
-| `title` | Study title. |
-| `phase` | Registry phase, e.g. `PHASE3`. Multi-phase studies list each phase separated by `\|`. |
-| `status` | Registry status, e.g. `RECRUITING`, `COMPLETED`. |
-| `sponsor` | Lead sponsor name as registered. |
-| `study_type`, `conditions[]`, `enrollment_count` | Registry metadata. |
-| `start_date`, `primary_completion_date`, `completion_date`, `last_update_post_date`, `results_first_post_date` | Registry dates. |
-| `why_stopped` | The registry's reason a trial stopped early, when it did. |
-| `primary_outcomes[]` | Primary outcome measures with time frames. |
-| `lead_sponsor`, `collaborators[]`, `sponsors[]` | Sponsors with their role and, when linked, Pav `company_id`. |
-| `company_ids[]` | Pav companies linked to the trial as sponsor or through their programs. |
-| `programs[]` | Pav programs linked to the trial. |
+| `nct_id`, `nct_url`, `title` | Registry id, link and title. |
+| `phase`, `status`, `study_type` | As registered (`PHASE3`, `RECRUITING`, `INTERVENTIONAL`). |
+| `conditions[]`, `enrollment_count` | Conditions and enrollment. |
+| `lead_sponsor`, `collaborators[]` | Sponsors, with `company_id` when linked. |
+| `company_ids[]`, `programs[]` | Linked Pav companies and programs. |
+| `start_date`, `primary_completion_date`, `last_update_post_date` | Registry dates. |
 
-## Endpoints
+## Parameters
 
-| Endpoint | Use |
-| --- | --- |
-| `GET /v1/trials` | Search (`q`) or browse trials. |
-| `GET /v1/trials/{nct_id}` | One trial. |
-| `GET /v1/companies/{company_id}/trials` | Trials linked to one company. See [Companies](/datasets/companies). |
-| `GET /v1/changes?entity=trial` | Changes to trials. See [Changes](/datasets/changes#clinical-trial-changes). |
-
-## Filters
-
-Filters combine with AND; repeating one filter matches any of its values.
-
-| Parameter | Matches | Example |
+| Name | Values | Example |
 | --- | --- | --- |
-| `q` | Relevance-ranked search that matches meaning as well as exact words. A phase written in `q` ("phase 3") acts as `phase` when you pass no `phase`. | `KRAS G12C non-small cell lung cancer` |
-| `condition` | A disease name or synonym, a MeSH id or a MONDO id. Includes trials filed under narrower conditions: `inflammatory bowel diseases` covers ulcerative colitis and Crohn disease. | `ulcerative colitis`, `D003093`, `MONDO:0005101` |
-| `phase` | Trial phase; any listed phase matches. Case and format are normalized. | `Phase 3` or `PHASE3` |
-| `status` | Recruitment status. Case and format are normalized. | `Recruiting` |
-| `sponsor` | Lead sponsor, exact name as registered, case-insensitive. | `Eli Lilly and Company` |
-| `company_id` | Trials linked to these Pav companies as sponsor or collaborator. | `218` |
-| `study_type` | Study type. | `Interventional` |
-| `start_date_from`, `start_date_to` | Start date range (`YYYY-MM-DD`, inclusive). Trials with no start date are left out. | `2025-01-01` |
-| `nct_id` | Specific trials. | `NCT04184622` |
-| `sort`, `direction` | Browse order (not with `q`): `start_date`, `last_update`, `enrollment`, `nct_id`. | `sort=start_date&direction=desc` |
-| `include_total` | Exact match count, on listings without `q`. | `true` |
-| `limit`, `offset` | Page size (1–1000, default 100). `offset + limit` must be at most 1000. | `limit=50` |
+| `q` | Free text, ranked by relevance | `semaglutide sleep apnea` |
+| `company_id` | Ids; matches sponsors and collaborators | `76` |
+| `nct_id` | NCT ids | `NCT07668414` |
+| `phase` | `1`–`4` | `3` |
+| `status` | Recruitment statuses | `RECRUITING` |
+| `study_type` | Study types | `INTERVENTIONAL` |
+| `indication` | Condition name, synonym, MeSH or MONDO id | `obesity` |
+| `from`, `to` | `start_date` range | `2026-01-01` |
+| `sort` | `start_date`, `last_update_post_date`, `enrollment_count`, `nct_id` (default) | `-start_date` |
 
-`sort` together with `q` returns `422`, because relevance search ranks by match.
-A `q` with no letters or digits returns no rows.
+Shared rules: [Conventions](/conventions).
 
-## Search recruiting trials
+## Example
+
+Recruiting Phase 3 obesity trials, newest first:
 
 <CodeGroup>
 
 ```bash cURL
 curl -G https://api.pav.bio/v1/trials \
   -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "q=obesity" \
-  --data-urlencode "phase=Phase 3" \
-  --data-urlencode "status=Recruiting" \
-  --data-urlencode "limit=3"
+  --data-urlencode "indication=obesity" \
+  --data-urlencode "phase=3" \
+  --data-urlencode "status=RECRUITING" \
+  --data-urlencode "sort=-start_date" \
+  --data-urlencode "limit=2"
 ```
 
 ```python Python
@@ -93,20 +63,12 @@ import requests
 resp = requests.get(
     "https://api.pav.bio/v1/trials",
     headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"q": "obesity", "phase": "Phase 3", "status": "Recruiting", "limit": 3},
+    params={"indication": "obesity", "phase": "3", "status": "RECRUITING",
+            "sort": "-start_date", "limit": 2},
 )
 resp.raise_for_status()
 for t in resp.json()["data"]:
-    print(t["nct_id"], "|", t["sponsor"], "|", t.get("enrollment_count"), "|", t["title"][:60])
-```
-
-```javascript JavaScript
-const params = new URLSearchParams({ q: "obesity", phase: "Phase 3", status: "Recruiting", limit: "3" });
-const resp = await fetch(`https://api.pav.bio/v1/trials?${params}`, {
-  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
-});
-const { data } = await resp.json();
-for (const t of data) console.log(t.nct_id, "|", t.sponsor, "|", t.enrollment_count, "|", t.title.slice(0, 60));
+    print(t["nct_id"], t["start_date"], t["sponsor"], "|", t["title"][:60])
 ```
 
 </CodeGroup>
@@ -115,209 +77,27 @@ for (const t of data) console.log(t.nct_id, "|", t.sponsor, "|", t.enrollment_co
 {
   "data": [
     {
-      "nct_id": "NCT06672549",
-      "title": "A Platform Trial for Pediatric Participants With Obesity or Overweight (LY900040)",
+      "nct_id": "NCT07668414",
+      "title": "A Research Study Investigating How Well the Medicine Zenagamtide Helps People With Excess Body Weight Lose Weight Compared to Semaglutide",
       "phase": "PHASE3",
       "status": "RECRUITING",
-      "sponsor": "Eli Lilly and Company",
-      "enrollment_count": 125,
-      "start_date": "2024-11-18",
-      "company_ids": [218]
+      "sponsor": "Novo Nordisk A/S",
+      "company_ids": [76],
+      "programs": [{ "program_id": 3838, "company_id": 76, "drug": "Oral Zenagamtide", "indication": "Obesity" }],
+      "start_date": "2026-09-22",
+      "enrollment_count": 650
     },
     {
-      "nct_id": "NCT07794579",
-      "title": "A Study of Orforglipron in Participants With Overweight at Risk of Development of Obesity-Related Complications or Progression to Class 1 Obesity",
+      "nct_id": "NCT07823608",
       "phase": "PHASE3",
       "status": "RECRUITING",
-      "sponsor": "Eli Lilly and Company",
-      "enrollment_count": 2001,
-      "start_date": "2026-08-26",
-      "company_ids": [218]
+      "sponsor": "Pfizer",
+      "company_ids": [506],
+      "start_date": "2026-09-17",
+      "enrollment_count": 258
     }
   ],
-  "pagination": { "limit": 3, "offset": 0 }
+  "next_cursor": "eyJyIjoidHJpYWxzIiwicyI6Ii1zdGFydF9kYXRlIiwidiI6IjIwMjYtMDktMTciLCJrIjoiTkNUMDc4MjM2MDgifQ",
+  "total": 84
 }
 ```
-
-## Trials for a condition, by start date
-
-`condition` matches the registry's own disease classification, so it finds
-every trial filed under the disease or a narrower one.
-
-<CodeGroup>
-
-```bash cURL
-curl -G https://api.pav.bio/v1/trials \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "condition=ulcerative colitis" \
-  --data-urlencode "phase=Phase 3" \
-  --data-urlencode "start_date_from=2025-01-01" \
-  --data-urlencode "sort=start_date" \
-  --data-urlencode "direction=desc" \
-  --data-urlencode "include_total=true" \
-  --data-urlencode "limit=3"
-```
-
-```python Python
-import os
-import requests
-
-resp = requests.get(
-    "https://api.pav.bio/v1/trials",
-    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={
-        "condition": "ulcerative colitis",
-        "phase": "Phase 3",
-        "start_date_from": "2025-01-01",
-        "sort": "start_date",
-        "direction": "desc",
-        "include_total": "true",
-        "limit": 3,
-    },
-)
-resp.raise_for_status()
-body = resp.json()
-print("total:", body["pagination"]["total"])
-for t in body["data"]:
-    print(t["start_date"], t["nct_id"], t["phase"], t["sponsor"])
-```
-
-```javascript JavaScript
-const params = new URLSearchParams({
-  condition: "ulcerative colitis",
-  phase: "Phase 3",
-  start_date_from: "2025-01-01",
-  sort: "start_date",
-  direction: "desc",
-  include_total: "true",
-  limit: "3",
-});
-const resp = await fetch(`https://api.pav.bio/v1/trials?${params}`, {
-  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
-});
-const body = await resp.json();
-console.log("total:", body.pagination.total);
-for (const t of body.data) console.log(t.start_date, t.nct_id, t.phase, t.sponsor);
-```
-
-</CodeGroup>
-
-```json Example response (trimmed)
-{
-  "data": [
-    {
-      "nct_id": "NCT07820046",
-      "title": "Nitazoxanide as Adjunct Therapy in Mild-to-Moderate Ulcerative Colitis",
-      "phase": "PHASE2|PHASE3",
-      "status": "NOT_YET_RECRUITING",
-      "sponsor": "Tanta University",
-      "start_date": "2027-01-01",
-      "company_ids": []
-    },
-    {
-      "nct_id": "NCT07686081",
-      "title": "Study to Evaluate the Efficacy and Safety of Ponesimod (VSP-128) in Patients With Moderately to Severely Active Ulcerative Colitis",
-      "phase": "PHASE3",
-      "status": "RECRUITING",
-      "sponsor": "Vanda Pharmaceuticals",
-      "start_date": "2026-09-01",
-      "company_ids": [336]
-    }
-  ],
-  "pagination": { "limit": 3, "offset": 0, "total": 17 }
-}
-```
-
-## A sponsor's newest trials
-
-Browse without `q` to sort. `sponsor` matches the registered lead sponsor name
-in any case.
-
-<CodeGroup>
-
-```bash cURL
-curl -G https://api.pav.bio/v1/trials \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "sponsor=Eli Lilly and Company" \
-  --data-urlencode "sort=start_date" \
-  --data-urlencode "direction=desc" \
-  --data-urlencode "limit=3"
-```
-
-```python Python
-import os
-import requests
-
-resp = requests.get(
-    "https://api.pav.bio/v1/trials",
-    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"sponsor": "Eli Lilly and Company", "sort": "start_date", "direction": "desc", "limit": 3},
-)
-resp.raise_for_status()
-for t in resp.json()["data"]:
-    print(t["start_date"], t["nct_id"], t["phase"], t["title"][:60])
-```
-
-```javascript JavaScript
-const params = new URLSearchParams({
-  sponsor: "Eli Lilly and Company",
-  sort: "start_date",
-  direction: "desc",
-  limit: "3",
-});
-const resp = await fetch(`https://api.pav.bio/v1/trials?${params}`, {
-  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
-});
-const { data } = await resp.json();
-for (const t of data) console.log(t.start_date, t.nct_id, t.phase, t.title.slice(0, 60));
-```
-
-</CodeGroup>
-
-```json Example response (trimmed)
-{
-  "data": [
-    { "nct_id": "NCT07790861", "title": "A Study of Orforglipron (LY3502970) in Chinese Participants With Obesity or Overweight and Weight-Related Health Problems", "phase": "PHASE3", "start_date": "2026-12-01" },
-    { "nct_id": "NCT07827612", "title": "A Study of Vepugratinib (LY3866288) in Adults With Non-Muscle Invasive Bladder Cancer and Upper Tract Urothelial Cancer", "phase": "PHASE2", "start_date": "2026-12-01" },
-    { "nct_id": "NCT07814417", "title": "A Study of Olomorasib (LY3537982) in Participants With Advanced Colorectal Cancer and a KRAS G12C Mutation", "phase": "PHASE2", "start_date": "2026-10-01" }
-  ],
-  "pagination": { "limit": 3, "offset": 0 }
-}
-```
-
-## Get one trial
-
-```bash
-curl https://api.pav.bio/v1/trials/NCT07165028 \
-  -H "Authorization: Bearer $PAV_API_KEY"
-```
-
-```json Example response (trimmed)
-{
-  "nct_id": "NCT07165028",
-  "title": "A Master Protocol of Multiple Agents in Adults With Metabolic Dysfunction-Associated Steatotic Liver Disease (SYNERGY-Outcomes)",
-  "phase": "PHASE3",
-  "status": "RECRUITING",
-  "sponsor": "Eli Lilly and Company",
-  "conditions": ["Metabolic Dysfunction-Associated Steatotic Liver Disease"],
-  "enrollment_count": 4500,
-  "lead_sponsor": { "name": "Eli Lilly and Company", "role": "lead_sponsor", "company_id": 218, "short_name": "eli_lilly" },
-  "company_ids": [218],
-  "programs": [
-    { "program_id": 1824, "company_id": 218, "drug": "retatrutide", "indication": "Metabolic dysfunction-associated steatotic liver disease" },
-    { "program_id": 1833, "company_id": 218, "drug": "Tirzepatide", "indication": "Metabolic Dysfunction-Associated Steatotic Liver Disease" }
-  ],
-  "start_date": "2025-10-15",
-  "primary_completion_date": "2030-08-01",
-  "primary_outcomes": [
-    { "measure": "Time to First Occurrence of Any Component of the Composite Endpoint for Major Adverse Liver Outcomes (MALO)", "time_frame": "Baseline up to Study Completion (about 224 weeks)" }
-  ]
-}
-```
-
-## Related
-
-- [Programs](/datasets/programs): each program lists its `clinical_trials[]`.
-- [Companies](/datasets/companies): `GET /v1/companies/{company_id}/trials`.
-- [Changes](/datasets/changes#clinical-trial-changes): status, date, phase and results changes.
-- [Search and filters](/concepts/search-and-filters)

@@ -10,20 +10,20 @@ Source for the public Pav API and MCP server documentation, built with
 - `docs.json`: site config and navigation. Sidebar groups of the
   **Documentation** tab:
   - Overview: `introduction.mdx`, `quickstart.mdx`, `data-overview.mdx`.
-  - Datasets: `datasets/`, one page per dataset in collapsible sub-groups
-    (Pipeline, Clinical and regulatory, Deals and patents, Monitoring). Each
-    page has an overview, coverage, key fields, filters, and example queries
-    with real trimmed responses.
-  - REST API: `authentication.mdx`, `concepts/search-and-filters.mdx`,
-    `concepts/pagination.mdx`, `rate-limits.mdx`.
+  - Datasets: `search.mdx` and `datasets/`, one page per dataset in
+    collapsible sub-groups (Pipeline, Clinical and regulatory, Deals and
+    patents, Monitoring). Each page has one sentence, a key-fields table, a
+    parameters table and one example (cURL and Python) with a real trimmed
+    response. Shared rules link to `conventions.mdx` instead of repeating.
+  - REST API: `authentication.mdx`, `conventions.mdx` (ids, `q`, filters,
+    dates, sorting, paging, errors), `rate-limits.mdx`.
   - AI agents: `mcp-server.mdx`, `openapi-and-agents.mdx`. The MCP page lives
     at `/mcp-server` because Mintlify serves its own `/mcp`.
   - Guides: `guides/`, task walkthroughs with runnable scripts and example
     output.
   - Resources: `concepts/coverage-and-sources.mdx`.
 - `introduction.mdx` routes and does not explain. It holds a lead paragraph
-  and card groups (ways to integrate, understanding the data, datasets,
-  guides). Put tables and detail on the page a card links to.
+  and card groups (start, datasets, guides). Put tables and detail on the page a card links to.
 - `api-reference/overview.mdx`: the first page of the **API Reference** tab,
   with one card per resource. The endpoint pages after it are generated.
 - `webhooks/`: placeholder for planned push delivery.

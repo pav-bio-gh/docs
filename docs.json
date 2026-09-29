@@ -71,6 +71,7 @@
                 "group": "Pipeline",
                 "icon": "layers",
                 "pages": [
+                  "search",
                   "datasets/programs",
                   "datasets/drugs",
                   "datasets/companies"
@@ -81,8 +82,7 @@
                 "icon": "shield-check",
                 "pages": [
                   "datasets/clinical-trials",
-                  "datasets/fda",
-                  "datasets/fda-applications"
+                  "datasets/fda"
                 ]
               },
               {
@@ -106,8 +106,7 @@
             "group": "REST API",
             "pages": [
               "authentication",
-              "concepts/search-and-filters",
-              "concepts/pagination",
+              "conventions",
               "rate-limits"
             ]
           },
@@ -163,6 +162,18 @@
     {
       "source": "/concepts/data-quality-and-coverage",
       "destination": "/concepts/coverage-and-sources"
+    },
+    {
+      "source": "/concepts/pagination",
+      "destination": "/conventions"
+    },
+    {
+      "source": "/concepts/search-and-filters",
+      "destination": "/conventions"
+    },
+    {
+      "source": "/datasets/fda-applications",
+      "destination": "/datasets/fda"
     }
   ],
   "navbar": {
@@ -183,6 +194,10 @@
           {
             "label": "Quickstart",
             "href": "/quickstart"
+          },
+          {
+            "label": "Conventions",
+            "href": "/conventions"
           },
           {
             "label": "Data overview",

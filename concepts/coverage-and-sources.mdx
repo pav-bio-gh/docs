@@ -1,121 +1,21 @@
 ---
 title: "Coverage and sources"
-description: "Where each dataset comes from, what it covers, and which fields are partial."
+description: "Where each dataset comes from."
 icon: "database"
 ---
 
-Pav data is built from public sources. Every record links back to where it
-came from, so any value can be checked against its source.
-
-## Sources
-
-| Dataset | Source | Provenance on each record |
-| --- | --- | --- |
-| Programs | Pipelines published by the companies themselves, their filings and announcements, and ClinicalTrials.gov for companies that publish no pipeline | `source_url` and `source_checked_at` |
-| Drugs | The names companies use for their programs' drugs | `aliases[]` |
-| Companies | Company pipelines, ClinicalTrials.gov sponsors, SEC filings, USPTO records and FDA applicants, linked to one Pav company id | `last_checked_at` for the pipeline; `cik` |
-| Clinical trials | ClinicalTrials.gov | `nct_url` |
-| Deals | SEC filings and company press releases | `events[].source_url`, `source_documents[]`, and an `evidence` sentence for each stated value |
-| Patents | USPTO applications, grants, prosecution and maintenance events, and assignment records | Application and patent numbers on every member and event |
-| FDA records | FDA Orange Book, Purple Book, orphan drug designations, drug applications, complete response letters, accelerated approvals, advisory committee calendar, warning letters and recalls | `source`, `source_version`, and `source_url` |
-| Ontology terms | MONDO (indications), NCIT and HGNC (targets) | `term_id` on each term |
-
-## Program field coverage
-
-Some fields are not disclosed by every company. Measured on all 14,253 active
-programs on 29 September 2026:
-
-| Field | Active programs with a value |
+| Dataset | Source |
 | --- | --- |
-| Normalized phase (`phase_norm` other than `Unknown`) | 98% |
-| Drug id (`drug_id`) | 92% |
-| Normalized modality (`modality_norm`) | 82% |
-| At least one linked clinical trial (`clinical_trials`) | 81% |
-| Indication mapped to MONDO (`indication_terms`) | 79% |
-| Mechanism of action (`mechanism_of_action`) | 54% |
-| Target (`target`) | 51% |
-| Target mapped to NCIT or HGNC (`target_terms`) | 50% |
+| Programs, drugs | Company pipelines, filings and announcements; ClinicalTrials.gov |
+| Companies | Company pipelines, ClinicalTrials.gov sponsors, SEC, USPTO, FDA |
+| Clinical trials | ClinicalTrials.gov |
+| Deals | SEC filings and company press releases |
+| Patents | USPTO |
+| FDA records | Orange Book and Purple Book (current monthly editions), orphan designations, Drugs@FDA, letters, approvals, meetings, recalls |
+| Ontology terms | MONDO, NCIT, HGNC |
 
-- Modality is assigned per drug, so every program of one `drug_id` has the same
-  `modality_norm`. A missing modality means no source states the product's
-  class.
-- Of active programs that publish a target, 97% have `target_terms`. The rest
-  name no single gene or protein class.
-- Indications with no disease term are broad buckets ("solid tumors"),
-  therapeutic areas, symptoms or procedures.
-
-<Warning>
-A filter on a partial field returns only programs where the field is set.
-`target=KRAS` cannot return a KRAS program whose company publishes no target.
-For complete landscapes, combine filters with relevance search (`q`). See
-[Search and filters](/concepts/search-and-filters).
-</Warning>
-
-About 1% of programs have `drug` set to `Undisclosed`, where the company
-publishes a program without naming the asset. They have no `drug_id`.
-
-Check current phase and modality counts at any time with
-[`GET /v1/stats`](/api-reference/stats/dataset-summary-statistics).
-
-## Deals
-
-- About half of deals state a value. `min_value_usd` and the value sorts
-  consider only deals with a stated value.
-- 43% of deals name a drug Pav tracks and carry drug tags (`assets`,
-  `targets`, `modalities`, `therapeutic_areas`). Platform, portfolio and
-  undisclosed-asset deals carry none.
-- `companies` lists parties linked to Pav companies. A party that is not a
-  Pav company is named in the deal text but is not in `companies`.
-- Each stated value carries `raw_text` and the `evidence` sentence it was read
-  from. Read `raw_text` for qualifiers such as "up to" or "approximately".
-
-## Patents
-
-- Coverage is US families only.
-- About a third of live families are linked to a Pav company. No rows for a
-  `company_id` does not mean the company holds no patents; search its owner
-  name with `q`.
-- `drugs[]` covers products in the Orange Book. Biologics have none, because
-  the Purple Book lists no patents.
-- `statutory_term_end` is the earliest nonprovisional filing date plus 20
-  years, with no term adjustments or extensions.
-
-## FDA records
-
-- Orange Book and Purple Book records reflect FDA's current published
-  edition; orphan designations the latest list. `record_key` values are built
-  from FDA identifiers and stay the same across editions.
-- Share of records linked to a Pav company: Purple Book products and Orange
-  Book patents 90%, complete response letters 87%, orphan designations 69%,
-  drug applications 68%, Orange Book products 66%, recalls and accelerated
-  approvals 59%, warning letters 30%. Search the FDA organization name with
-  `q` as well as filtering by `company_id`.
-- Warning letters start in 2021 and recalls in 2017; both cover drugs,
-  biologics and devices only.
-- Some dates are as FDA publishes them: Orange Book products approved before
-  1982 carry FDA's "Approved Prior to Jan 1, 1982" in `details.approval_date_raw`,
-  and some listed patents have no submission date.
-
-## Clinical trials
-
-- Trials are ClinicalTrials.gov studies only.
-- `programs` lists the Pav programs of the same drug in the same disease. A
-  trial with no linked program can still belong to a tracked company; check
-  `lead_sponsor.company_id`.
-- The trial change feed starts on 2026-06-15.
-
-## Freshness
-
-| Dataset | How to see freshness |
-| --- | --- |
-| Programs | `source_checked_at` on each program; `last_checked_at` on the company |
-| Clinical trials | `last_update_post_date` from the registry |
-| Deals | `latest_update_at` and `activity_date` |
-| Patents | `latest_status_date` on the family and `status_date` on each member |
-| FDA records | `source_version` (edition) and `document_date` |
-| Changes | `detected_at` on each event |
-
-## Report a data issue
-
-Send the record id and the `request_id` of the response to Pav at
+Every record links to its source (`source_url`, `nct_url`, deal source
+documents, patent and FDA numbers). A filter on a partly populated field,
+such as `target`, returns only rows where the field is set. Report a data
+issue with the record id and the response `request_id` at
 [pav.bio](https://pav.bio).

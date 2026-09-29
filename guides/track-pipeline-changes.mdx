@@ -1,33 +1,17 @@
 ---
 title: "Track pipeline changes"
-description: "Poll the changes feed for a watchlist of companies and report additions, removals and phase moves."
+description: "Poll the changes feed for a watchlist of companies."
 icon: "bell-ring"
 ---
 
-This guide builds a small monitor: each run reads every new pipeline change
-for a watchlist of companies since the last run, prints it, and saves a
-checkpoint. Schedule it with cron or any job runner.
+Turn a watchlist into company ids and read every change since the last run.
+Requires `PAV_API_KEY` and `pip install requests`.
 
-## Prerequisites
-
-- A Pav API key in `PAV_API_KEY`. See [Quickstart](/quickstart).
-- Python 3.9+ and `pip install requests`.
-- The `company_id` of each company to watch, from `GET /v1/companies?q=<name>`.
-  The changes feed matches the company itself; add the ids of its subsidiaries
-  to watch them too.
-
-## How the feed works
-
-- `change_type` is `insert` (program added), `delete` (program removed) or
-  `update` (phase or details changed).
-- `since` returns events detected at or after a timestamp. It is inclusive.
-- `next_cursor` pages through the results; the last page has none. Cursor
-  paging never skips or repeats an event while new events arrive.
-- Retracted events are hidden by default.
-
-See [Changes](/datasets/changes) for fields and filters.
-
-## Script
+1. `GET /v1/search?types=company` returns each company's id.
+2. `GET /v1/changes?company_id=<ids>&since=<checkpoint>` lists changes,
+   newest first; follow `next_cursor` to the end.
+3. Save the newest `detected_at` as the next checkpoint. `since` is
+   inclusive, so skip ids already seen.
 
 ```python track_changes.py
 import json
@@ -36,84 +20,47 @@ import pathlib
 
 import requests
 
-API = "https://api.pav.bio"
+API = "https://api.pav.bio/v1"
 HEADERS = {"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"}
 STATE = pathlib.Path("pav_changes_state.json")
-WATCHLIST = [218, 313, 506]  # Eli Lilly, Merck, Pfizer company_ids
 
-# 1. Resume from the last checkpoint; start from a fixed date on the first run.
-if STATE.exists():
-    state = json.loads(STATE.read_text())
-else:
-    state = {"since": "2026-06-01T00:00:00Z", "seen": []}
 
-# 2. Read every new event, following next_cursor.
-params = {"company_id": WATCHLIST, "since": state["since"], "limit": 500}
-events = []
-while True:
-    resp = requests.get(f"{API}/v1/changes", headers=HEADERS, params=params, timeout=60)
+def get(path, **params):
+    resp = requests.get(f"{API}{path}", headers=HEADERS, params=params, timeout=60)
     resp.raise_for_status()
-    body = resp.json()
-    events.extend(e for e in body["data"] if e["id"] not in state["seen"])
-    if not body.get("next_cursor"):
+    return resp.json()
+
+
+ids = [get("/search", q=name, types="company", limit=1)["data"][0]["id"]
+       for name in ["Eli Lilly", "Novo Nordisk", "Pfizer"]]
+state = json.loads(STATE.read_text()) if STATE.exists() else {"since": "2026-08-01T00:00:00Z", "seen": []}
+
+events, params = [], {"company_id": ",".join(ids), "since": state["since"], "limit": 200}
+while True:
+    page = get("/changes", **params)
+    events += [e for e in page["data"] if e["id"] not in state["seen"]]
+    if "next_cursor" not in page:
         break
-    params["cursor"] = body["next_cursor"]
+    params["cursor"] = page["next_cursor"]
 
-# 3. Report, oldest first.
-LABEL = {"insert": "ADDED", "delete": "REMOVED", "update": "PHASE"}
-for e in sorted(events, key=lambda e: e["detected_at"]):
-    phases = f"{e.get('prev_phase', '-')} -> {e.get('new_phase', '-')}"
-    print(f"{e['detected_at'][:10]} {LABEL[e['change_type']]:<7} {e['company']} | {e['drug']} | {e.get('indication', '')[:40]} | {phases}")
+print(len(events), "new changes; latest:")
+for e in events[:5]:
+    phase = f"{e.get('prev_phase', '')} -> {e.get('new_phase', '')}"
+    print(f"{e['detected_at'][:10]} {e['change_type']:<6} {e['company']} | {e['drug']} | {e.get('indication', '')} | {phase}")
 
-# 4. Save the checkpoint. `since` is inclusive, so also keep the ids seen at the
-#    newest timestamp and skip them on the next run.
 if events:
-    newest = max(e["detected_at"] for e in events)
-    seen = [e["id"] for e in events if e["detected_at"] == newest]
-    if newest == state["since"]:
-        seen += state["seen"]
-    state = {"since": newest, "seen": seen}
-    STATE.write_text(json.dumps(state))
-print(f"{len(events)} new events; next run starts at {state['since']}")
+    newest = events[0]["detected_at"]
+    STATE.write_text(json.dumps({"since": newest, "seen": [e["id"] for e in events if e["detected_at"] == newest]}))
 ```
-
-First run (trimmed):
-
-```text Example output (September 2026)
-2026-08-05 ADDED   Pfizer | PF-08634404 (PF'4404) | Transformed Small Cell Lung Cancer (Symb | - -> Phase 2
-2026-08-05 ADDED   Pfizer | PF-08634404 (PF'4404) | 1L Small Cell Lung Cancer (Symbiotic-Lun | - -> Phase 2
-...
-2026-08-13 REMOVED Merck | KEYTRUDA® | First-line unresectable locally advanced | Under Review -> -
-2026-08-13 REMOVED Merck | enlicitide decanoate | Hypercholesterolemia (US) | Phase 3 -> -
-2026-08-13 REMOVED Merck | ENFLONSIA™ | Respiratory syncytial virus | Under Review -> -
-50 new events; next run starts at 2026-08-13T06:03:35.136493Z
-```
-
-Second run, with no new changes:
 
 ```text Example output
-0 new events; next run starts at 2026-08-13T06:03:35.136493Z
+36 new changes; latest:
+2026-08-05 insert Eli Lilly | XCL1/2 Neutralizing Antibody | Vitiligo |  -> Phase 2
+2026-08-05 insert Eli Lilly | FXR Agonist + Mirikizumab | Crohn’s Disease |  -> Phase 2
+2026-08-05 insert Eli Lilly | Cleminorexton | Central Disorders of Hypersomnolence |  -> Phase 2
+2026-08-05 insert Eli Lilly | Clazakizumab | Inflammatory Disorders |  -> Phase 2
+2026-08-05 insert Eli Lilly | Brenipatide | Irritable Bowel Syndrome with Diarrhea |  -> Phase 2
 ```
 
-## Interpreting events
-
-- Phases in the feed are the company's own labels (`Under Review`,
-  `Clinical`), not normalized phases. Fetch the program for `phase_norm`.
-- Each event carries `program_id`; fetch `GET /v1/programs/{program_id}` for
-  the program's current record. A renamed program is an `update` of the same
-  `program_id`, not a `delete` and an `insert`.
-- A `delete` means the program left the company's published pipeline, for
-  example a discontinuation, or an approved drug moving off the page (its
-  program stays `active`).
-- A change can be retracted after you read it. To catch withdrawals, also poll
-  with `include_invalidated=true` and drop events that carry `invalidated_at`.
-- To see every company, drop `company_id`. To follow only phase moves, add
-  `change_type=update`.
-- To follow trials instead, poll `entity=trial` with `kind` (for example
-  `status` or `results_posted`). See [Changes](/datasets/changes#clinical-trial-changes).
-
-## Push delivery
-
-Webhooks for change events are planned. See the
-[Webhook Reference](/webhooks/introduction). Until then, poll this feed; a few
-requests per run fit well inside the [rate limit](/rate-limits).
+Add `entity=trial` with `kind=status,results_posted` to follow the same
+companies' trials.

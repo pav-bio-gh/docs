@@ -1,43 +1,24 @@
 ---
 title: "Screen deals for comparables"
-description: "Find comparable licensing and collaboration deals, rank them by stated economics, and trace each term to its source."
+description: "Comparable deals for a target, ranked by stated value."
 icon: "scale"
 ---
 
-This guide screens antibody-drug conjugate (ADC) licensing and collaboration
-deals announced since 2024, ranks them by stated upfront payment, and opens
-the top deal for its full terms and source filings.
+Find the target's id, list its deals by potential value, and open the top
+deal. Requires `PAV_API_KEY` and `pip install requests`.
 
-## Prerequisites
-
-- A Pav API key in `PAV_API_KEY`. See [Quickstart](/quickstart).
-- Python 3.9+ and `pip install requests`.
-
-## Approach
-
-1. **Use the drug tags.** `modality=adc` returns deals covering a drug Pav
-   knows is an ADC, whatever the documents call it.
-2. **Search the text too.** Platform and portfolio deals name no specific
-   drug, so they carry no tags. Deal `q` matches exact terms with no synonym
-   expansion: search `antibody-drug conjugate` and `ADC` separately and merge
-   everything by `deal_id`.
-3. **Filter by type and date** with `deal_type` and `announced_from`.
-4. **Rank by a stated term.** List rows carry `upfront`, milestone values,
-   `total_value` and `total_potential_value`. Many deals disclose no figure;
-   skip those rather than treating them as zero.
-5. **Open the deal** with `GET /v1/deals/{deal_id}` for royalties,
-   territories, rights and the source of each lifecycle event.
-
-## Script
+1. `GET /v1/search?types=target` returns the target's ontology id.
+2. `GET /v1/deals?target=<id>&sort=-total_potential_value` lists deals
+   covering drugs against it; follow `next_cursor` for more.
+3. `GET /v1/deals/{deal_id}` returns full terms, events and sources.
 
 ```python deal_screen.py
 import os
 
 import requests
 
-API = "https://api.pav.bio"
+API = "https://api.pav.bio/v1"
 HEADERS = {"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"}
-BASE = {"deal_type": ["licensing", "collaboration"], "announced_from": "2024-01-01", "limit": 100}
 
 
 def get(path, **params):
@@ -46,87 +27,25 @@ def get(path, **params):
     return resp.json()
 
 
-def collect(deals, **params):
-    offset = 0
-    while True:
-        page = get("/v1/deals", **BASE, **params, offset=offset)["data"]
-        for d in page:
-            deals[d["deal_id"]] = d
-        if len(page) < 100:
-            return
-        offset += 100
+target = get("/search", q="GLP-1 receptor", types="target", limit=1)["data"][0]
+page = get("/deals", target=target["id"], deal_type="licensing,collaboration",
+           sort="-total_potential_value", limit=3)
+print(f"{target['name']}: {page['total']} licensing and collaboration deals")
+for d in page["data"]:
+    value = d.get("total_potential_value", {}).get("amount")
+    print(f"{d['announced_at'][:10]} | ${value / 1e9:.2f}B | {d['deal_name']}" if value else d["deal_name"])
 
-
-# 1. Deals tagged with an ADC drug, plus deals whose text says ADC.
-deals = {}
-collect(deals, modality="adc")
-tagged = len(deals)
-for phrase in ["antibody-drug conjugate", "ADC"]:
-    collect(deals, q=phrase)
-print(f"{len(deals)} ADC licensing/collaboration deals since 2024 ({tagged} tagged with an ADC drug)")
-
-
-# 2. Keep deals with a stated upfront, largest first.
-def amount(value):
-    return (value or {}).get("amount") or 0
-
-
-priced = [d for d in deals.values() if amount(d.get("upfront"))]
-priced.sort(key=lambda d: amount(d.get("upfront")), reverse=True)
-print(f"{len(priced)} state an upfront")
-for d in priced[:5]:
-    total = (d.get("total_potential_value") or {}).get("raw_text", "total not stated")
-    print(f"{d['announced_at'][:10]} | {d['deal_name'][:60]} | upfront: {d['upfront']['raw_text'][:60]} | total: {total[:80]}")
-
-# 3. Open the top deal for its full terms and sources.
-top = get(f"/v1/deals/{priced[0]['deal_id']}")
-print()
-print(top["deal_name"], "|", [a["name"] for a in top.get("assets", [])])
-for key in ["upfront", "milestones", "royalties"]:
-    term = top.get("terms", {}).get(key)
-    if term:
-        print(f"  {key}: {term['raw_text']}")
-for event in top.get("events", [])[:3]:
-    print(f"  {event['event_type']}: {event.get('source_url')}")
+top = get(f"/deals/{page['data'][0]['deal_id']}")
+print("Upfront:", top.get("upfront", {}).get("raw_text"))
 ```
 
-```text Example output (September 2026)
-62 ADC licensing/collaboration deals since 2024 (22 tagged with an ADC drug)
-15 state an upfront
-2025-10-22 | Takeda and Innovent enter license and collaboration agreemen | upfront: US$1.2 billion upfront payment upon closing of the transacti | total: a total deal value of up to $11.4 billion
-2025-05-29 | Entered exclusive license agreement for XNW27011 | upfront: a $130 million upfront payment | total: a $130 million upfront payment + additional milestone payments associated with d
-2025-01-01 | Entered collaboration and exclusive global license agreement | upfront: an upfront payment of US$80 million | total: an upfront payment of US$80 million + up to US$1 billion in development and comm
-2024-12-30 | Exclusive license agreement for SHR-4849 | upfront: $75.0 million upfront payment | total: $75.0 million upfront payment
-2025-01-07 | Entered exclusive global license agreement for AVZO-1418/DB- | upfront: an upfront payment of $50 million | total: an upfront payment of $50 million + up to approximately $1.15 billion in develop
-
-Takeda and Innovent enter license and collaboration agreement for IBI363 and IBI343 (ex-China) and IBI3001 option | ['IBI3001', 'IBI343', 'IBI-363']
-  upfront: US$1.2 billion upfront payment upon closing of the transaction
-  milestones: development and sales milestone payments for IBI363, IBI343, and IBI3001 (if option exercised) totaling up to approximately $10.2 billion
-  royalties: royalty payments
-  announced: https://www.businesswire.com/news/home/20251021006409/en/Takeda-Enters-Global-Strategic-Partnership-with-Innovent-Biologics-to-Bolster-Oncology-Pipeline-with-Next-Generation-Investigational-Medicines-for-Treatment-of-Solid-Tumors
+```text Example output
+Glucagon-Like Peptide 1 Receptor: 8 licensing and collaboration deals
+2025-07-30 | $2.12B | Exclusive global license agreement for SYH2086
+2023-11-09 | $2.01B | AstraZeneca exclusive license agreement for ECC5004
+2025-03-24 | $2.00B | Novo Nordisk enters exclusive license agreement for UBT251 with United Biotechnology
+Upfront: an upfront payment of $120 million
 ```
 
-Exact-term search can also match deals that mention the term in passing. Read
-`summary` and `rights_summary` before treating a hit as a comparable.
-
-## Reading deal terms
-
-- `amount` is in base currency units with an ISO `currency`. `raw_text` keeps
-  the source wording, including qualifiers such as "up to".
-- `total_potential_value` is the headline value when one is stated, otherwise
-  upfront plus milestones in one currency; its `raw_text` shows the parts that
-  were added.
-- `not_disclosed: true` means the source explicitly withheld the term. A
-  missing term means none was stated.
-- `evidence` is the source sentence each value was read from; each lifecycle
-  event carries the `source_url` that reported it.
-- `latest_event_type` is the deal's current state. Filter with
-  `event_type=completed` for closed deals, or `terminated` for failed ones.
-
-## Variations
-
-- **One company's deal history:** `company_id=<id>` with `sort=announced_at`.
-- **By target or drug:** `target=TL1A`, or `drug_id=<id>` from [`/v1/drugs`](/datasets/drugs).
-- **By therapeutic area:** `therapeutic_area=oncology`.
-- **Large M&A:** `deal_type=acquisition&min_value_usd=1000000000&sort=headline_value`.
-- **Exact count for a screen:** add `include_total=true`.
+Read `raw_text` and `evidence` for qualifiers such as "up to". `min_value_usd`
+and value sorts consider only deals with a stated value.

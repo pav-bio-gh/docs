@@ -1,82 +1,39 @@
 ---
 title: "MCP server"
-description: "Connect Claude, Cursor or any MCP client to Pav data with one URL and your API key."
+description: "Connect Claude, Cursor or any MCP client to Pav data."
 icon: "bot"
 ---
-
-Pav runs a remote [Model Context Protocol](https://modelcontextprotocol.io)
-server. Every read endpoint of the API is an MCP tool, so an agent can search
-programs, drugs, companies, trials, deals, patents and FDA records, follow
-their changes, and cite the records it used.
 
 | | |
 | --- | --- |
 | URL | `https://api.pav.bio/mcp` |
 | Transport | Streamable HTTP |
-| Auth | Your Pav API key: `Authorization: Bearer <api_key>`. See [Authentication](/authentication). |
-| Access | Read-only. Every tool is marked read-only. |
-| Tools | 25, one per API endpoint |
+| Auth | `Authorization: Bearer <api_key>` ([Authentication](/authentication)) |
+| Tools | 30, one per endpoint, all read-only |
 
-## Connect a client
+## Connect
 
 <Tabs>
   <Tab title="Claude Code">
     ```bash
-    claude mcp add --transport http pav https://api.pav.bio/mcp \
-      --header "Authorization: Bearer $PAV_API_KEY"
+    claude mcp add --transport http pav https://api.pav.bio/mcp --header "Authorization: Bearer <api_key>"
     ```
-
-    Verify with `claude mcp list`, or type `/mcp` inside Claude Code.
   </Tab>
-  <Tab title="Claude Desktop">
-    Claude Desktop reaches remote servers that need a header through the
-    [`mcp-remote`](https://www.npmjs.com/package/mcp-remote) adapter (requires
-    Node.js 18+). Open **Settings → Developer → Edit Config** and add:
-
-    ```json claude_desktop_config.json
-    {
-      "mcpServers": {
-        "pav": {
-          "command": "npx",
-          "args": [
-            "-y",
-            "mcp-remote",
-            "https://api.pav.bio/mcp",
-            "--header",
-            "Authorization:${PAV_AUTH_HEADER}"
-          ],
-          "env": {
-            "PAV_AUTH_HEADER": "Bearer <your_api_key>"
-          }
-        }
-      }
-    }
-    ```
-
-    Restart Claude Desktop. The Pav tools appear under the tools menu in a new
-    chat. Keep `Authorization:${PAV_AUTH_HEADER}` without a space after the
-    colon; the value comes from `env`.
-  </Tab>
-  <Tab title="Cursor">
-    Add to `~/.cursor/mcp.json` (all projects) or `.cursor/mcp.json` (one
-    project):
+  <Tab title="Cursor and others">
+    For clients that take a URL and headers (Cursor: `~/.cursor/mcp.json`):
 
     ```json mcp.json
     {
       "mcpServers": {
         "pav": {
           "url": "https://api.pav.bio/mcp",
-          "headers": { "Authorization": "Bearer <your_api_key>" }
+          "headers": { "Authorization": "Bearer <api_key>" }
         }
       }
     }
     ```
-
-    Check **Settings → MCP** shows `pav` with its tools.
   </Tab>
   <Tab title="Python">
-    Use the [FastMCP](https://gofastmcp.com) client: `pip install fastmcp`.
-
     ```python
     import asyncio
     import os
@@ -92,90 +49,41 @@ their changes, and cite the records it used.
 
     async def main():
         async with Client(transport) as client:
-            tools = await client.list_tools()
-            print(len(tools), "tools")
-            result = await client.call_tool(
-                "list_deals",
-                {"min_value_usd": 1_000_000_000, "sort": "headline_value", "limit": 3},
-            )
-            for deal in result.structured_content["data"]:
-                print(deal["deal_name"], "|", deal["total_value"]["raw_text"])
+            hit = await client.call_tool("search", {"q": "tirzepatide", "types": "drug", "limit": 1})
+            drug_id = hit.structured_content["data"][0]["id"]
+            programs = await client.call_tool("list_programs", {"drug_id": drug_id, "view": "slim", "limit": 3})
+            for p in programs.structured_content["data"]:
+                print(p["company"], "|", p["indication"], "|", p["phase_norm"])
 
 
     asyncio.run(main())
     ```
 
-    ```text Output
-    25 tools
-    Pfizer acquisition of Seagen | Transaction value of approximately $43 billion (inclusive of net debt)
-    AstraZeneca definitive agreement to acquire Alexion | $39bn
-    Amgen acquisition of Horizon Therapeutics plc | transaction equity value of approximately $27.8 billion
+    ```text Example output
+    Eli Lilly | Cardiovascular Outcomes | Approved
+    Eli Lilly | Higher Doses | Phase 2
+    Eli Lilly | Metabolic Dysfunction-Associated Steatotic Liver Disease | Phase 3
     ```
   </Tab>
 </Tabs>
 
-Any other MCP client that supports streamable HTTP and custom headers works
-with the same URL and header.
-
 ## Tools
 
-Each tool is one API endpoint. Its arguments are the endpoint's parameters and
-its result is the endpoint's JSON response. The dataset pages describe the
-fields and filters.
+Each tool takes the endpoint's parameters and returns its JSON. Agents
+should call `search` first to turn names into ids.
 
-| Tool | Endpoint | Use |
-| --- | --- | --- |
-| `list_programs` | `GET /v1/programs` | Search and filter programs. |
-| `get_program` | `GET /v1/programs/{program_id}` | One program with trials and ontology terms. |
-| `get_similar_programs` | `GET /v1/programs/{program_id}/similar-programs` | Competitors and analogues of a program. |
-| `list_drugs` | `GET /v1/drugs` | Find a drug by any of its names. |
-| `get_drug` | `GET /v1/drugs/{drug_id}` | One drug with every company's programs of it. |
-| `list_companies` | `GET /v1/companies` | Find a company's `company_id` by name. |
-| `get_company` | `GET /v1/companies/{company_id}` | One company. |
-| `list_company_programs` | `GET /v1/companies/{company_id}/programs` | A company's pipeline. |
-| `list_company_trials` | `GET /v1/companies/{company_id}/trials` | Trials linked to a company. |
-| `list_company_changes` | `GET /v1/companies/{company_id}/changes` | A company's pipeline changes. |
-| `list_trials` | `GET /v1/trials` | Search and browse clinical trials by condition, phase, status, sponsor, company and start date. |
-| `get_trial` | `GET /v1/trials/{nct_id}` | One trial. |
-| `list_deals` | `GET /v1/deals` | Search and filter deals. |
-| `get_deal` | `GET /v1/deals/{deal_id}` | One deal with terms, events and sources. |
-| `list_patents` | `GET /v1/patents` | Search and filter patent families. |
-| `get_patent_family` | `GET /v1/patents/{family_id}` | One family with members, ownership and term. |
-| `list_fda_records` | `GET /v1/fda` | Search FDA records of every type. |
-| `list_fda_applications` | `GET /v1/fda/applications` | FDA drug applications (NDA, ANDA, BLA). |
-| `get_fda_application` | `GET /v1/fda/applications/{application_key}` | One application with its FDA records and submissions. |
-| `list_fda_complete_response_letters` | `GET /v1/fda/complete-response-letters` | Complete response letters. |
-| `list_fda_accelerated_approvals` | `GET /v1/fda/accelerated-approvals` | Accelerated approvals and their confirmatory requirements. |
-| `list_fda_advisory_committee_meetings` | `GET /v1/fda/advisory-committee-meetings` | FDA advisory committee meetings, past and scheduled. |
-| `get_fda_record` | `GET /v1/fda/{record_key}` | One FDA record. |
-| `list_changes` | `GET /v1/changes` | The program change feed, or trial changes with `entity=trial`. |
-| `get_stats` | `GET /v1/stats` | Dataset counts by phase and modality. |
+| Tool | Endpoint |
+| --- | --- |
+| `search` | `GET /v1/search` |
+| `list_programs`, `get_program`, `get_similar_programs` | `/v1/programs`, `/{program_id}`, `/{program_id}/similar-programs` |
+| `list_drugs`, `get_drug` | `/v1/drugs`, `/{drug_id}` |
+| `list_companies`, `get_company`, `list_company_trials` | `/v1/companies`, `/{company_id}`, `/{company_id}/trials` |
+| `list_trials`, `get_trial` | `/v1/trials`, `/{nct_id}` |
+| `list_deals`, `get_deal` | `/v1/deals`, `/{deal_id}` |
+| `list_patents`, `get_patent_family` | `/v1/patents`, `/{family_id}` |
+| `list_fda_orange_book_products`, `list_fda_orange_book_patents`, `list_fda_orange_book_exclusivities`, `list_fda_purple_book_products`, `list_fda_orphan_designations`, `list_fda_warning_letters`, `list_fda_recalls`, `list_fda_applications`, `list_fda_complete_response_letters`, `list_fda_accelerated_approvals`, `list_fda_advisory_committee_meetings` | One per [FDA record type](/datasets/fda) |
+| `get_fda_application`, `get_fda_record` | `/v1/fda/applications/{application_key}`, `/v1/fda/{record_key}` |
+| `list_changes` | `/v1/changes` |
+| `get_stats` | `/v1/stats` |
 
-<Tip>
-Look up a company with `list_companies` first, then pass its `company_id`
-to `list_company_programs`, `list_drugs`, `list_deals`, `list_patents`,
-`list_fda_records` or `list_changes`. Look up a drug with `list_drugs` and pass
-its `drug_id` to `list_programs` or `list_deals`.
-</Tip>
-
-## Example prompts
-
-- "Which KRAS G12C inhibitors are in Phase 3, and who owns them?"
-- "List recruiting Phase 3 obesity trials and their sponsors."
-- "What are the five largest biopharma acquisitions by headline value? Cite the source filing for each."
-- "Which live US patent families does Eli Lilly own that mention tirzepatide, and when do their statutory terms end?"
-- "List the Orange Book patents and exclusivities for Mounjaro and when each expires."
-- "What changed in Eli Lilly's pipeline since June 1?"
-- "Find programs similar to Merck's calderasib."
-- "Which companies hold rights to inclisiran, and how far has each taken it?"
-- "Which ulcerative colitis trials changed status or posted results this week?"
-- "Which accelerated approvals in oncology still have confirmatory trials pending?"
-
-## Errors and limits
-
-- A missing or invalid key returns HTTP `401` before any MCP message is
-  handled.
-- An API error inside a tool, such as an unknown `deal_id`, returns an MCP tool
-  error that carries the API's `{ error: { code, message, request_id } }` body.
-- Each tool call counts as one request toward your key's
-  [rate limit](/rate-limits). Connecting and listing tools do not count.
+Each tool call counts toward the [rate limit](/rate-limits).

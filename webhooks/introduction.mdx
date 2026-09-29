@@ -1,37 +1,10 @@
 ---
 title: "Webhook Reference"
-description: "Push delivery of pipeline change events. Coming soon."
+description: "Push delivery of change events. Planned, not yet available."
 icon: "webhook"
 ---
 
-<Note>
-Webhooks are not available yet. This page describes the planned push-delivery
-surface. Today, read pipeline movement from the [changes feed](/datasets/changes).
-</Note>
-
-## What is planned
-
-Webhooks will push pipeline change events to an endpoint you register, so you
-do not have to poll. Planned coverage mirrors the changes feed:
-
-- **Programs added** (`insert`): a company adds a program to its pipeline.
-- **Programs removed** (`delete`): a program leaves a company's pipeline.
-- **Phase changes** (`update`): a program moves between phases.
-
-Each delivery will carry the same change record the API returns today, signed
-so you can verify it came from Pav.
-
-## Until then: poll the changes feed
-
-`GET /v1/changes` returns the same events a webhook would push. Page it with
-`next_cursor` on a schedule and filter by `change_type` or `company_id`. The
-[Track pipeline changes](/guides/track-pipeline-changes) guide has a complete
-polling script.
-
-```bash
-curl -G https://api.pav.bio/v1/changes \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "limit=50"
-```
-
-Want webhooks sooner? Tell us at [pav.bio](https://pav.bio).
+Webhooks are planned. They will push the same records the
+[changes feed](/datasets/changes) returns (programs added, dropped or changing
+phase), signed so you can verify them. Until then, poll `GET /v1/changes`
+with `since`; see [Track pipeline changes](/guides/track-pipeline-changes).

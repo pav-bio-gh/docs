@@ -1,85 +1,52 @@
 ---
 title: "Companies"
-description: "Biopharma companies, their owners and identifiers, and the programs, trials, deals, patents and changes linked to them."
+description: "Biopharma companies with owners, tickers and identifiers."
 icon: "building-2"
 ---
 
-## Overview
+A company is one biopharma organization. Its `company_id` filters every
+other dataset and includes the companies it owns.
 
-A company is a biopharma organization Pav tracks. Its `company_id` is the key
-that joins every other dataset: programs it owns, trials it sponsors or runs
-through its programs, deals it is party to, patents it owns, FDA records that
-name it, and changes to its pipeline. Each company also carries its owner
-(parent or acquirer), stock tickers, SEC CIK and website when known.
-
-Questions this dataset answers:
-
-- What is Pav's id for Eli Lilly, and how many programs does it have?
-- Who owns this company, and when was it acquired?
-- Which clinical trials are linked to a company, as sponsor or through its programs?
-- What changed in a company's pipeline since last month?
-
-## Coverage
-
-| Companies with active programs | Also listed | Updated |
-| --- | --- | --- |
-| 3,300+ (September 2026) | Trial sponsors, deal parties, patent owners and FDA applicants linked to a Pav id | Pipelines are re-read regularly; `last_checked_at` shows the latest read |
-
-Investment firms and funds are not listed.
+| Endpoint | Returns |
+| --- | --- |
+| `GET /v1/companies` | Companies by name or filter. |
+| `GET /v1/companies/{company_id}` | One company with tickers, owner and website. |
+| `GET /v1/companies/{company_id}/trials` | Trials linked to the company or a company it owns. |
 
 ## Key fields
 
 | Field | Description |
 | --- | --- |
-| `company_id` | Pav company id. Use it to filter programs, drugs, trials, deals, patents, FDA records and changes. |
-| `short_name` | Company slug, e.g. `eli_lilly`. Stable. |
-| `name` | Display name. |
-| `country` | Headquarters country, when known. |
-| `asset_count` | Number of programs Pav tracks for the company itself. |
-| `last_checked_at` | When Pav last read the company's pipeline (UTC). |
-| `parent_company_id`, `parent_company_name` | The company that owns this one (its acquirer or parent group), when known. |
-| `acquired_by` | Set when the company was bought: the buyer's `company_id` and `name`, and `completed_on`. |
-| `tickers[]` | Current stock tickers, each with its `exchange` when known. Empty when private. |
-| `cik` | SEC Central Index Key (10 digits), when the company files with the SEC. |
-| `website` | Company website, when known. |
+| `company_id`, `name` | Pav company id and name. |
+| `parent_company_id` | Owning company, when owned. |
+| `country`, `website` | Headquarters country and website. |
+| `tickers[]`, `cik` | Stock tickers and SEC CIK. |
+| `asset_count` | Programs tracked. |
+| `last_checked_at` | When the company's pipeline was last read. |
 
-## Parents and subsidiaries
+## Parameters
 
-`company_id` on programs, drugs, patents, FDA records, and a company's
-programs and trials includes the companies it owns: acquired companies and
-subsidiaries. Pass `include_subsidiaries=false` for the company's own records
-only (not available on FDA records). The `company_id` filters on
-`/v1/trials`, deals and changes match the company itself. For example, Johnson & Johnson (`137`) has 123 active programs with its
-subsidiaries and 100 of its own. The `company` name filter on programs does
-not include subsidiaries; filter by `company_id` for the roll-up.
+| Name | Values | Example |
+| --- | --- | --- |
+| `q` | Name or known alias, ranked | `MSD` |
+| `company_id` | Ids | `313` |
+| `has_pipeline` | `true` or `false` | `true` |
+| `sort` | `asset_count` (default descending), `name` | `name` |
 
-## Endpoints
+`/companies/{company_id}/trials` takes `via` (`program`, `sponsor`, `any`),
+`phase`, `status`, `from`/`to` on `start_date`, and `sort`, as on
+[Clinical trials](/datasets/clinical-trials). Shared rules:
+[Conventions](/conventions).
 
-| Endpoint | Use |
-| --- | --- |
-| `GET /v1/companies` | Search by name (`q`) or list companies. |
-| `GET /v1/companies/{company_id}` | One company. |
-| `GET /v1/companies/{company_id}/programs` | The company's programs. Filters: `phase`, `modality`, `status`, `q`, `view`, `include_total`, `include_subsidiaries`. |
-| `GET /v1/companies/{company_id}/trials` | Trials linked to the company. |
-| `GET /v1/companies/{company_id}/changes` | The company's pipeline changes. See [Changes](/datasets/changes). |
-
-Filters on `GET /v1/companies`: `q` (name search), `has_pipeline` (`true` for
-companies with tracked programs), `limit` (1–5000, default 50), `offset`.
-
-## Find a company's id
-
-Search by name, then reuse the `company_id` everywhere. A company whose name,
-slug or another known name (for example `MSD` for Merck & Co., Inc.) equals
-`q` ranks first, then companies whose name starts with `q`, larger pipelines
-first. A `q` with no letters or digits returns no rows.
+## Example
 
 <CodeGroup>
 
 ```bash cURL
 curl -G https://api.pav.bio/v1/companies \
   -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "q=Eli Lilly" \
-  --data-urlencode "limit=3"
+  --data-urlencode "q=MSD" \
+  --data-urlencode "limit=2"
 ```
 
 ```python Python
@@ -89,20 +56,11 @@ import requests
 resp = requests.get(
     "https://api.pav.bio/v1/companies",
     headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"q": "Eli Lilly", "limit": 3},
+    params={"q": "MSD", "limit": 2},
 )
 resp.raise_for_status()
 for c in resp.json()["data"]:
-    print(c["company_id"], c["name"], c.get("asset_count"), c.get("parent_company_name", ""))
-```
-
-```javascript JavaScript
-const params = new URLSearchParams({ q: "Eli Lilly", limit: "3" });
-const resp = await fetch(`https://api.pav.bio/v1/companies?${params}`, {
-  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
-});
-const { data } = await resp.json();
-for (const c of data) console.log(c.company_id, c.name, c.asset_count, c.parent_company_name ?? "");
+    print(c["company_id"], c["name"], c["asset_count"])
 ```
 
 </CodeGroup>
@@ -111,149 +69,21 @@ for (const c of data) console.log(c.company_id, c.name, c.asset_count, c.parent_
 {
   "data": [
     {
-      "company_id": 218,
-      "short_name": "eli_lilly",
-      "name": "Eli Lilly",
+      "company_id": 313,
+      "name": "Merck & Co., Inc.",
       "country": "United States",
-      "asset_count": 88,
-      "tickers": [{ "ticker": "LLY" }],
-      "cik": "0000059478",
-      "website": "https://www.lilly.com"
+      "asset_count": 136,
+      "tickers": [{ "ticker": "MRK" }],
+      "cik": "0000310158",
+      "website": "https://www.merck.com"
     },
     {
-      "company_id": 811,
-      "short_name": "ajax_therapeutics",
-      "name": "Ajax Therapeutics",
-      "asset_count": 1,
-      "parent_company_id": 218,
-      "parent_company_name": "Eli Lilly",
-      "acquired_by": { "company_id": 218, "name": "Eli Lilly", "completed_on": "2026-06-10" },
+      "company_id": 6375,
+      "name": "MSD R&D (China) Co., Ltd.",
+      "asset_count": 2,
       "tickers": []
     }
   ],
-  "pagination": { "limit": 3, "offset": 0 }
+  "next_cursor": "eyJyIjoiY29tcGFuaWVzIiwicyI6InJlbGV2YW5jZSIsInAiOjJ9"
 }
 ```
-
-## List a company's programs
-
-<CodeGroup>
-
-```bash cURL
-curl -G https://api.pav.bio/v1/companies/218/programs \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "phase=Phase 3" \
-  --data-urlencode "limit=3"
-```
-
-```python Python
-import os
-import requests
-
-resp = requests.get(
-    "https://api.pav.bio/v1/companies/218/programs",
-    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"phase": "Phase 3", "limit": 3},
-)
-resp.raise_for_status()
-for p in resp.json()["data"]:
-    print(p["drug"], "|", p.get("indication", ""), "|", p.get("modality_norm"))
-```
-
-```javascript JavaScript
-const params = new URLSearchParams({ phase: "Phase 3", limit: "3" });
-const resp = await fetch(`https://api.pav.bio/v1/companies/218/programs?${params}`, {
-  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
-});
-const { data } = await resp.json();
-for (const p of data) console.log(p.drug, "|", p.indication, "|", p.modality_norm);
-```
-
-</CodeGroup>
-
-```json Example response (trimmed)
-{
-  "data": [
-    { "id": 1766, "status": "active", "drug": "Baricitinib", "indication": "Type 1 Diabetes", "phase_norm": "Phase 3", "modality_norm": "small_molecule" },
-    { "id": 1768, "status": "active", "drug": "Brenipatide", "indication": "Alcohol Use Disorder", "phase_norm": "Phase 3", "modality_norm": "peptide" },
-    { "id": 1771, "status": "active", "drug": "Brenipatide", "indication": "Major Depressive Disorder", "phase_norm": "Phase 3", "modality_norm": "peptide" }
-  ],
-  "pagination": { "limit": 3, "offset": 0 }
-}
-```
-
-## List a company's trials
-
-A trial is linked to a company in two ways:
-
-- **`via=program`**: one of the company's Pav programs is linked to the trial.
-- **`via=sponsor`**: the company is a sponsor of the trial on ClinicalTrials.gov.
-
-`via=any` (the default) returns both, including the trials of companies it
-owns. Filter by trial `phase` and `status`, and order with `sort`
-(`start_date`, `last_update`, `enrollment`, `nct_id`) and `direction`; without
-them trials come in NCT id order. With a filter or `sort`, `offset + limit` can
-be at most 1000. Pass `include_total=true` for an exact count. `limit` is
-1–1000 (default 100).
-
-<CodeGroup>
-
-```bash cURL
-curl -G https://api.pav.bio/v1/companies/218/trials \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "via=program" \
-  --data-urlencode "include_total=true" \
-  --data-urlencode "limit=2"
-```
-
-```python Python
-import os
-import requests
-
-resp = requests.get(
-    "https://api.pav.bio/v1/companies/218/trials",
-    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"via": "program", "include_total": "true", "limit": 2},
-)
-resp.raise_for_status()
-body = resp.json()
-print("total:", body["pagination"]["total"])
-for t in body["data"]:
-    print(t["nct_id"], t["phase"], t["status"], [p["drug"] for p in t["programs"]])
-```
-
-```javascript JavaScript
-const params = new URLSearchParams({ via: "program", include_total: "true", limit: "2" });
-const resp = await fetch(`https://api.pav.bio/v1/companies/218/trials?${params}`, {
-  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
-});
-const body = await resp.json();
-console.log("total:", body.pagination.total);
-for (const t of body.data) console.log(t.nct_id, t.phase, t.status, t.programs.map((p) => p.drug));
-```
-
-</CodeGroup>
-
-```json Example response (trimmed)
-{
-  "data": [
-    {
-      "nct_id": "NCT00867516",
-      "title": "Safety, Efficacy and Pharmacokinetics Study of ALD518 in Patients With Active Rheumatoid Arthritis",
-      "phase": "PHASE2",
-      "status": "COMPLETED",
-      "sponsor": "CSL Behring",
-      "company_ids": [218, 507],
-      "programs": [
-        { "program_id": 11277, "company_id": 218, "drug": "Clazakizumab", "indication": "Inflammatory Disorders" }
-      ]
-    }
-  ],
-  "pagination": { "limit": 2, "offset": 0, "total": 266 }
-}
-```
-
-## Related
-
-- [Programs](/datasets/programs), [Drugs](/datasets/drugs), [Clinical trials](/datasets/clinical-trials), [Deals](/datasets/deals), [Patents](/datasets/patents), [FDA records](/datasets/fda)
-- [Track pipeline changes](/guides/track-pipeline-changes)
