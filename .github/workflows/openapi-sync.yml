@@ -1,0 +1,69 @@
+name: Sync openapi.json
+
+# Pulls the public API spec and, when it changed, opens or updates one PR that
+# refreshes openapi.json. Needs repository setting "Allow GitHub Actions to
+# create and approve pull requests".
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+    inputs:
+      spec_url:
+        description: "Spec to sync (default: the live API spec)"
+        required: false
+        default: "https://api.pav.bio/v1/openapi.json"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: openapi-sync
+  cancel-in-progress: false
+
+env:
+  BRANCH: openapi-sync
+  PR_TITLE: Refresh openapi.json from api.pav.bio
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - name: Fetch the spec
+        env:
+          SPEC_URL: ${{ inputs.spec_url || 'https://api.pav.bio/v1/openapi.json' }}
+        run: |
+          curl -sfS --retry 5 --retry-all-errors "$SPEC_URL" -o "$RUNNER_TEMP/openapi.json"
+          python3 -c "import json,sys; d=json.load(open(sys.argv[1])); print(len(d['paths']), 'paths')" "$RUNNER_TEMP/openapi.json"
+
+      - name: Check the spec for backend terms
+        run: python3 scripts/check_backend_terms.py "$RUNNER_TEMP/openapi.json"
+
+      - name: Open or update the pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SPEC_URL: ${{ inputs.spec_url || 'https://api.pav.bio/v1/openapi.json' }}
+        run: |
+          if cmp -s "$RUNNER_TEMP/openapi.json" openapi.json; then
+            echo "openapi.json already matches $SPEC_URL; nothing to do"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          cp "$RUNNER_TEMP/openapi.json" openapi.json
+          git add openapi.json
+          git commit -q -m "$PR_TITLE"
+          git push -f origin "$BRANCH"
+          pr=$(gh pr list --head "$BRANCH" --state open --json url --jq '.[0].url')
+          if [ -n "$pr" ]; then
+            echo "updated $pr"
+          else
+            gh pr create --base main --head "$BRANCH" --title "$PR_TITLE" --body "The spec at $SPEC_URL changed. This PR copies it byte for byte into \`openapi.json\`, which generates the API Reference tab.
+
+          Before merging, update any dataset page, the MCP tool table or a guide that describes the change, and run \`mint validate\` and \`mint broken-links\`. See README.md, \"Updating after an API change\"."
+          fi

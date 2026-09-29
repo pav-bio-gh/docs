@@ -36,9 +36,25 @@ mint broken-links   # link check
 ## Updating after an API change
 
 The OpenAPI spec is the source of truth for endpoints, parameters and response
-shapes. Every production API deploy opens (or updates) a pull request titled
-"Refresh openapi.json from api.pav.bio" on the `openapi-sync` branch when the
-live spec differs from `openapi.json`. Review and merge it. To refresh by hand:
+shapes. The **Sync openapi.json** workflow
+(`.github/workflows/openapi-sync.yml`) runs hourly. It fetches
+`https://api.pav.bio/v1/openapi.json`, fails if the spec names how Pav is built
+(`scripts/check_backend_terms.py`), and, when the spec differs from
+`openapi.json`, opens or updates one pull request titled "Refresh openapi.json
+from api.pav.bio" from the `openapi-sync` branch. Review and merge it.
+
+Run it now, and check the result:
+
+```bash
+gh workflow run openapi-sync.yml -R pav-bio-gh/docs
+gh run list -R pav-bio-gh/docs --workflow openapi-sync.yml --limit 1
+```
+
+A run with an unchanged spec logs "openapi.json already matches" and opens
+nothing. The workflow rebuilds `openapi-sync` from `main` on every run, so
+merging or closing its pull request is always safe. It needs the repository
+setting "Allow GitHub Actions to create and approve pull requests". To refresh
+by hand instead:
 
 ```bash
 npm run refresh-openapi   # re-pulls openapi.json from api.pav.bio
