@@ -37,11 +37,13 @@ mint broken-links   # link check
 
 The OpenAPI spec is the source of truth for endpoints, parameters and response
 shapes. The **Sync openapi.json** workflow
-(`.github/workflows/openapi-sync.yml`) runs hourly. It fetches
-`https://api.pav.bio/v1/openapi.json`, fails if the spec names how Pav is built
-(`scripts/check_backend_terms.py`), and, when the spec differs from
-`openapi.json`, opens or updates one pull request titled "Refresh openapi.json
-from api.pav.bio" from the `openapi-sync` branch. Review and merge it.
+(`.github/workflows/openapi-sync.yml`) runs hourly and on demand. It fetches
+`https://api.pav.bio/v1/openapi.json` and, when it differs from `openapi.json`
+on `main`, commits it straight to `main` (Mintlify then deploys it). Before
+committing it checks that the spec names nothing about how Pav is built
+(`scripts/check_backend_terms.py`), parses as OpenAPI 3.x, and still builds
+the site (`mint validate`); any failure stops the run and leaves `main`
+unchanged.
 
 Run it now, and check the result:
 
@@ -50,13 +52,10 @@ gh workflow run openapi-sync.yml -R pav-bio-gh/docs
 gh run list -R pav-bio-gh/docs --workflow openapi-sync.yml --limit 1
 ```
 
-A run with an unchanged spec logs "openapi.json already matches" and opens
-nothing. The workflow rebuilds `openapi-sync` from `main` on every run, so
-merging or closing its pull request is always safe. Opening the pull request
-needs "Allow GitHub Actions to create and approve pull requests", which the
-enterprise policy currently blocks. Until it is allowed, a changed spec still
-lands on the `openapi-sync` branch and the run fails with a link to open the
-pull request by hand (`/compare/main...openapi-sync`). To refresh by hand
+A run with an unchanged spec logs "openapi.json already matches" and commits
+nothing. A run that commits logs "committed <sha> to main". A failed run
+names the failing check in its log; fix the cause (for a backend term, the
+route or schema description in the API) and re-run. To refresh by hand
 instead:
 
 ```bash
