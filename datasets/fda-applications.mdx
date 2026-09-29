@@ -136,12 +136,15 @@ for (const r of body.data) console.log(r.application_key, "|", r.title, "|", r.d
 
 ## An application dossier
 
-`GET /v1/fda/applications/{application_key}` returns the application, the
-other FDA records on it (Orange Book products, patents and exclusivities,
-Purple Book products, complete response letters, accelerated approvals), and
-up to 200 submissions with FDA's action on each, newest first. `records` holds
-up to 500 rows; for an application with more, page its records with
-`GET /v1/fda?application_key=`.
+`GET /v1/fda/applications/{application_key}` returns the application, every
+other FDA record on it (Orange Book products, patents and exclusivities,
+Purple Book products, complete response letters, accelerated approvals; newest
+first, with undated records such as exclusivities last), and its submissions
+with FDA's action on each, newest first. `records_total` and
+`submissions_total` count everything on the application; a list is complete
+when its length equals its total, which is true for every application today.
+If a list is ever shorter, page the rest with
+`GET /v1/fda?application_key=...&record_type=...`.
 
 <CodeGroup>
 
@@ -164,7 +167,7 @@ resp.raise_for_status()
 dossier = resp.json()
 app = dossier["application"]
 print(app["application_key"], "|", app["title"], "| first approved", app["document_date"])
-print(dict(collections.Counter(r["record_type"] for r in dossier["records"])))
+print(len(dossier["records"]), "of", dossier["records_total"], "records:", dict(collections.Counter(r["record_type"] for r in dossier["records"])))
 for s in dossier["submissions"][:3]:
     print(s["status_date"], s["submission_type"], s["submission_number"], s["status"], s.get("submission_class"))
 ```
@@ -176,6 +179,7 @@ const resp = await fetch("https://api.pav.bio/v1/fda/applications/N:215866", {
 const dossier = await resp.json();
 const app = dossier.application;
 console.log(app.application_key, "|", app.title, "| first approved", app.document_date);
+console.log(dossier.records.length, "of", dossier.records_total, "records");
 for (const s of dossier.submissions.slice(0, 3)) {
   console.log(s.status_date, s.submission_type, s.submission_number, s.status, s.submission_class);
 }
@@ -200,6 +204,8 @@ for (const s of dossier.submissions.slice(0, 3)) {
   "records": [
     { "record_key": "orange_book_product:N:215866:019", "record_type": "orange_book_product", "title": "MOUNJARO KWIKPEN", "event_date": "2026-01-20", "status": "RX" }
   ],
+  "records_total": 546,
+  "submissions_total": 14,
   "submissions": [
     { "submission_type": "SUPPL", "submission_number": "45", "status": "AP", "status_date": "2026-08-27", "submission_class": "Efficacy", "review_priority": "STANDARD" },
     { "submission_type": "SUPPL", "submission_number": "44", "status": "AP", "status_date": "2026-08-27", "submission_class": "Efficacy", "review_priority": "STANDARD" }
