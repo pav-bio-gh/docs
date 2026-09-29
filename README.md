@@ -7,20 +7,45 @@ Source for the public Pav API and MCP server documentation, built with
 
 ## Layout
 
-- `docs.json`: site config and navigation.
-- `introduction.mdx`, `quickstart.mdx`, `authentication.mdx`,
-  `rate-limits.mdx`: Get started.
-- `datasets/`: one page per dataset (programs, drugs, companies, clinical
-  trials, deals, patents, FDA records, FDA applications and reviews, changes):
-  overview, coverage, key fields, filters, and example queries with real
-  trimmed responses.
-- `concepts/`: search and filters, pagination, coverage and sources.
-- `mcp-server.mdx`, `openapi-and-agents.mdx`: Integrations. The MCP page lives
-  at `/mcp-server` because Mintlify serves its own `/mcp`.
-- `guides/`: task walkthroughs with runnable scripts and example output.
+- `docs.json`: site config and navigation. Sidebar groups of the
+  **Documentation** tab:
+  - Overview: `introduction.mdx`, `quickstart.mdx`, `data-overview.mdx`.
+  - Datasets: `datasets/`, one page per dataset in collapsible sub-groups
+    (Pipeline, Clinical and regulatory, Deals and patents, Monitoring). Each
+    page has an overview, coverage, key fields, filters, and example queries
+    with real trimmed responses.
+  - REST API: `authentication.mdx`, `concepts/search-and-filters.mdx`,
+    `concepts/pagination.mdx`, `rate-limits.mdx`.
+  - AI agents: `mcp-server.mdx`, `openapi-and-agents.mdx`. The MCP page lives
+    at `/mcp-server` because Mintlify serves its own `/mcp`.
+  - Guides: `guides/`, task walkthroughs with runnable scripts and example
+    output.
+  - Resources: `concepts/coverage-and-sources.mdx`.
+- `introduction.mdx` routes and does not explain. It holds a lead paragraph
+  and card groups (ways to integrate, understanding the data, datasets,
+  guides). Put tables and detail on the page a card links to.
+- `api-reference/overview.mdx`: the first page of the **API Reference** tab,
+  with one card per resource. The endpoint pages after it are generated.
 - `webhooks/`: placeholder for planned push delivery.
 - `openapi.json`: a copy of the live `https://api.pav.bio/v1/openapi.json`.
-  The **API Reference** tab is generated from it; never hand-edit it.
+  The **API Reference** tab is generated from it; never hand-edit it. The
+  sidebar group names ("Programs", "FDA") come from each tag's `x-group` in
+  the spec. The page URLs come from the lowercase tag name.
+
+## Design conventions
+
+- Theme `almond`, dark by default with the light/dark toggle kept. The chrome
+  is monochrome (`colors` near-black / near-white). The only brand color is
+  the blue iso-cube mark in `logo/` and `favicon.svg`.
+- Every page sets a [Lucide](https://lucide.dev) `icon:` in its frontmatter,
+  and so does every card. `icons.library` is `lucide`, so Font Awesome names
+  (`robot`, `magnifying-glass`) render blank. Check an icon name at
+  lucide.dev and look at it in `mint dev`; `mint validate` does not catch a
+  bad name.
+- The API Reference shows generated code samples in cURL, Python, JavaScript
+  and Go (`api.examples.languages`). Adding a language means running its
+  generated sample against the live API first.
+- `custom.css` holds only the "Soon" badge on the Webhook Reference tab.
 
 ## Local preview
 
@@ -32,6 +57,10 @@ mint dev            # http://localhost:3000
 mint validate       # strict build check
 mint broken-links   # link check
 ```
+
+Opening an API Reference page makes `mint dev` grow past 2 GB. To cap it,
+start it with `NODE_OPTIONS=--max-old-space-size=900 mint dev`; it then stays
+near 1.4 GB.
 
 ## Updating after an API change
 

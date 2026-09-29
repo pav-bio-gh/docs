@@ -1,6 +1,7 @@
 ---
 title: "Introduction"
 description: "Structured biopharma pipeline, trial, deal and patent data over a read-only REST API and an MCP server."
+icon: "book-open"
 ---
 
 Pav tracks drug development programs and the evidence around them: who is
@@ -8,80 +9,94 @@ developing what, for which indication, at which phase, in which trials, under
 which deals, and protected by which patents. The Pav API serves that data as
 JSON. The same data is available to AI agents through the Pav MCP server.
 
+## Ways to integrate
+
+Both use the same API key, return the same JSON, and share one rate limit.
+
 <CardGroup cols={2}>
-  <Card title="Quickstart" icon="rocket" href="/quickstart">
-    Create a key and make your first request in two minutes.
+  <Card title="REST API" icon="square-terminal" href="/quickstart">
+    Read-only `GET` endpoints at `https://api.pav.bio`. Create a key and make
+    your first request in two minutes.
   </Card>
-  <Card title="MCP server" icon="robot" href="/mcp-server">
-    Connect Claude, Cursor or any MCP client to Pav data.
+  <Card title="MCP server" icon="bot" href="/mcp-server">
+    Connect Claude, Cursor or any MCP client to Pav data with one URL and your
+    API key.
   </Card>
-  <Card title="API reference" icon="code" href="/api-reference/programs/list-and-search-pipeline-programs">
+  <Card title="OpenAPI spec" icon="file-code" href="/openapi-and-agents">
+    The machine-readable API spec for client generation and agent tool wiring.
+  </Card>
+  <Card title="API reference" icon="code" href="/api-reference/overview">
     Every endpoint, parameter and response schema.
-  </Card>
-  <Card title="OpenAPI and agents" icon="file-code" href="/openapi-and-agents">
-    Machine-readable spec for client generation and tool wiring.
   </Card>
 </CardGroup>
 
-## What you can access
+## Understanding the data
 
-| Dataset | What it is | Size (September 2026) |
-| --- | --- | --- |
-| [Programs](/datasets/programs) | Drug programs from company pipelines, filings and trial registrations: drug, indication, phase, modality, target, mechanism, status, linked trials | 14,000+ active programs (28,000+ in all) |
-| [Drugs](/datasets/drugs) | One drug product across every company that develops it, under all its names | 14,000+ drugs |
-| [Companies](/datasets/companies) | Biopharma companies with owners, tickers and identifiers, and their programs, trials, deals, patents and changes | 3,300+ with active programs |
-| [Clinical trials](/datasets/clinical-trials) | ClinicalTrials.gov studies, linked to Pav programs and sponsor companies | ClinicalTrials.gov registry |
-| [Deals](/datasets/deals) | M&A, licensing, collaborations, options, joint ventures; terms, lifecycle, drugs covered, source documents | 3,300+ deals |
-| [Patents](/datasets/patents) | US patent families with owners, members, ownership history, FDA-approved drugs and statutory term | 123,000+ families |
-| [FDA records](/datasets/fda) | Orange Book, Purple Book, orphan designations, drug applications, complete response letters, accelerated approvals, advisory committee meetings, warning letters and recalls | 115,000+ records |
-| [Changes](/datasets/changes) | Detected movement: programs added, removed or changing phase; trials changing status, dates, phase or results | Continuous feeds |
+<CardGroup cols={2}>
+  <Card title="Data overview" icon="network" href="/data-overview">
+    What each dataset holds, how large it is, and how the datasets join
+    through Pav ids.
+  </Card>
+  <Card title="Coverage and sources" icon="database" href="/concepts/coverage-and-sources">
+    Where each dataset comes from, what it covers, and which fields are
+    partial.
+  </Card>
+</CardGroup>
 
-Current active program and company counts are available at any time from
-[`GET /v1/stats`](/api-reference/stats/dataset-summary-statistics).
+## Available datasets
 
-## How the data connects
+<CardGroup cols={2}>
+  <Card title="Programs" icon="flask-conical" href="/datasets/programs">
+    Drug development programs: drug, indication, phase, modality, target,
+    mechanism, status and linked trials.
+  </Card>
+  <Card title="Drugs" icon="pill" href="/datasets/drugs">
+    One drug product across every company that develops it, under all its
+    names.
+  </Card>
+  <Card title="Companies" icon="building-2" href="/datasets/companies">
+    Biopharma companies with owners, tickers and identifiers, and everything
+    linked to them.
+  </Card>
+  <Card title="Clinical trials" icon="stethoscope" href="/datasets/clinical-trials">
+    ClinicalTrials.gov studies, linked to Pav programs and sponsor companies.
+  </Card>
+  <Card title="Deals" icon="handshake" href="/datasets/deals">
+    M&A, licensing, collaborations, options and joint ventures, with terms,
+    lifecycle and source documents.
+  </Card>
+  <Card title="Patents" icon="scroll-text" href="/datasets/patents">
+    US patent families with owners, members, ownership history, FDA-approved
+    drugs and statutory term.
+  </Card>
+  <Card title="FDA records" icon="landmark" href="/datasets/fda">
+    Orange Book, Purple Book, orphan designations, warning letters, recalls
+    and more.
+  </Card>
+  <Card title="FDA applications and reviews" icon="file-check" href="/datasets/fda-applications">
+    Drug applications with their submissions, complete response letters,
+    accelerated approvals and advisory committee meetings.
+  </Card>
+  <Card title="Changes" icon="history" href="/datasets/changes">
+    Programs added, removed or changing phase; trials changing status, dates,
+    phase or results.
+  </Card>
+</CardGroup>
 
-Every dataset joins through Pav ids.
+## Guides
 
-- A **company** (`company_id`) owns **programs** (`id`), and can own other
-  companies (`parent_company_id`).
-- A **drug** (`drug_id`) groups every company's programs of the same product.
-- A **program** lists its linked **clinical trials** (`nct_id`). A trial lists
-  the Pav programs and companies linked to it.
-- A **deal** lists its party companies and the drugs it covers; filter deals by
-  `company_id` or `drug_id`.
-- A **patent family** lists its owner companies and the FDA-approved drugs
-  listing its patents; filter patents by `company_id`.
-- An **FDA record** carries its linked company and FDA application number;
-  filter FDA records by `company_id` or `application_key`.
-- A **change** records a program's movement with its `program_id` and
-  `company_id`, or a trial's with its `nct_id`.
-
-Look up a company's id once, with `GET /v1/companies?q=...`, then reuse the id
-across every dataset.
-
-## API at a glance
-
-- Base URL: `https://api.pav.bio`
-- All endpoints are `GET` and return JSON.
-- Authenticate with a Pav API key: `Authorization: Bearer <api_key>`.
-  See [Authentication](/authentication).
-- List endpoints return `{ "data": [...], "pagination": {...} }`.
-  See [Pagination](/concepts/pagination).
-- `q=` runs relevance-ranked search on programs, companies and trials, exact
-  name lookup on drugs, and exact-term or substring matching on deals, patents
-  and FDA records.
-  See [Search and filters](/concepts/search-and-filters).
-- 300 requests per minute per key, across the whole service. Errors share
-  one envelope.
-  See [Rate limits and errors](/rate-limits).
-
-## Built for
-
-- Competitive landscapes by target, indication or modality.
-- Deal screening and comparable-transaction work.
-- Patent, exclusivity and loss-of-exclusivity checks.
-- Pipeline monitoring and alerting.
-- AI agents that answer biopharma questions with sourced data.
-
-Start with the [Quickstart](/quickstart).
+<CardGroup cols={2}>
+  <Card title="Build a competitive landscape" icon="chart-column" href="/guides/competitive-landscape">
+    Every program against a target, counted by phase, with trials and nearest
+    competitors.
+  </Card>
+  <Card title="Screen deals for comparables" icon="scale" href="/guides/deal-screening">
+    Comparable licensing and collaboration deals, ranked by stated economics.
+  </Card>
+  <Card title="Check patents and loss of exclusivity" icon="calendar-clock" href="/guides/patent-loe-check">
+    US patent families, Orange Book patents and exclusivities around a drug.
+  </Card>
+  <Card title="Track pipeline changes" icon="bell-ring" href="/guides/track-pipeline-changes">
+    Poll the changes feed for a watchlist of companies.
+  </Card>
+</CardGroup>
