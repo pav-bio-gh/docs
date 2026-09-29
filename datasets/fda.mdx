@@ -1,139 +1,71 @@
 ---
 title: "FDA records"
-description: "Orange Book products, patents and exclusivities; Purple Book biologics; orphan designations; drug applications; complete response letters; accelerated approvals; advisory committee meetings; warning letters and recalls."
+description: "Orange Book, Purple Book, orphan designations, applications, letters, approvals and meetings."
 icon: "landmark"
 ---
 
-## Overview
+FDA regulatory records, one list endpoint per record type, each linked to a
+Pav company where possible and keyed by FDA identifiers.
 
-FDA records are regulatory records published by the US Food and Drug
-Administration, with the applicant, sponsor or recipient linked to a Pav
-company where possible. `GET /v1/fda` covers eleven record types, each with
-the FDA identifiers you need to join it to other sources: application numbers,
-product numbers, patent numbers and orphan designation ids.
-
-Drug applications, complete response letters, accelerated approvals and
-advisory committee meetings also have their own endpoints and an application
-dossier. See [FDA applications and reviews](/datasets/fda-applications).
-
-Questions this dataset answers:
-
-- Which Orange Book patents and exclusivities protect a drug, and when do they expire?
-- Which biosimilars of a reference biologic are licensed, and are they interchangeable?
-- Which orphan designations does a company hold?
-- Which listed patents expire in the next quarter?
-- Which warning letters and recalls name a company?
-
-## Coverage
-
-| Record type (`record_type`) | Records | Source | Linked to a Pav company |
+| Record type | Endpoint (`/v1/fda/…`) | `from`/`to` date | `status` |
 | --- | --- | --- | --- |
-| `orange_book_product` | 48,761 | Orange Book, current monthly edition | 66% |
-| `orange_book_patent` | 22,303 | Orange Book, current monthly edition | 90% |
-| `orange_book_exclusivity` | 2,326 | Orange Book, current monthly edition | Not reported |
-| `purple_book_product` | 2,242 | Purple Book, current monthly edition | 90% |
-| `orphan_designation` | 7,876 | FDA orphan drug designations, one record per designation | 69% |
-| `drug_application` | 29,359 | FDA drug applications (NDA, ANDA, BLA) | 68% |
-| `complete_response_letter` | 365 | FDA complete response letters, one per letter | 87% |
-| `accelerated_approval` | 370 | FDA accelerated approval lists | 59% |
-| `advisory_committee_meeting` | 556 | FDA advisory committee calendar | Meetings name no company |
-| `warning_letter` | 1,548 | FDA warning letters to drug, biologic and device firms, from 2021 | 30% |
-| `recall` | 241 | FDA drug, biologic and device recalls, from 2017 | 59% |
-| **Total** | **115,947** | | |
+| Orange Book products | `orange-book-products` | Approval | `RX`, `OTC`, `DISCN` |
+| Orange Book patents | `orange-book-patents` | Patent expiry | `listed` |
+| Orange Book exclusivities | `orange-book-exclusivities` | Exclusivity expiry | Exclusivity code |
+| Purple Book products | `purple-book-products` | License | Marketing status (`Rx`, …) |
+| Orphan designations | `orphan-designations` | Designation | `Designated`, … |
+| Drug applications (NDA, ANDA, BLA) | `applications` | First approval | `approved`, … |
+| Complete response letters | `complete-response-letters` | Letter | `Approved`, `Unapproved` |
+| Accelerated approvals | `accelerated-approvals` | Approval | `ongoing`, `verified`, `withdrawn` |
+| Advisory committee meetings | `advisory-committee-meetings` | Meeting | `held`, `scheduled` |
+| Warning letters | `warning-letters` | Letter | `issued`, … |
+| Recalls | `recalls` | Recall | `active`, … |
 
-Counts are from September 2026. Get current counts with `include_total=true`
-and a `record_type` filter.
-
-<Warning>
-Records that are not linked to a Pav company, most often warning letters and
-recalls, never match `company_id`. Many of those recipients are pharmacies,
-outsourcing facilities, distributors and consumer-product sellers that Pav
-does not track. To cover a company fully, also search its FDA name with `q`,
-for example `q=Pfizer`.
-</Warning>
-
-## Record keys
-
-Every record has a durable `record_key` for `GET /v1/fda/{record_key}`, built
-from FDA's own identifiers. It stays the same across FDA editions and stops
-working only when FDA drops the record itself (a delisted product or an expired
-listing).
-
-| Record | Key format | Example |
-| --- | --- | --- |
-| Orange Book product | `orange_book_product:<application>:<product>` | `orange_book_product:N:215866:019` |
-| Orange Book patent | `orange_book_patent:<application>:<product>:<patent>[:<use code>]` | `orange_book_patent:N:215866:018:9474780:U-4374` |
-| Orange Book exclusivity | `orange_book_exclusivity:<application>:<product>:<code>:<expiry>` | `orange_book_exclusivity:N:215866:001:NCE:2027-05-13` |
-| Purple Book product | `purple_book_product:<BLA>:<product>` | `purple_book_product:761059:006` |
-| Orphan designation | `orphan_designation:<designation id>` | `orphan_designation:1141926` |
-| Drug application | `drug_application:<application>` | `drug_application:N:215866` |
-
-Filter by FDA identifier as well: `application_key`, `product_key`,
-`patent_number` and `designation_id`.
+`GET /v1/fda/{record_key}` returns one record; URL-encode the key. `GET /v1/fda/applications/{application_key}`
+returns an application with every FDA record on it and its submissions
+(`records_total`, `submissions_total`).
 
 ## Key fields
 
 | Field | Description |
 | --- | --- |
-| `record_key` | Durable key for `GET /v1/fda/{record_key}`. |
-| `record_type` | One of the eleven types in the coverage table. |
-| `source`, `source_version` | FDA publication, and its edition (`YYYY-MM` for Orange and Purple Book; the load date for orphan designations; `null` for continuously published sources). |
-| `fda_organization_name` | Applicant, sponsor or recipient as FDA spells it. |
-| `company` | The linked Pav company (`company_id`, `short_name`, `name`), when linked. |
-| `application_key`, `product_key`, `patent_number`, `designation_id` | FDA identifiers, by record type. Application keys are `N:` (NDA), `A:` (ANDA) or `BLA:` plus the number. |
-| `title` | Trade name; patent or exclusivity label; application product names; letter subject; recalled product; the product with an accelerated approval; or the meeting title. |
-| `description` | Ingredient or proper name for products, patents and exclusivities; the designated indication; the letter subject or type; the recall reason; the approved indication; or the convening center. |
-| `document_date` | The date FDA issued the record: approval, patent submission, designation, letter, recall, first approval of an application, accelerated approval or meeting day. Not set for exclusivities. |
-| `event_date`, `event_date_type` | A dated event: `approval`, `patent_expiry`, `exclusivity_expiry`, `orphan_exclusivity_expiry`, `issued`, `posted`, `recall`, `latest_action`, `letter`, `meeting` or `projected_completion`. |
-| `status` | Marketing status for products (`RX`, `OTC`, `DISCN`), `listed` for patents, the exclusivity code, designation status, letter or recall status, application or review status. |
-| `source_url` | The official FDA page for the record. Orange Book patents and exclusivities link to their product's patent and exclusivity page. |
-| `details` | Type-specific fields: strength, dosage form and route, TE code, RLD flag, `approval_date_raw`; patent use code, substance and product claim flags, pediatric extension; biosimilar pathway and licensure; orphan `approvals` and exclusivity dates; recall `brand`, reason and product types; letter issuing office. |
+| `record_key`, `record_type` | Durable key built from FDA identifiers, and the type. |
+| `company`, `fda_organization_name` | Linked Pav company, and the name as FDA spells it. |
+| `application_key`, `product_key`, `patent_number` | FDA identifiers (`N:215866`, `N:215866:001`). |
+| `title`, `description` | Product or subject, and ingredient, indication or reason. |
+| `document_date` | Date FDA issued the record. |
+| `event_date`, `event_date_type` | A dated event such as `patent_expiry` or `latest_action`. |
+| `source`, `source_version`, `source_url` | FDA publication, edition and page. |
+| `details` | Type-specific fields. |
 
-## Endpoints
+## Parameters
 
-| Endpoint | Use |
-| --- | --- |
-| `GET /v1/fda` | Search and filter FDA records of every type. |
-| `GET /v1/fda/{record_key}` | One record by `record_key`. URL-encode the key: it can contain `/`, `:` and spaces. |
-| `GET /v1/fda/applications`, `/complete-response-letters`, `/accelerated-approvals`, `/advisory-committee-meetings` | One record type each. See [FDA applications and reviews](/datasets/fda-applications). |
-| `GET /v1/fda/applications/{application_key}` | An application with every FDA record on it and its submissions. |
+Every FDA list takes these. Orange and Purple Book lists also take `product_key`; Orange
+Book patents `patent_number`; orphan designations `designation_id`.
 
-## Filters
-
-All filters are optional and combine with AND.
-
-| Parameter | Matches | Example |
+| Name | Values | Example |
 | --- | --- | --- |
-| `q` | Case-insensitive substring of the title, description, company name, FDA organization name or an FDA identifier. No synonym expansion. `%` and `_` are matched literally. | `tirzepatide` |
-| `company_id` | Records linked to these Pav companies or the companies they own. Repeatable. | `218` |
-| `record_type` | Record types. Repeatable. | `orange_book_patent` |
-| `application_key` | Exact FDA application. | `N:215866` |
-| `product_key` | Exact application and product number. | `N:215866:019` |
-| `patent_number` | Exact Orange Book patent number. | `9474780` |
-| `designation_id` | Exact orphan designation id. | `1141926` |
-| `date_field` | Which date `date_from`/`date_to` apply to: `document_date` (default, issue date) or `event_date` (for example a patent or exclusivity expiry). | `event_date` |
-| `date_from`, `date_to` | Date range, inclusive. | `2027-01-01` |
-| `sort`, `direction` | `document_date` (default) or `event_date`; `desc` (default) or `asc`. Missing dates sort last. | `sort=event_date&direction=asc` |
-| `include_total` | Exact match count. | `true` |
-| `limit`, `offset` | Page size (1–100, default 25) and offset. | `limit=100` |
+| `q` | Part of the title, description, company or FDA id | `tirzepatide` |
+| `company_id` | Ids | `218` |
+| `application_key` | FDA application | `N:215866` |
+| `status` | Statuses, case-insensitive | `listed` |
+| `from`, `to` | The date in the table above | `2027-01-01` |
+| `sort` | `document_date`, `event_date` | `-event_date` |
 
-## Orange Book patents and exclusivities for a drug
+Shared rules: [Conventions](/conventions).
 
-List an application's patents and exclusivities by expiry. A patent is listed
-once per product and use code, so the same patent number repeats across rows.
+## Example
+
+Orange Book patents on tirzepatide products, latest expiry first:
 
 <CodeGroup>
 
 ```bash cURL
-curl -G https://api.pav.bio/v1/fda \
+curl -G https://api.pav.bio/v1/fda/orange-book-patents \
   -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "application_key=N:215866" \
-  --data-urlencode "record_type=orange_book_patent" \
-  --data-urlencode "record_type=orange_book_exclusivity" \
-  --data-urlencode "sort=event_date" \
-  --data-urlencode "direction=asc" \
-  --data-urlencode "include_total=true" \
-  --data-urlencode "limit=3"
+  --data-urlencode "q=tirzepatide" \
+  --data-urlencode "sort=-event_date" \
+  --data-urlencode "limit=2"
 ```
 
 ```python Python
@@ -141,127 +73,13 @@ import os
 import requests
 
 resp = requests.get(
-    "https://api.pav.bio/v1/fda",
+    "https://api.pav.bio/v1/fda/orange-book-patents",
     headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={
-        "application_key": "N:215866",
-        "record_type": ["orange_book_patent", "orange_book_exclusivity"],
-        "sort": "event_date",
-        "direction": "asc",
-        "include_total": "true",
-        "limit": 3,
-    },
-)
-resp.raise_for_status()
-body = resp.json()
-print("total:", body["pagination"]["total"])
-for r in body["data"]:
-    print(r["event_date"], "|", r["record_type"], "|", r["title"], "|", r["status"])
-```
-
-```javascript JavaScript
-const params = new URLSearchParams([
-  ["application_key", "N:215866"],
-  ["record_type", "orange_book_patent"],
-  ["record_type", "orange_book_exclusivity"],
-  ["sort", "event_date"],
-  ["direction", "asc"],
-  ["include_total", "true"],
-  ["limit", "3"],
-]);
-const resp = await fetch(`https://api.pav.bio/v1/fda?${params}`, {
-  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
-});
-const body = await resp.json();
-console.log("total:", body.pagination.total);
-for (const r of body.data) console.log(r.event_date, "|", r.record_type, "|", r.title, "|", r.status);
-```
-
-</CodeGroup>
-
-```json Example response (trimmed)
-{
-  "data": [
-    {
-      "record_key": "orange_book_exclusivity:N:215866:001:NCE:2027-05-13",
-      "record_type": "orange_book_exclusivity",
-      "source": "orange_book",
-      "source_version": "2026-08",
-      "fda_organization_name": "ELI LILLY AND CO",
-      "company": { "company_id": 218, "short_name": "eli_lilly", "name": "Eli Lilly" },
-      "application_key": "N:215866",
-      "product_key": "N:215866:001",
-      "title": "MOUNJARO (AUTOINJECTOR) — Exclusivity NCE",
-      "description": "TIRZEPATIDE",
-      "event_date": "2027-05-13",
-      "event_date_type": "exclusivity_expiry",
-      "status": "NCE",
-      "source_url": "https://www.accessdata.fda.gov/scripts/cder/ob/patent_info.cfm?Product_No=001&Appl_No=215866&Appl_type=N"
-    }
-  ],
-  "pagination": { "limit": 3, "offset": 0, "total": 522 }
-}
-```
-
-A listed patent row from the same application (`patent_number=9474780`):
-
-```json Example record (trimmed)
-{
-  "record_key": "orange_book_patent:N:215866:018:9474780:U-4374",
-  "record_type": "orange_book_patent",
-  "application_key": "N:215866",
-  "product_key": "N:215866:018",
-  "patent_number": "9474780",
-  "title": "MOUNJARO — Patent 9474780",
-  "description": "TIRZEPATIDE",
-  "document_date": "2026-02-20",
-  "event_date": "2036-05-13",
-  "event_date_type": "patent_expiry",
-  "status": "listed",
-  "details": {
-    "patent_use_code": "U-4374",
-    "pediatric_extension": false,
-    "drug_substance_claim": true,
-    "drug_product_claim": true
-  }
-}
-```
-
-## Biosimilars of a reference biologic
-
-<CodeGroup>
-
-```bash cURL
-curl -G https://api.pav.bio/v1/fda \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "q=adalimumab" \
-  --data-urlencode "record_type=purple_book_product" \
-  --data-urlencode "include_total=true" \
-  --data-urlencode "limit=3"
-```
-
-```python Python
-import os
-import requests
-
-resp = requests.get(
-    "https://api.pav.bio/v1/fda",
-    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"q": "adalimumab", "record_type": "purple_book_product", "include_total": "true", "limit": 3},
+    params={"q": "tirzepatide", "sort": "-event_date", "limit": 2},
 )
 resp.raise_for_status()
 for r in resp.json()["data"]:
-    d = r.get("details", {})
-    print(r["title"], "|", r["description"], "|", r["fda_organization_name"], "|", d.get("license_type"))
-```
-
-```javascript JavaScript
-const params = new URLSearchParams({ q: "adalimumab", record_type: "purple_book_product", include_total: "true", limit: "3" });
-const resp = await fetch(`https://api.pav.bio/v1/fda?${params}`, {
-  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
-});
-const { data } = await resp.json();
-for (const r of data) console.log(r.title, "|", r.description, "|", r.fda_organization_name, "|", r.details?.license_type);
+    print(r["patent_number"], r["event_date"], r["title"])
 ```
 
 </CodeGroup>
@@ -270,242 +88,23 @@ for (const r of data) console.log(r.title, "|", r.description, "|", r.fda_organi
 {
   "data": [
     {
-      "record_key": "purple_book_product:761059:006",
-      "record_type": "purple_book_product",
+      "record_key": "orange_book_patent:N:215866:001:12295987:U-4192",
+      "record_type": "orange_book_patent",
       "source_version": "2026-08",
-      "fda_organization_name": "Samsung Bioepis Co., Ltd.",
-      "company": { "company_id": 1450, "short_name": "samsung_bioepis", "name": "Samsung Bioepis Co., Ltd." },
-      "application_key": "BLA:761059",
-      "product_key": "BLA:761059:006",
-      "title": "Hadlima",
-      "description": "adalimumab-bwwd",
-      "document_date": "2026-04-29",
-      "event_date_type": "approval",
-      "status": "Rx",
-      "source_url": "https://purplebooksearch.fda.gov/index.cfm?event=productdetails&blaNo=761059",
-      "details": {
-        "strength": "80MG/0.8ML",
-        "dosage_form": "Injection",
-        "route": "Subcutaneous",
-        "license_type": "351(k) Interchangeable",
-        "licensure": "Licensed"
-      }
+      "company": { "company_id": 218, "name": "Eli Lilly" },
+      "application_key": "N:215866",
+      "product_key": "N:215866:001",
+      "patent_number": "12295987",
+      "title": "MOUNJARO (AUTOINJECTOR) — Patent 12295987",
+      "description": "TIRZEPATIDE",
+      "document_date": "2025-06-11",
+      "event_date": "2041-12-30",
+      "event_date_type": "patent_expiry",
+      "status": "listed",
+      "details": { "patent_use_code": "U-4192", "pediatric_extension": false }
     }
   ],
-  "pagination": { "limit": 3, "offset": 0, "total": 66 }
+  "next_cursor": "eyJyIjoiZmRhL29yYW5nZV9ib29rX3BhdGVudCIsInMiOiItZXZlbnRfZGF0ZSIsInYiOiIyMDQxLTEyLTMwIiwiayI6Im9yYW5nZV9ib29rX3BhdGVudDpOOjIxNTg2NjowMDE6MTIyOTU5ODc6VS00MTkzIn0",
+  "total": 828
 }
 ```
-
-## A company's orphan designations
-
-`company_id` includes the companies it owns, so Eli Lilly's designations
-include those held by its subsidiaries.
-
-<CodeGroup>
-
-```bash cURL
-curl -G https://api.pav.bio/v1/fda \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "company_id=218" \
-  --data-urlencode "record_type=orphan_designation" \
-  --data-urlencode "include_total=true" \
-  --data-urlencode "limit=3"
-```
-
-```python Python
-import os
-import requests
-
-resp = requests.get(
-    "https://api.pav.bio/v1/fda",
-    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"company_id": 218, "record_type": "orphan_designation", "include_total": "true", "limit": 3},
-)
-resp.raise_for_status()
-body = resp.json()
-print("total:", body["pagination"]["total"])
-for r in body["data"]:
-    print(r["document_date"], "|", r["designation_id"], "|", r["title"][:40], "|", r["description"])
-```
-
-```javascript JavaScript
-const params = new URLSearchParams({ company_id: "218", record_type: "orphan_designation", include_total: "true", limit: "3" });
-const resp = await fetch(`https://api.pav.bio/v1/fda?${params}`, {
-  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
-});
-const body = await resp.json();
-console.log("total:", body.pagination.total);
-for (const r of body.data) console.log(r.document_date, "|", r.designation_id, "|", r.title.slice(0, 40), "|", r.description);
-```
-
-</CodeGroup>
-
-```json Example response (trimmed)
-{
-  "data": [
-    {
-      "record_key": "orphan_designation:1141926",
-      "record_type": "orphan_designation",
-      "source_version": "2026-09-29",
-      "fda_organization_name": "Verve Therapeutics, a Wholly Owned Subs of Eli Lilly and Co",
-      "company": { "company_id": 2841, "short_name": "verve_therapeutics", "name": "Verve Therapeutics, Inc." },
-      "designation_id": "1141926",
-      "title": "messenger RNA encoding for adenine base editor protein and guide RNA targeting the angiopoietin like 3 (ANGPTL3) gene",
-      "description": "treatment of homozygous familial hypercholesterolemia",
-      "document_date": "2026-09-11",
-      "status": "Designated",
-      "source_url": "https://www.accessdata.fda.gov/scripts/opdlisting/oopd/detailedIndex.cfm?cfgridkey=1141926",
-      "details": { "approvals": [] }
-    }
-  ],
-  "pagination": { "limit": 3, "offset": 0, "total": 32 }
-}
-```
-
-## Patents expiring in a window
-
-Exclusivities and patent expiries live in `event_date`, so set
-`date_field=event_date`.
-
-<CodeGroup>
-
-```bash cURL
-curl -G https://api.pav.bio/v1/fda \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "record_type=orange_book_patent" \
-  --data-urlencode "date_field=event_date" \
-  --data-urlencode "date_from=2027-01-01" \
-  --data-urlencode "date_to=2027-03-31" \
-  --data-urlencode "sort=event_date" \
-  --data-urlencode "direction=asc" \
-  --data-urlencode "include_total=true" \
-  --data-urlencode "limit=3"
-```
-
-```python Python
-import os
-import requests
-
-resp = requests.get(
-    "https://api.pav.bio/v1/fda",
-    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={
-        "record_type": "orange_book_patent",
-        "date_field": "event_date",
-        "date_from": "2027-01-01",
-        "date_to": "2027-03-31",
-        "sort": "event_date",
-        "direction": "asc",
-        "include_total": "true",
-        "limit": 3,
-    },
-)
-resp.raise_for_status()
-body = resp.json()
-print("total:", body["pagination"]["total"])
-for r in body["data"]:
-    print(r["event_date"], "|", r["patent_number"], "|", r["title"], "|", r["fda_organization_name"])
-```
-
-```javascript JavaScript
-const params = new URLSearchParams({
-  record_type: "orange_book_patent",
-  date_field: "event_date",
-  date_from: "2027-01-01",
-  date_to: "2027-03-31",
-  sort: "event_date",
-  direction: "asc",
-  include_total: "true",
-  limit: "3",
-});
-const resp = await fetch(`https://api.pav.bio/v1/fda?${params}`, {
-  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
-});
-const body = await resp.json();
-console.log("total:", body.pagination.total);
-for (const r of body.data) console.log(r.event_date, "|", r.patent_number, "|", r.title, "|", r.fda_organization_name);
-```
-
-</CodeGroup>
-
-```json Example response (trimmed)
-{
-  "data": [
-    { "record_key": "orange_book_patent:N:022110:001:7531623", "event_date": "2027-01-01", "patent_number": "7531623", "title": "VIBATIV — Patent 7531623", "fda_organization_name": "APOTEX INC" },
-    { "record_key": "orange_book_patent:N:209128:001:10245228:U-1351", "event_date": "2027-01-05", "patent_number": "10245228", "title": "DSUVIA — Patent 10245228", "fda_organization_name": "VERTICAL PHARMACEUTICALS LLC" }
-  ],
-  "pagination": { "limit": 3, "offset": 0, "total": 378 }
-}
-```
-
-## Get one record
-
-URL-encode the `record_key`.
-
-<CodeGroup>
-
-```bash cURL
-curl https://api.pav.bio/v1/fda/orange_book_product%3AN%3A215866%3A019 \
-  -H "Authorization: Bearer $PAV_API_KEY"
-```
-
-```python Python
-import os
-from urllib.parse import quote
-
-import requests
-
-key = "orange_book_product:N:215866:019"
-resp = requests.get(
-    f"https://api.pav.bio/v1/fda/{quote(key, safe='')}",
-    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-)
-resp.raise_for_status()
-record = resp.json()
-print(record["title"], "|", record["details"]["strength"], "|", record["status"])
-```
-
-```javascript JavaScript
-const key = "orange_book_product:N:215866:019";
-const resp = await fetch(`https://api.pav.bio/v1/fda/${encodeURIComponent(key)}`, {
-  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
-});
-if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-const record = await resp.json();
-console.log(record.title, "|", record.details.strength, "|", record.status);
-```
-
-</CodeGroup>
-
-```json Example response (trimmed)
-{
-  "record_key": "orange_book_product:N:215866:019",
-  "record_type": "orange_book_product",
-  "source": "orange_book",
-  "source_version": "2026-08",
-  "fda_organization_name": "ELI LILLY AND CO",
-  "company": { "company_id": 218, "short_name": "eli_lilly", "name": "Eli Lilly" },
-  "application_key": "N:215866",
-  "product_key": "N:215866:019",
-  "title": "MOUNJARO KWIKPEN",
-  "description": "TIRZEPATIDE",
-  "document_date": "2026-01-20",
-  "event_date_type": "approval",
-  "status": "RX",
-  "source_url": "https://www.accessdata.fda.gov/scripts/cder/ob/results_product.cfm?Appl_Type=N&Appl_No=215866",
-  "details": {
-    "ingredient": "TIRZEPATIDE",
-    "strength": "10MG/2.4ML (4.17MG/ML)",
-    "dosage_route": "SOLUTION;SUBCUTANEOUS",
-    "reference_listed_drug": true,
-    "reference_standard": true
-  }
-}
-```
-
-## Related
-
-- [FDA applications and reviews](/datasets/fda-applications): application dossiers, complete response letters, accelerated approvals and advisory committee meetings.
-- [Patent and LOE check guide](/guides/patent-loe-check): combines Orange Book
-  patents and exclusivities with US patent families.
-- [Patents](/datasets/patents) and [Companies](/datasets/companies)

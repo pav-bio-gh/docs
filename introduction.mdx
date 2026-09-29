@@ -1,102 +1,57 @@
 ---
 title: "Introduction"
-description: "Structured biopharma pipeline, trial, deal and patent data over a read-only REST API and an MCP server."
+description: "Biopharma pipeline, trial, deal, patent and FDA data over REST and MCP."
 icon: "book-open"
 ---
 
-Pav tracks drug development programs and the evidence around them: who is
-developing what, for which indication, at which phase, in which trials, under
-which deals, and protected by which patents. The Pav API serves that data as
-JSON. The same data is available to AI agents through the Pav MCP server.
+The Pav API serves drug programs and the evidence around them (trials, deals,
+patents, FDA records and changes) as JSON over a read-only REST API and an
+MCP server. Both use one API key and one rate limit.
 
-## Ways to integrate
-
-Both use the same API key, return the same JSON, and share one rate limit.
+## Start
 
 <CardGroup cols={2}>
-  <Card title="REST API" icon="square-terminal" href="/quickstart">
-    Read-only `GET` endpoints at `https://api.pav.bio`. Create a key and make
-    your first request in two minutes.
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Create a key and make a first request.
+  </Card>
+  <Card title="Conventions" icon="list-checks" href="/conventions">
+    Ids, filters, dates, sorting and paging.
   </Card>
   <Card title="MCP server" icon="bot" href="/mcp-server">
-    Connect Claude, Cursor or any MCP client to Pav data with one URL and your
-    API key.
-  </Card>
-  <Card title="OpenAPI spec" icon="file-code" href="/openapi-and-agents">
-    The machine-readable API spec for client generation and agent tool wiring.
+    Connect Claude, Cursor or any MCP client.
   </Card>
   <Card title="API reference" icon="code" href="/api-reference/overview">
-    Every endpoint, parameter and response schema.
+    Every endpoint and schema.
   </Card>
 </CardGroup>
 
-## Understanding the data
+## Datasets
 
-<CardGroup cols={2}>
-  <Card title="Data overview" icon="network" href="/data-overview">
-    What each dataset holds, how large it is, and how the datasets join
-    through Pav ids.
-  </Card>
-  <Card title="Coverage and sources" icon="database" href="/concepts/coverage-and-sources">
-    Where each dataset comes from, what it covers, and which fields are
-    partial.
-  </Card>
-</CardGroup>
-
-## Available datasets
-
-<CardGroup cols={2}>
-  <Card title="Programs" icon="flask-conical" href="/datasets/programs">
-    Drug development programs: drug, indication, phase, modality, target,
-    mechanism, status and linked trials.
-  </Card>
-  <Card title="Drugs" icon="pill" href="/datasets/drugs">
-    One drug product across every company that develops it, under all its
-    names.
-  </Card>
-  <Card title="Companies" icon="building-2" href="/datasets/companies">
-    Biopharma companies with owners, tickers and identifiers, and everything
-    linked to them.
-  </Card>
-  <Card title="Clinical trials" icon="stethoscope" href="/datasets/clinical-trials">
-    ClinicalTrials.gov studies, linked to Pav programs and sponsor companies.
-  </Card>
-  <Card title="Deals" icon="handshake" href="/datasets/deals">
-    M&A, licensing, collaborations, options and joint ventures, with terms,
-    lifecycle and source documents.
-  </Card>
-  <Card title="Patents" icon="scroll-text" href="/datasets/patents">
-    US patent families with owners, members, ownership history, FDA-approved
-    drugs and statutory term.
-  </Card>
-  <Card title="FDA records" icon="landmark" href="/datasets/fda">
-    Orange Book, Purple Book, orphan designations, warning letters, recalls
-    and more.
-  </Card>
-  <Card title="FDA applications and reviews" icon="file-check" href="/datasets/fda-applications">
-    Drug applications with their submissions, complete response letters,
-    accelerated approvals and advisory committee meetings.
-  </Card>
-  <Card title="Changes" icon="history" href="/datasets/changes">
-    Programs added, removed or changing phase; trials changing status, dates,
-    phase or results.
-  </Card>
+<CardGroup cols={3}>
+  <Card title="Search" icon="search" href="/search">Names to ids.</Card>
+  <Card title="Programs" icon="flask-conical" href="/datasets/programs">Drug, indication, phase, target.</Card>
+  <Card title="Drugs" icon="pill" href="/datasets/drugs">One product across companies.</Card>
+  <Card title="Companies" icon="building-2" href="/datasets/companies">Owners, tickers, identifiers.</Card>
+  <Card title="Clinical trials" icon="stethoscope" href="/datasets/clinical-trials">ClinicalTrials.gov studies.</Card>
+  <Card title="Deals" icon="handshake" href="/datasets/deals">M&A, licensing, terms.</Card>
+  <Card title="Patents" icon="scroll-text" href="/datasets/patents">US patent families.</Card>
+  <Card title="FDA records" icon="landmark" href="/datasets/fda">Orange Book to advisory committees.</Card>
+  <Card title="Changes" icon="history" href="/datasets/changes">Program and trial movement.</Card>
 </CardGroup>
 
 ## Guides
 
 <CardGroup cols={2}>
-  <Card title="Build a competitive landscape" icon="chart-column" href="/guides/competitive-landscape">
-    Every program against a target, counted by phase, with trials and nearest
-    competitors.
+  <Card title="Competitive landscape" icon="chart-column" href="/guides/competitive-landscape">
+    Programs against a target, by phase.
   </Card>
-  <Card title="Screen deals for comparables" icon="scale" href="/guides/deal-screening">
-    Comparable licensing and collaboration deals, ranked by stated economics.
+  <Card title="Deal screening" icon="scale" href="/guides/deal-screening">
+    Comparable deals ranked by value.
   </Card>
-  <Card title="Check patents and loss of exclusivity" icon="calendar-clock" href="/guides/patent-loe-check">
-    US patent families, Orange Book patents and exclusivities around a drug.
+  <Card title="Patents and exclusivity" icon="calendar-clock" href="/guides/patent-loe-check">
+    Patent families and Orange Book listings for a drug.
   </Card>
   <Card title="Track pipeline changes" icon="bell-ring" href="/guides/track-pipeline-changes">
-    Poll the changes feed for a watchlist of companies.
+    Poll changes for a watchlist.
   </Card>
 </CardGroup>

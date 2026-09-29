@@ -1,192 +1,119 @@
 ---
 title: "Quickstart"
-description: "Create a Pav API key and make your first request in two minutes."
+description: "Create an API key, find an id, and list a company's programs."
 icon: "rocket"
 ---
 
 ## 1. Create an API key
 
-Sign in at [app.pav.bio](https://app.pav.bio) and open
-**Settings → Developer**. Create a personal or organization key and copy the
-secret. It is shown once.
+Sign in at [app.pav.bio](https://app.pav.bio), open **Settings → Developer**,
+and create a key. The secret is shown once.
 
 ```bash
 export PAV_API_KEY="<your_api_key>"
 ```
 
-## 2. Make your first request
+## 2. Find an id
 
-Every request needs the key in the `Authorization` header. This call searches
-programs for oral GLP-1 agonists in obesity.
+Filters take ids. [Search](/search) turns a name into one.
+
+```bash
+curl -G https://api.pav.bio/v1/search \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "q=Eli Lilly" \
+  --data-urlencode "types=company" \
+  --data-urlencode "limit=1"
+```
+
+```json Example response
+{ "data": [{ "type": "company", "id": "218", "name": "Eli Lilly", "detail": "United States", "program_count": 94 }] }
+```
+
+## 3. List by id
+
+Eli Lilly's Phase 3 programs:
 
 <CodeGroup>
 
 ```bash cURL
 curl -G https://api.pav.bio/v1/programs \
   -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "q=oral GLP-1 obesity" \
-  --data-urlencode "limit=3"
+  --data-urlencode "company_id=218" \
+  --data-urlencode "phase=3" \
+  --data-urlencode "view=slim" \
+  --data-urlencode "limit=2"
 ```
 
 ```python Python
 import os
 import requests
 
-resp = requests.get(
-    "https://api.pav.bio/v1/programs",
-    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"q": "oral GLP-1 obesity", "limit": 3},
-)
-resp.raise_for_status()
-for program in resp.json()["data"]:
-    print(program["company"], "|", program["drug"], "|", program["phase_norm"])
-```
+API = "https://api.pav.bio/v1"
+HEADERS = {"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"}
 
-```javascript JavaScript
-const params = new URLSearchParams({ q: "oral GLP-1 obesity", limit: "3" });
-const resp = await fetch(`https://api.pav.bio/v1/programs?${params}`, {
-  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
-});
-if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-const { data } = await resp.json();
-for (const program of data) {
-  console.log(program.company, "|", program.drug, "|", program.phase_norm);
-}
+hit = requests.get(f"{API}/search", headers=HEADERS,
+                   params={"q": "Eli Lilly", "types": "company", "limit": 1}).json()["data"][0]
+resp = requests.get(f"{API}/programs", headers=HEADERS,
+                    params={"company_id": hit["id"], "phase": "3", "view": "slim", "limit": 2})
+resp.raise_for_status()
+page = resp.json()
+for p in page["data"]:
+    print(p["program_id"], p["drug"], "|", p["indication"], "|", p["phase_norm"])
+print("total:", page["total"])
 ```
 
 </CodeGroup>
-
-## 3. Read the response
-
-List endpoints return a `data` array and a `pagination` block. Search results
-are ordered best match first.
 
 ```json Example response (trimmed)
 {
   "data": [
     {
-      "id": 7089,
+      "program_id": 1766,
       "status": "active",
-      "company_id": 1186,
-      "company": "Rivus Pharmaceuticals",
-      "drug": "RV-8451",
-      "drug_id": 11613,
-      "indication": "obesity",
-      "phase_norm": "Preclinical",
-      "modality_norm": "small_molecule",
-      "target": "GLP-1 non-peptide",
-      "mechanism_of_action": "GLP-1 non-peptide",
-      "partners": [],
-      "source_url": "https://www.rivuspharma.com/our-pipeline/"
-    },
-    {
-      "id": 12453,
-      "status": "active",
-      "company_id": 10390,
-      "company": "Structure Therapeutics",
-      "drug": "aleniglipron",
-      "drug_id": 5557,
-      "indication": "Metabolic (Obesity)",
+      "company_id": 218,
+      "company": "Eli Lilly",
+      "drug": "Baricitinib",
+      "drug_id": 4752,
+      "indication": "Type 1 Diabetes",
       "phase_norm": "Phase 3",
       "modality_norm": "small_molecule",
-      "target": "GLP-1 receptor",
-      "mechanism_of_action": "oral small molecule selective glucagon-like peptide-1 receptor (GLP-1R) agonist",
-      "partners": ["Schrödinger"]
+      "target": "JAK1/JAK2",
+      "trial_count": 2
+    },
+    {
+      "program_id": 1768,
+      "status": "active",
+      "company_id": 218,
+      "company": "Eli Lilly",
+      "drug": "Brenipatide",
+      "drug_id": 4754,
+      "indication": "Alcohol Use Disorder",
+      "phase_norm": "Phase 3",
+      "modality_norm": "peptide",
+      "trial_count": 2
     }
   ],
-  "pagination": { "limit": 3, "offset": 0 }
+  "next_cursor": "eyJyIjoicHJvZ3JhbXMiLCJzIjoiY29tcGFueSIsInYiOiJFbGkgTGlsbHkiLCJrIjoiMTc2OCJ9",
+  "total": 40
 }
 ```
 
-<Note>
-Fields with no value are omitted from the JSON rather than returned as `null`;
-list fields such as `partners` can be empty. Check for a key before reading
-it. Lists return `active` programs unless you pass `status`.
-</Note>
-
-## 4. Try more datasets
-
-<AccordionGroup>
-  <Accordion title="Find a company and list its Phase 3 programs">
-    ```bash
-    # Look up the company_id (Eli Lilly is 218)
-    curl -G https://api.pav.bio/v1/companies \
-      -H "Authorization: Bearer $PAV_API_KEY" \
-      --data-urlencode "q=Eli Lilly" --data-urlencode "limit=3"
-
-    # List that company's Phase 3 programs
-    curl -G https://api.pav.bio/v1/companies/218/programs \
-      -H "Authorization: Bearer $PAV_API_KEY" \
-      --data-urlencode "phase=Phase 3" --data-urlencode "limit=5"
-    ```
-  </Accordion>
-  <Accordion title="Largest deals by headline value">
-    ```bash
-    curl -G https://api.pav.bio/v1/deals \
-      -H "Authorization: Bearer $PAV_API_KEY" \
-      --data-urlencode "min_value_usd=1000000000" \
-      --data-urlencode "sort=headline_value" \
-      --data-urlencode "limit=5"
-    ```
-  </Accordion>
-  <Accordion title="Recruiting Phase 3 obesity trials">
-    ```bash
-    curl -G https://api.pav.bio/v1/trials \
-      -H "Authorization: Bearer $PAV_API_KEY" \
-      --data-urlencode "q=obesity" \
-      --data-urlencode "phase=Phase 3" \
-      --data-urlencode "status=Recruiting" \
-      --data-urlencode "limit=5"
-    ```
-  </Accordion>
-  <Accordion title="Live patent families mentioning tirzepatide">
-    ```bash
-    curl -G https://api.pav.bio/v1/patents \
-      -H "Authorization: Bearer $PAV_API_KEY" \
-      --data-urlencode "q=tirzepatide" \
-      --data-urlencode "state=live" \
-      --data-urlencode "limit=5"
-    ```
-  </Accordion>
-  <Accordion title="Latest pipeline phase changes">
-    ```bash
-    curl -G https://api.pav.bio/v1/changes \
-      -H "Authorization: Bearer $PAV_API_KEY" \
-      --data-urlencode "change_type=update" \
-      --data-urlencode "limit=10"
-    ```
-  </Accordion>
-  <Accordion title="Every company holding a drug, by any of its names">
-    ```bash
-    curl -G https://api.pav.bio/v1/drugs \
-      -H "Authorization: Bearer $PAV_API_KEY" \
-      --data-urlencode "q=Leqvio"
-    ```
-  </Accordion>
-  <Accordion title="Trials that posted results most recently">
-    ```bash
-    curl -G https://api.pav.bio/v1/changes \
-      -H "Authorization: Bearer $PAV_API_KEY" \
-      --data-urlencode "entity=trial" \
-      --data-urlencode "kind=results_posted" \
-      --data-urlencode "limit=10"
-    ```
-  </Accordion>
-</AccordionGroup>
+Pass `next_cursor` as `cursor` for the next page. The same ids, filters and
+paging work on every list; see [Conventions](/conventions).
 
 ## Next
 
 <CardGroup cols={2}>
+  <Card title="Conventions" icon="list-checks" href="/conventions">
+    Ids, `q`, filters, dates, sorting and paging.
+  </Card>
   <Card title="Datasets" icon="database" href="/datasets/programs">
-    What each dataset contains, its key fields and common queries.
+    Fields and filters for each dataset.
   </Card>
   <Card title="MCP server" icon="bot" href="/mcp-server">
-    Give an agent the same data as tools.
-  </Card>
-  <Card title="Search and filters" icon="search" href="/concepts/search-and-filters">
-    How `q` and filters combine, and which values filters accept.
+    The same data as agent tools.
   </Card>
   <Card title="Guides" icon="book-open" href="/guides/competitive-landscape">
-    End-to-end workflows: landscapes, deals, patents, monitoring.
+    Landscapes, deals, patents, monitoring.
   </Card>
 </CardGroup>

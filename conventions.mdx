@@ -1,0 +1,137 @@
+---
+title: "Conventions"
+description: "Ids, search, filters, dates, sorting, paging and errors, shared by every endpoint."
+icon: "list-checks"
+---
+
+Every `/v1` list endpoint follows the rules on this page.
+
+## Ids, not names
+
+Entity filters take Pav ids, comma-separated: `company_id`, `drug_id`,
+`program_id`. `company_id` includes the companies it owns (subsidiaries and
+acquired companies). Get an id from a name with [Search](/search):
+
+| Search result `type` | Pass `id` as |
+| --- | --- |
+| `company` | `company_id` |
+| `drug` | `drug_id` |
+| `program` | `program_id` |
+| `target` | `target` (ontology term id, e.g. `NCIT:C18289`) |
+| `indication` | `indication` (ontology term id, e.g. `MONDO:0011122`) |
+
+## Free text: `q`
+
+`q` is the only free-text parameter.
+
+| Endpoint | `q` behavior |
+| --- | --- |
+| Programs, companies, trials | Ranks by relevance. `sort` is not allowed. |
+| Drugs | Exact name, code or brand. |
+| Deals, patents, FDA | Filters rows; `sort` applies. |
+
+## Filters
+
+The same names mean the same thing everywhere: `phase`, `status`,
+`indication`, `target`, `modality`, `therapeutic_area`. Filters combine with
+AND. Pass several values comma-separated (`phase=2,3`) or repeat the
+parameter. For a term that contains a comma, pass its ontology id.
+
+## Dates
+
+`from` and `to` (`YYYY-MM-DD`, inclusive) filter each list's primary date.
+Rows with no date never match.
+
+| List | Date |
+| --- | --- |
+| Programs | `last_updated` |
+| Trials | `start_date` |
+| Deals | `announced_at` |
+| Patents | `earliest_priority_date` |
+| FDA | `document_date`; Orange Book patents and exclusivities: expiry (`event_date`) |
+
+`/v1/changes` takes `since`, an ISO 8601 timestamp, instead.
+
+## Sorting
+
+`sort=field` ascends and `sort=-field` descends. An unknown field returns
+`400` listing the allowed ones.
+
+## Views
+
+Programs, similar programs and patents take `view=full` (default) or
+`view=slim`, which returns light rows without nested records.
+
+## Paging
+
+Lists take `limit` (1–200, default 50) and `cursor`, and return:
+
+```json
+{ "data": [...], "next_cursor": "eyJyIjoi...", "total": 123 }
+```
+
+- Pass `next_cursor` back as `cursor`. It is absent on the last page.
+- Pages never skip or repeat rows, at any depth.
+- `total` is the exact match count. It is absent for relevance-ranked `q`
+  results, which end after 1,000 rows.
+- A cursor works only with the same endpoint and `sort`.
+
+<CodeGroup>
+
+```bash cURL
+curl -G https://api.pav.bio/v1/programs \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "company_id=218" \
+  --data-urlencode "phase=3" \
+  --data-urlencode "view=slim" \
+  --data-urlencode "limit=20"
+```
+
+```python Python
+import os
+import requests
+
+params = {"company_id": 218, "phase": "3", "view": "slim", "limit": 20}
+rows = []
+while True:
+    resp = requests.get(
+        "https://api.pav.bio/v1/programs",
+        headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
+        params=params,
+    )
+    resp.raise_for_status()
+    page = resp.json()
+    rows += page["data"]
+    if "next_cursor" not in page:
+        break
+    params["cursor"] = page["next_cursor"]
+print(len(rows), "of", page["total"])
+```
+
+</CodeGroup>
+
+## Responses and errors
+
+Fields with no value are omitted. Every parameter error, including an unknown
+parameter, is `400 validation_error`. All errors share one shape; see
+[Rate limits and errors](/rate-limits).
+
+```json Example 400 response
+{
+  "error": {
+    "code": "validation_error",
+    "message": "query.sort: `sort` is not allowed with `q`; results are ranked by relevance",
+    "request_id": "58eb108c626c45d58df6038898a5cce5"
+  }
+}
+```
+
+## Changes in 2.0
+
+- Name filters `company`, `short_name`, `drug`, `sponsor` removed: use ids.
+- `include_subsidiaries` removed: `company_id` always includes owned companies.
+- `offset`, `include_total`, `direction`, `date_field` removed: use `cursor`, `total`, `sort=-field`, `from`/`to`.
+- `condition` is now `indication`; deals `event_type` is now `status`; patents `state` is now `status` and `include_members` is now `view`.
+- Programs are identified by `program_id` and carry `last_updated`.
+- `/v1/programs/autocomplete`, `/v1/companies/{company_id}/programs` and `/v1/companies/{company_id}/changes` removed: use `/v1/search`, `/v1/programs?company_id=` and `/v1/changes?company_id=`.
+- `/v1/fda` list removed: one list per [FDA record type](/datasets/fda).

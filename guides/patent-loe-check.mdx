@@ -1,46 +1,24 @@
 ---
 title: "Check patents and loss of exclusivity"
-description: "Collect the US patent families, Orange Book patents and exclusivities around a drug, with owners and expiry dates."
+description: "Orange Book patents, exclusivities and US patent families around a drug."
 icon: "calendar-clock"
 ---
 
-This guide gathers the live US patent families that mention tirzepatide, from
-every owner, lists them by statutory term end, and adds the drug's Orange Book
-patents and exclusivities. It is a starting point for
-loss-of-exclusivity (LOE) work, not a legal opinion.
+List a drug's Orange Book patent and exclusivity expiries and its live US
+patent families. Requires `PAV_API_KEY` and `pip install requests`.
 
-<Warning>
-`statutory_term_end` is the earliest nonprovisional filing date plus 20 years.
-It does not include patent term adjustment, patent term extension or terminal
-disclaimers. Orange Book expiry dates and regulatory exclusivities come from
-[FDA records](/datasets/fda), shown below. Confirm expiry dates before relying
-on them.
-</Warning>
-
-## Prerequisites
-
-- A Pav API key in `PAV_API_KEY`. See [Quickstart](/quickstart).
-- Python 3.9+ and `pip install requests`.
-
-## Approach
-
-1. **Find the owner** of the drug from its programs.
-2. **Search families by every name** of the drug. Patent `q` matches the
-   title, an owner name, or the trade name or ingredient of an approved drug
-   listing the family's patents, with no synonyms, so search the generic name
-   and code names separately.
-3. **Open each live family** for its term, members and owners.
-4. **Search by compound class** within the owner's portfolio. Compound patents
-   are often titled by chemical class rather than drug name.
-
-## Script
+1. `GET /v1/search?types=drug` confirms the drug and its id.
+2. `GET /v1/fda/orange-book-patents` and `/orange-book-exclusivities` with
+   `q=<ingredient>` list listings; follow `next_cursor` and keep one row per
+   patent.
+3. `GET /v1/patents?q=<name>&status=live` lists live families.
 
 ```python loe_check.py
 import os
 
 import requests
 
-API = "https://api.pav.bio"
+API = "https://api.pav.bio/v1"
 HEADERS = {"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"}
 
 
@@ -50,192 +28,39 @@ def get(path, **params):
     return resp.json()
 
 
-# 1. Find the drug's owner from its programs.
-programs = get("/v1/programs", drug="Tirzepatide", limit=50)["data"]
-owners = {p["company_id"]: p["company"] for p in programs}
-print("owner:", owners)
-
-# 2. Collect families by drug name and code name, from every owner.
-families = {}
-for term in ["tirzepatide", "LY3298176"]:
-    for f in get("/v1/patents", q=term, limit=100)["data"]:
-        families[f["family_id"]] = f
-
-# 3. Open each live family for its statutory term and members.
-rows = []
-for family_id, f in families.items():
-    if not f.get("has_live_member"):
-        continue
-    detail = get(f"/v1/patents/{family_id}")
-    rows.append(
-        (
-            detail.get("statutory_term_end", "n/a"),
-            family_id,
-            detail["representative_title"][:55],
-            ", ".join(detail.get("owner_names", [])),
-            detail["granted_count"],
-        )
-    )
-
-rows.sort()
-print(f"{len(rows)} live families mention tirzepatide or LY3298176")
-for term_end, family_id, title, owner, granted in rows:
-    print(f"{term_end} | {family_id} | {title} | {owner} | granted={granted}")
-```
-
-```text Example output (September 2026)
-owner: {218: 'Eli Lilly', 610: 'Lexaria Bioscience'}
-11 live families mention tirzepatide or LY3298176
-2036-01-05 | 62101488 | GIP AND GLP-1 CO-AGONIST COMPOUNDS | ELI LILLY AND COMPANY | granted=1
-2039-06-14 | 62688632 | GIP/GLP1 AGONIST COMPOSITIONS | ELI LILLY AND COMPANY | granted=5
-2039-07-22 | 62702061 | METHODS OF USING A GIP/GLP1 CO-AGONIST FOR THERAPY | ELI LILLY AND COMPANY | granted=2
-2039-07-22 | 62702180 | METHOD OF USING A GIP/GLP1 CO-AGONIST FOR DIABETES | ELI LILLY AND COMPANY | granted=2
-2041-01-22 | 62967867 | THERAPEUTIC USES OF TIRZEPATIDE | ELI LILLY AND COMPANY | granted=1
-2042-02-02 | 63150187 | TIRZEPATIDE THERAPEUTIC METHODS | ELI LILLY AND COMPANY | granted=0
-2042-11-22 | PCTIB2022061286 | PROCESS FOR THE PREPARATION OF TIRZEPATIDE OR PHARMACEU | SUN PHARMACEUTICAL INDUSTRIES LIMITED | granted=0
-2043-06-23 | 63357285 | TIRZEPATIDE COMPOSITIONS AND USE | ELI LILLY AND COMPANY | granted=0
-2043-12-29 | 63477734 | PROCESSES AND INTERMEDIATES FOR PREPARING TIRZEPATIDE | ELI LILLY AND COMPANY | granted=1
-2044-10-09 | 63589289 | INTRANASAL DELIVERY OF TIRZEPATIDE TO TREAT OBESITY | THE TRUSTEES OF COLUMBIA UNIVERSITY IN THE CITY OF NEW YORK | granted=0
-2045-02-25 | 19062335 | MULTI-DOSE PEN OF TIRZEPATIDE | ORBICULAR PHARMACEUTICAL TECHNOLOGIES PRIVATE LIMITED | granted=1
-```
-
-Third-party families (formulation, process, device) show up because `q`
-searches every owner, not just the drug's sponsor.
-
-## Find compound patents by class
-
-The families above are named after the drug. Earlier compound families use the
-chemical class in their titles. Search the owner's portfolio for the class,
-oldest priority last:
-
-```python compound_class.py
-import os
-
-import requests
-
-API = "https://api.pav.bio"
-HEADERS = {"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"}
-
-resp = requests.get(
-    f"{API}/v1/patents",
-    headers=HEADERS,
-    params={"company_id": 218, "q": "GIP", "sort": "earliest_priority_date", "limit": 10},
-    timeout=60,
-)
-resp.raise_for_status()
-for f in resp.json()["data"]:
-    print(f.get("earliest_priority_date"), "|", f["family_id"], "|", f["representative_title"][:70])
-```
-
-```text Example output (September 2026)
-2024-08-02 | 63678779 | GIP RECEPTOR AGONIST COMPOUNDS
-2024-06-18 | 63661175 | GIP RECEPTOR AGONIST COMPOUNDS
-2023-01-31 | 63482404 | GIP/GLP1/GCG TRI-RECEPTOR AGONISTS AND USES THEREOF
-2022-11-21 | 63426904 | PROCESS FOR PREPARING A GIP/GLP1 DUAL AGONIST
-2022-10-19 | 63417339 | PRESERVED GIP/GLP AGONIST COMPOSITIONS
-2022-09-15 | 63406995 | GIP AND GLP-1 DUAL AGONIST COMPOUNDS
-2022-09-12 | 63405565 | A GIP/GLP1 FOR USE IN THERAPY
-2021-02-17 | 63150408 | GIP/GLP1 DUAL AGONIST THERAPEUTIC METHODS
-2020-01-23 | 62964932 | GIP/GLP1 CO-AGONIST COMPOUNDS
-2019-08-01 | 62881685 | GIPR-AGONIST COMPOUNDS
-```
-
-Narrow further with `cpc` (for example `C07K` for peptides), `granted=true`, or
-`priority_to` for the earliest filings.
-
-## Add Orange Book patents and exclusivities
-
-The Orange Book lists the patents a sponsor has submitted for an approved drug,
-with their expiry dates, and the regulatory
-exclusivities FDA has granted. Pull both from [FDA records](/datasets/fda) by
-the drug's application numbers. A family's `drugs[]` already names the
-application (`application_key`) for each product that lists one of its
-patents.
-
-```python orange_book.py
-import os
-
-import requests
-
-API = "https://api.pav.bio"
-HEADERS = {"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"}
-
-
-def get_all(**params):
-    rows, offset = [], 0
+def every(path, **params):
+    params["limit"] = 200
     while True:
-        resp = requests.get(f"{API}/v1/fda", headers=HEADERS, params={**params, "limit": 100, "offset": offset}, timeout=60)
-        resp.raise_for_status()
-        page = resp.json()["data"]
-        rows += page
-        if len(page) < 100:
-            return rows
-        offset += 100
+        page = get(path, **params)
+        yield from page["data"]
+        if "next_cursor" not in page:
+            return
+        params["cursor"] = page["next_cursor"]
 
 
-# 1. Find the drug's approved applications in the Orange Book.
-products = get_all(q="tirzepatide", record_type="orange_book_product")
-apps = sorted({p["application_key"] for p in products})
-print("applications:", apps, "|", sorted({p["title"] for p in products}))
-
-# 2. Collect listed patents and exclusivities per application. Patents repeat
-#    once per product and use code, so keep one row per patent number.
-patents, exclusivities = {}, {}
-for app in apps:
-    for r in get_all(application_key=app, record_type=["orange_book_patent", "orange_book_exclusivity"]):
-        if r["record_type"] == "orange_book_patent":
-            key = r["patent_number"]
-            if key not in patents or r["event_date"] > patents[key]["event_date"]:
-                patents[key] = r
-        else:
-            key = (r["application_key"], r["status"])
-            if key not in exclusivities or r["event_date"] > exclusivities[key]["event_date"]:
-                exclusivities[key] = r
-
-# 3. Print expiries, latest last.
-print(f"\n{len(patents)} listed patents")
-for p in sorted(patents.values(), key=lambda r: r["event_date"]):
-    d = p.get("details", {})
-    claims = [c for c in ("drug_substance_claim", "drug_product_claim") if d.get(c)]
-    print(f"{p['event_date']} | {p['patent_number']} | {', '.join(claims) or 'no substance or product claim flagged'}")
-print(f"\n{len(exclusivities)} exclusivities")
-for e in sorted(exclusivities.values(), key=lambda r: r["event_date"]):
-    print(f"{e['event_date']} | {e['application_key']} | {e['status']}")
+drug = get("/search", q="tirzepatide", types="drug", limit=1)["data"][0]
+name = drug["name"]
+expiry = {}
+for r in every("/fda/orange-book-patents", q=name, sort="event_date"):
+    expiry[r["patent_number"]] = r["event_date"]
+print(f"{name} (drug_id {drug['id']}): {len(expiry)} Orange Book patents, last expires {max(expiry.values())}")
+for r in every("/fda/orange-book-exclusivities", q=name, sort="-event_date"):
+    print(f"  exclusivity {r['status']} until {r['event_date']}")
+    break
+families = get("/patents", q=name, status="live", view="slim", limit=3)
+print(f"{families['total']} live US patent families, e.g.:")
+for f in families["data"]:
+    print(f"  {f['family_id']} | priority {f['earliest_priority_date']} | {f['representative_title']}")
 ```
 
-```text Example output (September 2026)
-applications: ['N:215866', 'N:217806'] | ['MOUNJARO', 'MOUNJARO (AUTOINJECTOR)', 'MOUNJARO KWIKPEN', 'ZEPBOUND', 'ZEPBOUND (AUTOINJECTOR)', 'ZEPBOUND KWIKPEN']
-
-10 listed patents
-2036-05-13 | 9474780 | drug_substance_claim, drug_product_claim
-2039-06-14 | 12629404 | drug_product_claim
-2039-06-14 | 12453755 | no substance or product claim flagged
-2039-06-14 | 12453756 | drug_product_claim
-2039-06-14 | 11357820 | drug_substance_claim, drug_product_claim
-2039-06-14 | 11918623 | no substance or product claim flagged
-2039-07-22 | 12616740 | no substance or product claim flagged
-2039-07-22 | 12343382 | no substance or product claim flagged
-2039-07-22 | 12453758 | no substance or product claim flagged
-2041-12-30 | 12295987 | no substance or product claim flagged
-
-6 exclusivities
-2026-11-08 | N:217806 | NP
-2027-05-13 | N:215866 | NCE
-2027-05-13 | N:217806 | NCE
-2027-10-18 | N:217806 | M-82
-2027-12-20 | N:217806 | I-958
-2028-12-19 | N:215866 | NPP
+```text Example output
+Tirzepatide (drug_id 4781): 10 Orange Book patents, last expires 2041-12-30
+  exclusivity NPP until 2028-12-19
+11 live US patent families, e.g.:
+  63477734 | priority 2022-12-29 | PROCESSES AND INTERMEDIATES FOR PREPARING TIRZEPATIDE
+  19062335 | priority 2025-02-25 | MULTI-DOSE PEN OF TIRZEPATIDE
+  63150187 | priority 2021-02-17 | TIRZEPATIDE THERAPEUTIC METHODS
 ```
 
-Read the listed patent expiries together with the family dates above.
-`details.pediatric_extension` marks an expiry that includes pediatric
-exclusivity. Exclusivity codes are FDA's, such as `NCE` (new chemical entity)
-and `NPP` (new patient population).
-
-## What to check in each family
-
-- `members[]`: each application's `role` (continuation, divisional, ...),
-  `patent_number`, `grant_date`, `status_description` and `is_dead`.
-- `ownership[]`: recorded assignments, to confirm the current owner.
-- `events[]` and `events_total`: prosecution and maintenance history.
-- `has_live_member`: `false` means every member is abandoned or expired.
+`statutory_term_end` on `GET /v1/patents/{family_id}` is the earliest
+nonprovisional filing plus 20 years, without extensions.

@@ -1,68 +1,33 @@
 ---
 title: "Authentication"
-description: "Authenticate every request with a Pav API key in the Authorization header."
+description: "Send a Pav API key as a bearer token on every request."
 icon: "key-round"
 ---
 
-Every `/v1` endpoint and the MCP server require a Pav API key, sent as a bearer
-token.
+Every `/v1` endpoint and the MCP server take a Pav API key:
 
 ```http
 Authorization: Bearer <your_api_key>
 ```
 
-The **API Reference** playground accepts the same key.
-
-## Create a key
-
-1. Sign in at [app.pav.bio](https://app.pav.bio).
-2. Open **Settings → Developer**.
-3. Create a key. Choose a **personal** key (tied to your user) or an
-   **organization** key (tied to your organization).
-4. Copy the secret. It is shown once and cannot be retrieved later.
-
-## Rotate and revoke
-
-Create a new key, move your clients to it, then revoke the old key in
-**Settings → Developer**. Revocation takes effect within a few minutes.
-
-## Scopes
-
-The API is read-only. Keys created without custom scopes work on every
-endpoint. A key created with custom scopes must include `pav:pipeline:read`;
-otherwise requests return `403 forbidden`.
-
-## Authentication errors
+Create a personal or organization key at [app.pav.bio](https://app.pav.bio)
+under **Settings → Developer**. The secret is shown once. To rotate, create a
+new key, move clients to it, then revoke the old one; revocation takes effect
+within minutes. A key created with custom scopes needs `pav:pipeline:read`.
+Keep keys out of source control and client-side code.
 
 | Status | `code` | When |
 | --- | --- | --- |
-| `401` | `unauthorized` | Missing, malformed, unknown, revoked or expired key. The response carries `WWW-Authenticate: Bearer`. |
-| `403` | `forbidden` | The key declares scopes but not `pav:pipeline:read`. |
-| `503` | `unavailable` | Key verification is temporarily unavailable. Retry with backoff; your key is not rejected. |
+| `401` | `unauthorized` | Missing, unknown, revoked or expired key. |
+| `403` | `forbidden` | The key's scopes lack `pav:pipeline:read`. |
+| `503` | `unavailable` | Key verification briefly unavailable; retry. |
 
 ```json Example 401 response
 {
   "error": {
     "code": "unauthorized",
     "message": "Missing or invalid API key",
-    "request_id": "e961695acf3b443290107b0215526414"
+    "request_id": "b734c48c19304a37b6d66e7f1a623264"
   }
 }
 ```
-
-```json Example 403 response (key created with other scopes)
-{
-  "error": {
-    "code": "forbidden",
-    "message": "API key is missing pav:pipeline:read scope",
-    "request_id": "e6694922cbe8436ba0869d5458ca553e"
-  }
-}
-```
-
-See [Rate limits and errors](/rate-limits) for the full error list.
-
-<Warning>
-Treat a key like a password. Keep it out of source control, logs and
-client-side code. Read it from an environment variable or a secret store.
-</Warning>

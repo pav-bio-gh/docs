@@ -1,93 +1,54 @@
 ---
 title: "Changes"
-description: "Feeds of detected movement: programs added, removed or changing phase, and clinical trials changing status, dates, phase or results."
+description: "Programs added, dropped or changing phase; trials changing status, dates or results."
 icon: "history"
 ---
 
-## Overview
+`GET /v1/changes` lists detected changes, newest first. Poll it with `since`
+to follow movement.
 
-`GET /v1/changes` serves two feeds, chosen with `entity`:
-
-- **Programs** (`entity=program`, the default): a program appears in a
-  company's pipeline, leaves it, or changes phase. Each event names the
-  program, company, drug and indication, the phase before and after, and when
-  Pav detected it.
-- **Clinical trials** (`entity=trial`): a trial is registered or removed, or
-  its status, phase, dates, enrollment, stop reason or results change on
-  ClinicalTrials.gov.
-
-Poll a feed instead of diffing snapshots yourself.
-
-Questions these feeds answer:
-
-- Which programs moved phase this week?
-- What did a company add to or drop from its pipeline since a given date?
-- Which trials started recruiting, completed or posted results today?
-
-## Coverage
-
-| Feed | Scope | Order | History |
-| --- | --- | --- | --- |
-| Programs | Programs of every tracked company | Newest first by `detected_at` | Retracted events hidden unless `include_invalidated=true` |
-| Clinical trials | Every ClinicalTrials.gov study | Newest first by `detected_at` | From 2026-06-15; updated daily |
-
-## Endpoints
-
-| Endpoint | Use |
+| `entity` | Covers |
 | --- | --- |
-| `GET /v1/changes` | Either feed across all companies. |
-| `GET /v1/companies/{company_id}/changes` | One company's program feed. |
+| `program` (default) | Programs added (`insert`), changed (`update`) or dropped (`delete`). |
+| `trial` | ClinicalTrials.gov changes by `kind`, from 2026-06-15. |
 
-Page with `cursor`, not `offset`. Each response carries `next_cursor` while
-more events exist; the cursor stays correct while new events arrive. See
-[Pagination](/concepts/pagination).
-
-## Program changes
-
-### Key fields
+## Key fields
 
 | Field | Description |
 | --- | --- |
-| `id` | Change event id. |
-| `program_id` | The changed program; pass it to `GET /v1/programs/{program_id}`. `null` only on some older retracted events. |
-| `company_id`, `company`, `short_name` | The company whose pipeline changed. |
-| `drug`, `indication`, `territory` | The program that changed, as published. |
-| `change_type` | `insert` (program added), `update` (phase or details changed), `delete` (program left the company's pipeline). |
-| `prev_phase`, `new_phase` | Phase before and after, as the company labels it. `insert` has only `new_phase`; `delete` has only `prev_phase`. |
-| `detected_at` | When Pav detected the change (UTC). |
-| `invalidated_at`, `invalidation_reason` | Set when a change was later retracted. Returned only with `include_invalidated=true`. |
+| `id` | Change id. |
+| `program_id` or `nct_id` | What changed. |
+| `company_id`, `company`, `drug`, `indication` | Program context. |
+| `change_type` | `insert`, `update` or `delete`. |
+| `prev_phase`, `new_phase` | Phase before and after (programs). |
+| `kind`, `old_value`, `new_value` | What changed and its values (trials). |
+| `detected_at` | When Pav detected the change. |
 
-`invalidation_reason` is one of:
+## Parameters
 
-| Value | Meaning |
-| --- | --- |
-| `reverted` | A later reading undid the change within 30 days, for example a program that left a page and came back. |
-| `restated` | The change was replaced by a corrected history in September 2026. |
-| `asset_reappeared_in_later_run` | Older events: the removed program reappeared. |
-
-A change can be retracted after you first read it. To see withdrawals, poll
-with `include_invalidated=true` and drop events that carry `invalidated_at`.
-
-### Filters
-
-| Parameter | Matches | Example |
+| Name | Values | Example |
 | --- | --- | --- |
-| `change_type` | `insert`, `update`, `delete`. Repeatable. | `update` |
-| `company_id` | Companies (on `/v1/changes`). Repeatable. | `218` |
-| `since` | Changes detected at or after this ISO 8601 timestamp. | `2026-09-01T00:00:00Z` |
-| `include_invalidated` | Include retracted changes. | `true` |
-| `cursor` | Opaque cursor from the previous response's `next_cursor`. | |
-| `limit` | Page size (1–5000, default 50). | `100` |
+| `entity` | `program`, `trial` | `trial` |
+| `company_id`, `program_id` | Ids | `218` |
+| `nct_id` | NCT ids (`entity=trial`) | `NCT06771115` |
+| `change_type` | `insert`, `update`, `delete` | `update` |
+| `kind` | `trial`, `status`, `phase`, `start_date`, `primary_completion_date`, `completion_date`, `results_posted`, `enrollment`, `why_stopped` | `results_posted` |
+| `since` | ISO 8601 timestamp on `detected_at` | `2026-09-01T00:00:00Z` |
+| `include_invalidated` | `true`: include retracted program changes | `true` |
 
-### Latest phase changes
+Shared rules: [Conventions](/conventions).
+
+## Example
+
+Eli Lilly's program changes:
 
 <CodeGroup>
 
 ```bash cURL
 curl -G https://api.pav.bio/v1/changes \
   -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "change_type=update" \
-  --data-urlencode "limit=3"
+  --data-urlencode "company_id=218" \
+  --data-urlencode "limit=2"
 ```
 
 ```python Python
@@ -97,91 +58,11 @@ import requests
 resp = requests.get(
     "https://api.pav.bio/v1/changes",
     headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"change_type": "update", "limit": 3},
+    params={"company_id": 218, "limit": 2},
 )
 resp.raise_for_status()
 for c in resp.json()["data"]:
-    print(c["detected_at"][:10], "|", c["company"], "|", c["drug"], "|", c.get("prev_phase", "-"), "->", c.get("new_phase", "-"))
-```
-
-```javascript JavaScript
-const params = new URLSearchParams({ change_type: "update", limit: "3" });
-const resp = await fetch(`https://api.pav.bio/v1/changes?${params}`, {
-  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
-});
-const { data } = await resp.json();
-for (const c of data) {
-  console.log(c.detected_at.slice(0, 10), "|", c.company, "|", c.drug, "|", c.prev_phase ?? "-", "->", c.new_phase ?? "-");
-}
-```
-
-</CodeGroup>
-
-```json Example response (trimmed)
-{
-  "data": [
-    {
-      "id": 104790,
-      "program_id": 5964,
-      "company_id": 603,
-      "company": "Jupiter Neurosciences",
-      "drug": "JOTROL™",
-      "indication": "Parkinson's Disease (PD)",
-      "change_type": "update",
-      "prev_phase": "Phase 1",
-      "new_phase": "Phase 2",
-      "detected_at": "2026-09-29T16:00:16.046981Z"
-    },
-    {
-      "id": 104757,
-      "program_id": 1540,
-      "company_id": 464,
-      "company": "CSPC Innovation Pharmaceutical",
-      "drug": "SYS6090 Injection",
-      "indication": "Advanced malignant tumor",
-      "change_type": "update",
-      "prev_phase": "Phase 1",
-      "new_phase": "Phase 2",
-      "detected_at": "2026-09-29T05:54:43.144088Z"
-    }
-  ],
-  "pagination": { "limit": 3, "offset": 0 },
-  "next_cursor": "<opaque cursor>"
-}
-```
-
-### One company since a date
-
-<CodeGroup>
-
-```bash cURL
-curl -G https://api.pav.bio/v1/companies/218/changes \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "since=2026-06-01T00:00:00Z" \
-  --data-urlencode "limit=3"
-```
-
-```python Python
-import os
-import requests
-
-resp = requests.get(
-    "https://api.pav.bio/v1/companies/218/changes",
-    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"since": "2026-06-01T00:00:00Z", "limit": 3},
-)
-resp.raise_for_status()
-for c in resp.json()["data"]:
-    print(c["change_type"], "|", c["drug"], "|", c.get("indication", ""), "|", c.get("prev_phase", "-"), "->", c.get("new_phase", "-"))
-```
-
-```javascript JavaScript
-const params = new URLSearchParams({ since: "2026-06-01T00:00:00Z", limit: "3" });
-const resp = await fetch(`https://api.pav.bio/v1/companies/218/changes?${params}`, {
-  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
-});
-const { data } = await resp.json();
-for (const c of data) console.log(c.change_type, "|", c.drug, "|", c.indication, "|", c.prev_phase ?? "-", "->", c.new_phase ?? "-");
+    print(c["detected_at"][:10], c["change_type"], c["drug"], "|", c["indication"], "|", c.get("new_phase"))
 ```
 
 </CodeGroup>
@@ -212,107 +93,7 @@ for (const c of data) console.log(c.change_type, "|", c.drug, "|", c.indication,
       "detected_at": "2026-08-05T17:11:03.060172Z"
     }
   ],
-  "pagination": { "limit": 3, "offset": 0 },
-  "next_cursor": "<opaque cursor>"
+  "next_cursor": "eyJyIjoiY2hhbmdlcy9wcm9ncmFtIiwicyI6Ii1kZXRlY3RlZF9hdCIsInYiOiIyMDI2LTA4LTA1VDE3OjExOjAzLjA2MDE3MiswMDowMCIsImsiOiI5MTMyMSJ9",
+  "total": 14
 }
 ```
-
-<Note>
-Changes are tracked per program, so a renamed program or a changed territory
-is an `update` of the same `program_id`, not a `delete` and an `insert`. A
-`delete` means the program left the company's published pipeline, for
-example a discontinuation.
-</Note>
-
-## Clinical trial changes
-
-Pass `entity=trial`. Each event is one field of one trial changing on
-ClinicalTrials.gov.
-
-### Key fields
-
-| Field | Description |
-| --- | --- |
-| `id`, `entity` | Change event id, and `trial`. |
-| `nct_id`, `title` | The changed trial. |
-| `kind` | What changed: `trial` (registered, or removed from the registry), `status`, `phase`, `start_date`, `primary_completion_date`, `completion_date`, `results_posted` (results first posted), `enrollment`, `why_stopped`. |
-| `change_type` | `insert` (value first set, or a new trial), `update` (value changed), `delete` (value removed, or the trial left the registry). |
-| `old_value`, `new_value` | Values as the registry states them. Phases are joined with `\|`; dates are `YYYY-MM-DD` or `YYYY-MM`. |
-| `change_date` | The day the registry published the update. |
-| `detected_at` | When Pav recorded the change (UTC); the feed is ordered by it. History loaded when the feed started carries its `change_date` at midnight UTC. |
-
-### Filters
-
-| Parameter | Matches | Example |
-| --- | --- | --- |
-| `kind` | What changed. Repeatable. | `status` |
-| `nct_id` | Specific trials. Repeatable. | `NCT04184622` |
-| `change_type` | `insert`, `update`, `delete`. Repeatable. | `update` |
-| `company_id` | Trials linked to these companies. Repeatable. | `218` |
-| `since`, `cursor`, `limit` | As for programs. | |
-
-`kind` and `nct_id` without `entity=trial`, and `include_invalidated` with
-`entity=trial`, return `422`.
-
-### Trials that changed status
-
-<CodeGroup>
-
-```bash cURL
-curl -G https://api.pav.bio/v1/changes \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "entity=trial" \
-  --data-urlencode "kind=status" \
-  --data-urlencode "limit=3"
-```
-
-```python Python
-import os
-import requests
-
-resp = requests.get(
-    "https://api.pav.bio/v1/changes",
-    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"entity": "trial", "kind": "status", "limit": 3},
-)
-resp.raise_for_status()
-for c in resp.json()["data"]:
-    print(c["change_date"], "|", c["nct_id"], "|", c.get("old_value", "-"), "->", c.get("new_value", "-"))
-```
-
-```javascript JavaScript
-const params = new URLSearchParams({ entity: "trial", kind: "status", limit: "3" });
-const resp = await fetch(`https://api.pav.bio/v1/changes?${params}`, {
-  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
-});
-const { data } = await resp.json();
-for (const c of data) console.log(c.change_date, "|", c.nct_id, "|", c.old_value ?? "-", "->", c.new_value ?? "-");
-```
-
-</CodeGroup>
-
-```json Example response (trimmed)
-{
-  "data": [
-    {
-      "id": 194348,
-      "entity": "trial",
-      "nct_id": "NCT07835945",
-      "title": "Comparison of Arterial and Capillary Blood Gas Analyses in Patients With Respiratory Distress Due to COPD or APE",
-      "kind": "status",
-      "change_type": "update",
-      "old_value": "NOT_YET_RECRUITING",
-      "new_value": "RECRUITING",
-      "change_date": "2026-09-29",
-      "detected_at": "2026-09-29T14:33:36.421078Z"
-    }
-  ],
-  "pagination": { "limit": 3, "offset": 0 },
-  "next_cursor": "<opaque cursor>"
-}
-```
-
-## Related
-
-- [Track pipeline changes guide](/guides/track-pipeline-changes)
-- [Webhook Reference](/webhooks/introduction): push delivery is planned; poll these feeds today.

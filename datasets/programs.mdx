@@ -1,163 +1,63 @@
 ---
 title: "Programs"
-description: "Drug development programs: drug, indication, phase, modality, target, mechanism, status and linked trials."
+description: "Drug development programs: one drug in one indication at one company."
 icon: "flask-conical"
 ---
 
-## Overview
+A program is one drug in one indication at one company, with its phase,
+modality, target, status and linked trials.
 
-A program is one drug in one indication at one company. Programs come from the
-pipelines companies publish, their filings and announcements, FDA-approved uses
-of drugs the company still develops, and, for companies that publish no
-pipeline, their registered clinical trials (see `basis`). Each
-program carries a normalized phase, a modality, the molecular target and
-mechanism when known, a lifecycle status, the clinical trials linked to it,
-and the page it was read from.
-
-Questions this dataset answers:
-
-- Which companies have an oral GLP-1 agonist in development for obesity?
-- Which KRAS G12C inhibitors are in Phase 3, and in which indications?
-- What else is being developed against this target?
-- What is Eli Lilly's full Phase 3 pipeline?
-
-## Coverage
-
-| Active programs | All programs | Companies with active programs | Normalized phases | Normalized modalities |
-| --- | --- | --- | --- | --- |
-| 14,000+ | 28,000+ | 3,300+ | 9 | 19 |
-
-Counts are from September 2026. Get current counts, and active program counts
-per phase and modality, from
-[`GET /v1/stats`](/api-reference/stats/dataset-summary-statistics). Partial
-fields are listed in [Coverage and sources](/concepts/coverage-and-sources).
-
-## Status
-
-Every program has a `status`. List and search endpoints return only `active`
-programs unless you pass `status`.
-
-| `status` | Meaning |
+| Endpoint | Returns |
 | --- | --- |
-| `active` | In development or on the market. A drug with a recorded approval stays `active` after the company moves it off its pipeline page. |
-| `inactive` | Known only from clinical trials, and all of its trials have closed. It returns to `active` if a trial opens. |
-| `discontinued` | Dropped from the company's pipeline. |
-
-Repeat `status` to combine values: `status=active&status=discontinued`. An
-unknown value returns `422`. A `discontinued` program carries
-`discontinued_at`, for example Novartis's lifonebart in ALS (program `10521`):
-`"discontinued_at": "2026-08-25T00:00:00Z"`.
-
-## How phase is decided
-
-Phase is the development stage the developer reports for this drug in this
-indication (its pipeline, filings and announcements), or a US or EU
-regulatory approval. Only when the developer reports no phase is it taken from
-the most advanced registered clinical trial of the same drug in the same
-indication. A trial never raises a phase the developer reports, so a program
-can list a trial at a later stage than its phase. A program's trials are the
-registered trials of the same drug in the same disease; trials of the drug in
-other diseases belong to those programs.
-
-Failing all of these, phase is the phase a public source (a press release,
-filing or registry record) states for the program. When the developer's
-pipeline page has not been readable for a long time, a public source dated
-after its last reading takes the place of the page's phase.
-
-`phase` keeps the developer's own label. `phase_norm` is the normalized phase,
-and is `Approved` when a US or EU approval covers the indication, even if the
-developer still lists an earlier stage.
+| `GET /v1/programs` | Programs, filtered or searched with `q`. |
+| `GET /v1/programs/{program_id}` | One program with trials and ontology terms. |
+| `GET /v1/programs/{program_id}/similar-programs` | Other drugs' programs with the same target, indication or modality. |
 
 ## Key fields
 
 | Field | Description |
 | --- | --- |
-| `id` | Pav program id. Stable: a phase change updates the program, and a discontinued program keeps its id. |
-| `status` | `active`, `inactive` or `discontinued`. See [Status](#status). |
-| `discontinued_at` | For a `discontinued` program, when it stopped: the date the company or a reviewer stated the stop, or the first check that found it gone from the pipeline. `null` while `active` or `inactive`. |
-| `basis` | How Pav knows of the program: `company_pipeline` (the company lists or announces it), `regulatory_approval` (an FDA-approved use of a drug the company still develops that its pipeline does not list; `phase_norm` is `Approved` and `source_url` is the FDA label), or `clinical_trial_registry` (known only from registered clinical trials). |
-| `company_id`, `company`, `short_name` | Owning company: Pav id, display name, slug. |
-| `drug` | Drug or asset name as the company publishes it. |
-| `drug_id`, `aliases` | The Pav drug shared by every company's programs of the same drug product, and the drug's other names (INN, research codes, brands). `null` for an undisclosed asset. See [Drugs](/datasets/drugs). |
-| `indication` | Indication as the company publishes it. |
-| `phase` / `phase_norm` | Phase as published, and the normalized phase (`Preclinical`, `Phase 1`, `Phase 1/2`, `Phase 2`, `Phase 2/3`, `Phase 3`, `Filed`, `Registration`, `Approved`). See [How phase is decided](#how-phase-is-decided). |
-| `modality` / `modality_norm` | Modality as published, and the normalized modality (`small_molecule`, `antibody`, `adc`, `cell_therapy`, `rna`, ...). Assigned per drug, so every program of one `drug_id` has the same `modality_norm`. |
-| `modality_subclass` | Nucleic-acid class for `rna` and `oligonucleotide` drugs: `sirna`, `mrna`, `sarna`, `rna_editing`, `aso` or `aptamer`. |
-| `modality_formats[]` | Format facets: `bispecific` (bi-, tri- and multispecifics), `antibody_drug_conjugate`, `peptide_drug_conjugate`, `antibody_oligonucleotide_conjugate`, `antibody_peptide_conjugate`. |
-| `target`, `mechanism_of_action` | Molecular target and mechanism, when known. |
-| `partners` | Partners the company lists for the program. When it lists none, the other companies that develop or market the same drug, outside the company's own corporate family. |
-| `clinical_trials[]` | Linked ClinicalTrials.gov studies (`nct_id`, phase, status, sponsor, conditions). |
-| `indication_terms[]` | MONDO disease terms for the indication. A program that covers several diseases has one term per disease. |
-| `target_terms[]` | NCIT or HGNC terms for the target, each with `gene_symbol` (the official HGNC symbol, `null` for non-gene targets). Group and match targets by `gene_symbol`. |
-| `source_url`, `source_checked_at` | The page the program was read from (the FDA label for a `regulatory_approval` program), and when Pav last read it. |
+| `program_id` | Pav program id. |
+| `status` | `active`, `inactive` (known only from trials, all closed) or `discontinued`. |
+| `company_id`, `company` | Developing company. |
+| `drug`, `drug_id` | Drug as published, and the Pav drug shared across companies. |
+| `indication`, `indication_terms[]` | Indication as published, and its MONDO terms. |
+| `phase_norm` | `Preclinical`, `Phase 1` … `Phase 3`, `Filed`, `Registration`, `Approved`. |
+| `modality_norm`, `target`, `target_terms[]` | Modality, target as published, and its NCIT or HGNC terms. |
+| `clinical_trials[]`, `source_url`, `last_updated` | Linked trials, source page, last change. |
 
-Fields with no value are omitted from the JSON. List fields such as
-`partners` and `modality_formats` can be empty arrays.
+`view=slim` returns light rows with `trial_count` instead of nested trials
+and terms.
 
-Full schema: [List and search pipeline programs](/api-reference/programs/list-and-search-pipeline-programs).
+## Parameters
 
-## Endpoints
-
-| Endpoint | Use |
-| --- | --- |
-| `GET /v1/programs` | Search (`q`) or filter programs. |
-| `GET /v1/programs/{program_id}` | One program with its trials and ontology terms. |
-| `GET /v1/programs/{program_id}/similar-programs` | Programs of other drugs most similar to a given program. |
-| `GET /v1/programs/autocomplete` | Search-as-you-type suggestions for a search box. |
-| `GET /v1/companies/{company_id}/programs` | One company's programs. |
-| `GET /v1/drugs/{drug_id}` | One drug's programs across every company. See [Drugs](/datasets/drugs). |
-
-## Filters
-
-All filters are optional and combine with AND. Repeating a filter matches any
-of its values.
-
-| Parameter | Matches | Example |
+| Name | Values | Example |
 | --- | --- | --- |
-| `q` | Relevance-ranked search that matches meaning as well as exact words. See [Search with `q`](#search-with-q). | `oral GLP-1 obesity` |
-| `status` | Lifecycle states. Default `active`. | `discontinued` |
-| `phase` | Normalized phase label, exactly as in `phase_norm`. | `Phase 3` |
-| `modality` | Modality token or display label, a nucleic-acid subclass (`siRNA`, `mRNA`, `saRNA`, `ASO`, `aptamer`, `RNA editing`) or a format (`bispecific`, `antibody_drug_conjugate`, ...). Unknown values return `422` listing the accepted forms. | `adc`, `siRNA`, `bispecific` |
-| `target` | The target as written, a target term label or id (NCIT or HGNC), a gene symbol, or a common alias. `TL1A`, `TNFSF15` and `NCIT:C18289` return the same programs, including multi-target programs. | `TL1A` |
-| `indication` | The indication as written, its MONDO term label or id, or an exact synonym. Includes programs for narrower diseases: `lung cancer` includes non-small cell lung carcinoma. | `NSCLC`, `MONDO:0005233` |
-| `drug` | Drug name. Case, punctuation and trademark signs are ignored, and a name also matches inside a longer one: `sotorasib` matches `LUMAKRAS® (sotorasib)`, and a drug matches combinations that include it. | `tirzepatide` |
-| `drug_id` | Every company's programs of one drug. | `4781` |
-| `company` | Company name, slug, or another name the company is known by. | `MSD`, `Merck & Co.` |
-| `company_id` | Pav company id. Includes the companies it owns unless `include_subsidiaries=false`. | `218` |
-| `short_name` | Company slug. | `eli_lilly` |
-| `view` | `full` (default) or `slim`: light rows with `trial_count` instead of nested trials and terms. | `slim` |
-| `sort`, `direction` | Listing order: `company`, `drug`, `indication`, `target`, `phase`, `modality`, `source_checked_at`. | `sort=phase&direction=desc` |
-| `include_total` | Exact match count in `pagination.total`, with or without `q`. | `true` |
-| `limit`, `offset` | Page size (1–5000, default 50) and offset. | `limit=100` |
+| `q` | Free text, ranked by relevance | `oral GLP-1 obesity` |
+| `company_id`, `drug_id`, `program_id` | Ids | `218` |
+| `phase` | `1`, `2`, `3` or a `phase_norm` label | `2,3` |
+| `status` | `active` (default), `inactive`, `discontinued` | `discontinued` |
+| `indication` | Name, synonym or MONDO id; includes narrower diseases | `MONDO:0011122` |
+| `target` | Name, gene symbol or term id | `TL1A` |
+| `modality` | Modality, subclass or format | `siRNA`, `bispecific` |
+| `from`, `to` | `last_updated` range | `2026-09-01` |
+| `sort` | `company`, `drug`, `indication`, `target`, `modality`, `phase`, `last_updated` | `-phase` |
+| `view` | `full`, `slim` | `slim` |
 
-<Warning>
-`phase` takes the label shown in `phase_norm` (`Phase 3`), not a token such as
-`phase_3`. A `phase` that matches nothing returns an empty `data` array, not an
-error. `target` and `modality` return only programs where the field is known.
-</Warning>
+Shared rules: [Conventions](/conventions).
 
-## Search with `q`
+## Example
 
-`q` finds programs by meaning, not only by exact words, ranked best match
-first. It reads the drug's type and the disease hierarchy:
-`siRNA for hypercholesterolemia` ranks siRNA programs first, and
-`pancreatic cancer` also finds pancreatic ductal adenocarcinoma programs.
-Spellings of a target such as `Claudin 18.2`, `CLDN18.2` and `Claudin18.2`
-return the same programs.
-
-Relevance search returns `pagination.total` as `null`. When you pass `sort`
-or `include_total=true`, or page past 1,000 rows, `q` instead returns every
-program matching all of its words, in listing order, with an exact total. A
-`q` with no letters or digits returns no rows. `%` and `_` are matched
-literally.
+Phase 2 and 3 programs against TL1A, latest phase first:
 
 <CodeGroup>
 
 ```bash cURL
 curl -G https://api.pav.bio/v1/programs \
   -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "q=KRAS G12C inhibitor" \
-  --data-urlencode "phase=Phase 3" \
+  --data-urlencode "target=NCIT:C18289" \
+  --data-urlencode "phase=2,3" \
+  --data-urlencode "sort=-phase" \
   --data-urlencode "limit=3"
 ```
 
@@ -168,20 +68,11 @@ import requests
 resp = requests.get(
     "https://api.pav.bio/v1/programs",
     headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"q": "KRAS G12C inhibitor", "phase": "Phase 3", "limit": 3},
+    params={"target": "NCIT:C18289", "phase": "2,3", "sort": "-phase", "limit": 3},
 )
 resp.raise_for_status()
 for p in resp.json()["data"]:
-    print(p["company"], "|", p["drug"], "|", p.get("indication", ""), "|", p.get("target"))
-```
-
-```javascript JavaScript
-const params = new URLSearchParams({ q: "KRAS G12C inhibitor", phase: "Phase 3", limit: "3" });
-const resp = await fetch(`https://api.pav.bio/v1/programs?${params}`, {
-  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
-});
-const { data } = await resp.json();
-for (const p of data) console.log(p.company, "|", p.drug, "|", p.indication, "|", p.target);
+    print(p["program_id"], p["company"], "|", p["drug"], "|", p["indication"], "|", p["phase_norm"])
 ```
 
 </CodeGroup>
@@ -190,286 +81,29 @@ for (const p of data) console.log(p.company, "|", p.drug, "|", p.indication, "|"
 {
   "data": [
     {
-      "id": 4397,
-      "status": "active",
-      "basis": "company_pipeline",
-      "company_id": 187,
-      "company": "Roche",
-      "drug": "divarasib (KRAS G12C)",
-      "drug_id": 3527,
-      "indication": "1L non small cell lung cancer (1L NSCLC)",
+      "program_id": 1356,
+      "company_id": 93,
+      "company": "Chugai Pharmaceutical",
+      "drug": "afimkibart",
+      "drug_id": 3521,
+      "indication": "Crohn’s disease",
       "phase_norm": "Phase 3",
-      "modality_norm": "small_molecule",
-      "target": "KRAS G12C"
+      "modality_norm": "antibody",
+      "target": "TL1A"
     },
     {
-      "id": 3407,
-      "status": "active",
+      "program_id": 3498,
       "company_id": 313,
       "company": "Merck",
-      "drug": "calderasib",
-      "drug_id": 8861,
-      "indication": "Colorectal cancer",
+      "drug": "tulisokibart",
+      "drug_id": 8880,
+      "indication": "Crohn’s disease",
       "phase_norm": "Phase 3",
-      "modality_norm": "small_molecule",
-      "target": "KRAS G12C"
-    }
-  ],
-  "pagination": { "limit": 3, "offset": 0 }
-}
-```
-
-## Filter and count
-
-Without `q`, the endpoint lists programs matching the filters. Pass
-`include_total=true` for the exact count. `indication=obesity` matches every
-phrasing mapped to the obesity term, such as "Overweight or Obese Adults".
-
-<CodeGroup>
-
-```bash cURL
-curl -G https://api.pav.bio/v1/programs \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "indication=obesity" \
-  --data-urlencode "phase=Phase 2" \
-  --data-urlencode "phase=Phase 3" \
-  --data-urlencode "include_total=true" \
-  --data-urlencode "limit=3"
-```
-
-```python Python
-import os
-import requests
-
-resp = requests.get(
-    "https://api.pav.bio/v1/programs",
-    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={
-        "indication": "obesity",
-        "phase": ["Phase 2", "Phase 3"],
-        "include_total": "true",
-        "limit": 3,
-    },
-)
-resp.raise_for_status()
-body = resp.json()
-print("total:", body["pagination"]["total"])
-for p in body["data"]:
-    print(p["company"], "|", p["drug"], "|", p["indication"], "|", p["phase_norm"])
-```
-
-```javascript JavaScript
-const params = new URLSearchParams([
-  ["indication", "obesity"],
-  ["phase", "Phase 2"],
-  ["phase", "Phase 3"],
-  ["include_total", "true"],
-  ["limit", "3"],
-]);
-const resp = await fetch(`https://api.pav.bio/v1/programs?${params}`, {
-  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
-});
-const body = await resp.json();
-console.log("total:", body.pagination.total);
-for (const p of body.data) console.log(p.company, "|", p.drug, "|", p.indication, "|", p.phase_norm);
-```
-
-</CodeGroup>
-
-```json Example response (trimmed)
-{
-  "data": [
-    { "id": 12904, "company": "Actimed Therapeutics Ltd", "drug": "S-pindolol benzoate (ACM 001.1)", "indication": "Obesity", "phase_norm": "Phase 2" },
-    { "id": 13371, "company": "Alveus Therapeutics, Inc.", "drug": "ALV-100", "indication": "Overweight or Obese Adults", "phase_norm": "Phase 2" },
-    { "id": 359, "company": "Amgen", "drug": "MARIDEBART CAFRAGLUTIDE (MariTide, formerly AMG 133)", "indication": "Obesity", "phase_norm": "Phase 3" }
-  ],
-  "pagination": { "limit": 3, "offset": 0, "total": 101 }
-}
-```
-
-## Everything against a target
-
-`target` matches gene symbols, aliases and term ids, so `TL1A` also returns
-programs published as `TNFSF15` or with several targets. `view=slim` returns
-light rows for scanning.
-
-<CodeGroup>
-
-```bash cURL
-curl -G https://api.pav.bio/v1/programs \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "target=TL1A" \
-  --data-urlencode "view=slim" \
-  --data-urlencode "include_total=true" \
-  --data-urlencode "limit=3"
-```
-
-```python Python
-import os
-import requests
-
-resp = requests.get(
-    "https://api.pav.bio/v1/programs",
-    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"target": "TL1A", "view": "slim", "include_total": "true", "limit": 3},
-)
-resp.raise_for_status()
-body = resp.json()
-print("total:", body["pagination"]["total"])
-for p in body["data"]:
-    print(p["company"], "|", p["drug"], "|", p["target"], "|", p["phase_norm"], "|", p["modality_formats"])
-```
-
-```javascript JavaScript
-const params = new URLSearchParams({ target: "TL1A", view: "slim", include_total: "true", limit: "3" });
-const resp = await fetch(`https://api.pav.bio/v1/programs?${params}`, {
-  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
-});
-const body = await resp.json();
-console.log("total:", body.pagination.total);
-for (const p of body.data) console.log(p.company, "|", p.drug, "|", p.target, "|", p.phase_norm, "|", p.modality_formats);
-```
-
-</CodeGroup>
-
-```json Example response (trimmed)
-{
-  "data": [
-    {
-      "id": 11728,
-      "status": "active",
-      "company_id": 203,
-      "company": "AbbVie",
-      "drug": "ABBV-7066",
-      "drug_id": 113,
-      "indication": "Inflammatory Bowel Disease (IBD)",
-      "phase_norm": "Phase 2",
       "modality_norm": "antibody",
-      "modality_formats": [],
-      "target": "IL-23 + TL1A",
-      "trial_count": 0
-    },
-    {
-      "id": 11208,
-      "status": "active",
-      "company_id": 3340,
-      "company": "Attovia Therapeutics",
-      "drug": "ATTO-1091",
-      "drug_id": 1859,
-      "indication": "Inflammatory Bowel Disease",
-      "phase_norm": "Preclinical",
-      "modality_norm": "antibody",
-      "modality_formats": ["bispecific"],
-      "target": "TL1A x IL-23p19 x Integrin α4β7",
-      "trial_count": 1
+      "target": "tumor necrosis factor (TNF)-like ligand 1A (TL1A)"
     }
   ],
-  "pagination": { "limit": 3, "offset": 0, "total": 43 }
+  "next_cursor": "eyJyIjoicHJvZ3JhbXMiLCJzIjoiLXBoYXNlIiwidiI6IjYiLCJrIjoiMzQ5OCJ9",
+  "total": 27
 }
 ```
-
-## Find similar programs
-
-Given a program id, return programs of other drugs ranked by similarity: first
-those sharing its target, then its indication, then its modality and a nearby
-phase. The same drug is never returned, and each drug appears once. `limit`
-is 1–50 (default 5); `exclude_same_company=true` leaves out the company's own
-programs.
-
-<CodeGroup>
-
-```bash cURL
-curl -G https://api.pav.bio/v1/programs/1833/similar-programs \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "limit=3" \
-  --data-urlencode "exclude_same_company=true"
-```
-
-```python Python
-import os
-import requests
-
-resp = requests.get(
-    "https://api.pav.bio/v1/programs/1833/similar-programs",
-    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"limit": 3, "exclude_same_company": "true"},
-)
-resp.raise_for_status()
-for p in resp.json()["data"]:
-    print(p["company"], "|", p["drug"], "|", p.get("indication", ""), "|", p.get("target"))
-```
-
-```javascript JavaScript
-const params = new URLSearchParams({ limit: "3", exclude_same_company: "true" });
-const resp = await fetch(`https://api.pav.bio/v1/programs/1833/similar-programs?${params}`, {
-  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
-});
-const { data } = await resp.json();
-for (const p of data) console.log(p.company, "|", p.drug, "|", p.indication, "|", p.target);
-```
-
-</CodeGroup>
-
-```json Example response (trimmed)
-{
-  "program_id": 1833,
-  "data": [
-    { "id": 2315, "company": "Hanmi Pharmaceutical", "drug": "efocipegtrutide", "indication": "MASH (formerly NASH)", "phase_norm": "Phase 2", "target": "glucagon, GIP and GLP-1" },
-    { "id": 2897, "company": "Jiangsu Hengrui Medicine", "drug": "HRS9531", "indication": "Overweight or obesity", "phase_norm": "Phase 3", "target": "GLP-1/GIP" },
-    { "id": 4404, "company": "Roche", "drug": "enicepatide", "indication": "obesity +/- Type 2 diabetes (T2D)", "phase_norm": "Phase 3", "target": "GLP-1/GIP receptor" }
-  ]
-}
-```
-
-## Get one program
-
-`GET /v1/programs/{program_id}` returns the full record, including linked
-trials and ontology terms. An id that was merged into another program returns
-the surviving program.
-
-```bash
-curl https://api.pav.bio/v1/programs/1833 \
-  -H "Authorization: Bearer $PAV_API_KEY"
-```
-
-```json Example response (trimmed)
-{
-  "id": 1833,
-  "status": "active",
-  "basis": "company_pipeline",
-  "company_id": 218,
-  "company": "Eli Lilly",
-  "drug": "Tirzepatide",
-  "drug_id": 4781,
-  "aliases": ["Tirzepatide"],
-  "indication": "Metabolic Dysfunction-Associated Steatotic Liver Disease",
-  "phase": "Phase 3",
-  "phase_norm": "Phase 3",
-  "modality_norm": "peptide",
-  "mechanism_of_action": "GIP/GLP-1 receptor agonist",
-  "clinical_trials": [
-    {
-      "nct_id": "NCT07165028",
-      "nct_url": "https://clinicaltrials.gov/study/NCT07165028",
-      "nct_phase": "PHASE3",
-      "nct_sponsor": "Eli Lilly and Company",
-      "nct_status": "RECRUITING"
-    }
-  ],
-  "indication_terms": [
-    { "ontology": "MONDO", "term_id": "MONDO:0013209", "term_label": "metabolic dysfunction-associated steatotic liver disease" }
-  ],
-  "target_terms": [
-    { "ontology": "NCIT", "term_id": "NCIT:C26183", "term_label": "Gastric Inhibitory Polypeptide Receptor", "gene_symbol": "GIPR" },
-    { "ontology": "NCIT", "term_id": "NCIT:C191844", "term_label": "Glucagon-Like Peptide 1 Receptor", "gene_symbol": "GLP1R" }
-  ],
-  "source_url": "https://www.lilly.com/science/research-development/pipeline"
-}
-```
-
-## Related
-
-- [Drugs](/datasets/drugs): one drug across every company that develops it.
-- [Competitive landscape guide](/guides/competitive-landscape)
-- [Companies](/datasets/companies) and [Clinical trials](/datasets/clinical-trials)
-- [Search and filters](/concepts/search-and-filters)

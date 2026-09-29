@@ -1,100 +1,55 @@
 ---
 title: "Patents"
-description: "US patent families with owners, member applications, ownership history, prosecution events, FDA-approved drugs and statutory term."
+description: "US patent families with owners, members, FDA-listed drugs and statutory term."
 icon: "scroll-text"
 ---
 
-## Overview
+A patent family groups US applications and patents that share a priority
+claim, with their owners and the FDA-approved drugs that list them.
 
-A patent family is a US root application together with its continuations,
-divisionals and provisionals. Each family carries its members and their
-status, recorded owners (and the Pav companies they are linked to), recorded
-assignments, prosecution and maintenance events, CPC classes, the
-FDA-approved drugs whose Orange Book listing names one of its patents, and a
-statutory term end date.
-
-Questions this dataset answers:
-
-- Which live, granted US patent families does a company own?
-- Which families cover a drug, and who owns them?
-- Which family does patent `US 9,474,780 B2` belong to, and which products list it?
-- When does a family's statutory term end?
-
-## Coverage
-
-| Families | Live families | Source | Linked to a Pav company |
-| --- | --- | --- | --- |
-| 123,000+ (September 2026) | 109,000+ | USPTO applications, grants and assignment records | About a third of live families |
-
-<Warning>
-No rows for a company does not mean the company holds no patents. An owner
-that is not a Pav company (a university or an untracked company) is still
-listed in `owner_names`; search it with `q`.
-</Warning>
+| Endpoint | Returns |
+| --- | --- |
+| `GET /v1/patents` | Families, filtered. |
+| `GET /v1/patents/{family_id}` | One family with members, ownership changes, prosecution events, FDA-listed drugs and statutory term. |
 
 ## Key fields
 
 | Field | Description |
 | --- | --- |
-| `family_id` | Pav family id. |
-| `representative_title` | Title of the representative member. |
-| `member_count`, `granted_count`, `pending_count` | Family size and status mix. |
-| `earliest_priority_date`, `earliest_filing_date`, `latest_grant_date`, `latest_status_date` | Key dates. |
-| `has_live_member` | `true` when any member is pending or in force. |
-| `owner_names[]` | Recorded owners of live members, as recorded. |
-| `companies[]` | Owners linked to Pav companies. |
-| `drugs[]` | FDA-approved products whose Orange Book listing names one of the family's patents: `trade_name`, `ingredient`, `application_key`, `patent_numbers`, `latest_patent_expiry` (including pediatric exclusivity). Biologics are not covered, because the Purple Book lists no patents. |
-| `members[]` | Member applications (list endpoint: with `include_members=true`, up to 30 per family). |
+| `family_id`, `representative_title` | Pav family id and title. |
+| `member_count`, `granted_count`, `pending_count` | Members by status. |
+| `has_live_member` | A member is pending or in force. |
+| `earliest_priority_date`, `latest_grant_date` | Key dates. |
+| `owner_names[]`, `companies[]` | Owners as recorded, and linked Pav companies. |
+| `drugs[]` | Orange Book products that list a member. |
+| `members[]` | Up to 30 members with numbers and status (`view=full`). |
 
-`GET /v1/patents/{family_id}` adds `statutory_term_start` and
-`statutory_term_end`, family `cpc_codes`, per-member owners, recorded
-conveyances in `ownership[]`, and prosecution and maintenance `events[]`.
+## Parameters
 
-<Note>
-`statutory_term_end` is the earliest nonprovisional filing date plus 20 years.
-It does not include patent term adjustments or extensions. Treat it as a
-baseline for loss-of-exclusivity work, not a final expiry date.
-</Note>
-
-## Endpoints
-
-| Endpoint | Use |
-| --- | --- |
-| `GET /v1/patents` | Search and filter families. |
-| `GET /v1/patents/{family_id}` | One family with members, ownership, events, drugs and term. |
-
-## Filters
-
-All filters are optional and combine with AND.
-
-| Parameter | Matches | Example |
+| Name | Values | Example |
 | --- | --- | --- |
-| `q` | A patent, publication or application number in any common format finds its family. Any other text matches a substring of the title or an owner name, or the trade name or ingredient of an FDA-approved drug listing one of the family's patents. No synonym expansion. | `tirzepatide`, `US 9,474,780 B2`, `2021/0363216`, `14/987,791` |
-| `company_id` | Families whose live members a Pav company owns, including the companies it owns unless `include_subsidiaries=false`. Repeatable. | `218` |
-| `cpc` | CPC class prefix on any member. Spacing is ignored. | `C07K`, `A61K38/26` |
-| `state` | `live` (a member pending or in force) or `lapsed` (none). | `live` |
-| `granted` | `true`: at least one grant; `false`: none. | `true` |
-| `priority_from`, `priority_to` | Earliest priority date range, inclusive. | `2020-01-01` |
-| `include_members` | Include member applications. | `true` |
-| `sort` | `latest_status_date` (default), `earliest_priority_date`, `member_count`; newest or largest first. | `earliest_priority_date` |
-| `include_total` | Exact match count. | `true` |
-| `limit`, `offset` | Page size (1–100, default 25) and offset (up to 10,000). | `limit=50` |
+| `q` | Patent, publication or application number, or part of a title, owner or FDA-listed drug | `tirzepatide` |
+| `company_id` | Ids; owners of live members | `218` |
+| `cpc` | CPC prefix on any member | `A61K38/26` |
+| `status` | `live`, `lapsed` | `live` |
+| `granted` | `true`, `false` | `true` |
+| `from`, `to` | `earliest_priority_date` range | `2020-01-01` |
+| `sort` | `latest_status_date` (default descending), `earliest_priority_date`, `member_count` | `-member_count` |
+| `view` | `full`, `slim` | `slim` |
 
-A lapsed family has no live owners, so `company_id` with `state=lapsed`
-returns nothing.
+Shared rules: [Conventions](/conventions).
 
-## A company's live granted families
+## Example
 
 <CodeGroup>
 
 ```bash cURL
 curl -G https://api.pav.bio/v1/patents \
   -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "company_id=218" \
-  --data-urlencode "state=live" \
-  --data-urlencode "granted=true" \
-  --data-urlencode "include_total=true" \
-  --data-urlencode "limit=3"
+  --data-urlencode "q=tirzepatide" \
+  --data-urlencode "status=live" \
+  --data-urlencode "view=slim" \
+  --data-urlencode "limit=2"
 ```
 
 ```python Python
@@ -104,29 +59,11 @@ import requests
 resp = requests.get(
     "https://api.pav.bio/v1/patents",
     headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"company_id": 218, "state": "live", "granted": "true", "include_total": "true", "limit": 3},
+    params={"q": "tirzepatide", "status": "live", "view": "slim", "limit": 2},
 )
 resp.raise_for_status()
-body = resp.json()
-print("total:", body["pagination"]["total"])
-for f in body["data"]:
-    print(f["family_id"], "|", f["representative_title"], "|", f.get("earliest_priority_date"))
-```
-
-```javascript JavaScript
-const params = new URLSearchParams({
-  company_id: "218",
-  state: "live",
-  granted: "true",
-  include_total: "true",
-  limit: "3",
-});
-const resp = await fetch(`https://api.pav.bio/v1/patents?${params}`, {
-  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
-});
-const body = await resp.json();
-console.log("total:", body.pagination.total);
-for (const f of body.data) console.log(f.family_id, "|", f.representative_title, "|", f.earliest_priority_date);
+for f in resp.json()["data"]:
+    print(f["family_id"], f["earliest_priority_date"], f["representative_title"])
 ```
 
 </CodeGroup>
@@ -139,195 +76,23 @@ for (const f of body.data) console.log(f.family_id, "|", f.representative_title,
       "representative_title": "PROCESSES AND INTERMEDIATES FOR PREPARING TIRZEPATIDE",
       "member_count": 3,
       "granted_count": 1,
+      "pending_count": 2,
       "earliest_priority_date": "2022-12-29",
       "has_live_member": true,
-      "companies": [{ "company_id": 218, "short_name": "eli_lilly", "name": "Eli Lilly" }],
-      "drugs": []
+      "owner_names": ["ELI LILLY AND COMPANY"],
+      "companies": [{ "company_id": 218, "name": "Eli Lilly" }]
     },
     {
-      "family_id": "62946586",
-      "representative_title": "KRAS G12C INHIBITORS",
-      "member_count": 2,
-      "granted_count": 1,
-      "earliest_priority_date": "2019-12-11",
-      "has_live_member": true,
-      "companies": [{ "company_id": 218, "short_name": "eli_lilly", "name": "Eli Lilly" }],
-      "drugs": []
-    }
-  ],
-  "pagination": { "limit": 3, "offset": 0, "total": 127 }
-}
-```
-
-## Families that mention a drug
-
-`q` matches titles, owner names and the drugs listing a family's patents, so it
-finds families from every owner, including owners that are not Pav companies.
-
-<CodeGroup>
-
-```bash cURL
-curl -G https://api.pav.bio/v1/patents \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "q=tirzepatide" \
-  --data-urlencode "include_total=true" \
-  --data-urlencode "limit=5"
-```
-
-```python Python
-import os
-import requests
-
-resp = requests.get(
-    "https://api.pav.bio/v1/patents",
-    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"q": "tirzepatide", "include_total": "true", "limit": 5},
-)
-resp.raise_for_status()
-for f in resp.json()["data"]:
-    print(f["family_id"], "|", f["representative_title"], "|", ", ".join(f.get("owner_names", [])))
-```
-
-```javascript JavaScript
-const params = new URLSearchParams({ q: "tirzepatide", include_total: "true", limit: "5" });
-const resp = await fetch(`https://api.pav.bio/v1/patents?${params}`, {
-  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
-});
-const { data } = await resp.json();
-for (const f of data) console.log(f.family_id, "|", f.representative_title, "|", (f.owner_names ?? []).join(", "));
-```
-
-</CodeGroup>
-
-```json Example response (trimmed)
-{
-  "data": [
-    { "family_id": "63477734", "representative_title": "PROCESSES AND INTERMEDIATES FOR PREPARING TIRZEPATIDE", "owner_names": ["ELI LILLY AND COMPANY"] },
-    { "family_id": "19062335", "representative_title": "MULTI-DOSE PEN OF TIRZEPATIDE", "owner_names": ["ORBICULAR PHARMACEUTICAL TECHNOLOGIES PRIVATE LIMITED"] },
-    { "family_id": "63150187", "representative_title": "TIRZEPATIDE THERAPEUTIC METHODS", "owner_names": ["ELI LILLY AND COMPANY"] }
-  ],
-  "pagination": { "limit": 5, "offset": 0, "total": 11 }
-}
-```
-
-## Look up a patent number
-
-Any common format of a patent, publication or application number finds its
-family. `drugs[]` shows the approved products whose Orange Book listing names
-the patent.
-
-<CodeGroup>
-
-```bash cURL
-curl -G https://api.pav.bio/v1/patents \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "q=US 9,474,780 B2"
-```
-
-```python Python
-import os
-import requests
-
-resp = requests.get(
-    "https://api.pav.bio/v1/patents",
-    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"q": "US 9,474,780 B2"},
-)
-resp.raise_for_status()
-for f in resp.json()["data"]:
-    print(f["family_id"], "|", f["representative_title"])
-    for d in f["drugs"]:
-        print("  ", d["trade_name"], "|", d["application_key"], "|", d["latest_patent_expiry"])
-```
-
-```javascript JavaScript
-const params = new URLSearchParams({ q: "US 9,474,780 B2" });
-const resp = await fetch(`https://api.pav.bio/v1/patents?${params}`, {
-  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
-});
-const { data } = await resp.json();
-for (const f of data) {
-  console.log(f.family_id, "|", f.representative_title);
-  for (const d of f.drugs) console.log("  ", d.trade_name, "|", d.application_key, "|", d.latest_patent_expiry);
-}
-```
-
-</CodeGroup>
-
-```json Example response (trimmed)
-{
-  "data": [
-    {
-      "family_id": "62101488",
-      "representative_title": "GIP AND GLP-1 CO-AGONIST COMPOUNDS",
+      "family_id": "19062335",
+      "representative_title": "MULTI-DOSE PEN OF TIRZEPATIDE",
       "member_count": 1,
-      "granted_count": 1,
-      "earliest_priority_date": "2015-01-09",
-      "owner_names": ["ELI LILLY AND COMPANY"],
-      "drugs": [
-        { "trade_name": "MOUNJARO", "ingredient": "TIRZEPATIDE", "application_key": "N:215866", "patent_numbers": ["9474780"], "latest_patent_expiry": "2036-05-13" },
-        { "trade_name": "ZEPBOUND", "ingredient": "TIRZEPATIDE", "application_key": "N:217806", "patent_numbers": ["9474780"], "latest_patent_expiry": "2036-05-13" }
-      ]
+      "earliest_priority_date": "2025-02-25",
+      "has_live_member": true,
+      "owner_names": ["ORBICULAR PHARMACEUTICAL TECHNOLOGIES PRIVATE LIMITED"],
+      "companies": []
     }
   ],
-  "pagination": { "limit": 25, "offset": 0 }
+  "next_cursor": "eyJyIjoicGF0ZW50cyIsInMiOiItbGF0ZXN0X3N0YXR1c19kYXRlIiwidiI6IjIwMjYtMDctMTUiLCJrIjoiMTkwNjIzMzUifQ",
+  "total": 11
 }
 ```
-
-Pass `drugs[].application_key` to [`/v1/fda`](/datasets/fda) for the
-product's Orange Book patents and exclusivities.
-
-## Get one family
-
-```bash
-curl https://api.pav.bio/v1/patents/63477734 \
-  -H "Authorization: Bearer $PAV_API_KEY"
-```
-
-```json Example response (trimmed)
-{
-  "family_id": "63477734",
-  "representative_title": "PROCESSES AND INTERMEDIATES FOR PREPARING TIRZEPATIDE",
-  "member_count": 3,
-  "granted_count": 1,
-  "pending_count": 2,
-  "earliest_priority_date": "2022-12-29",
-  "latest_grant_date": "2025-05-20",
-  "owner_names": ["ELI LILLY AND COMPANY"],
-  "companies": [{ "company_id": 218, "short_name": "eli_lilly", "name": "Eli Lilly" }],
-  "statutory_term_start": "2023-12-29",
-  "statutory_term_end": "2043-12-29",
-  "cpc_codes": ["C07K   1/061", "C07K   1/10", "C07K  14/001", "C07K  14/605", "C07K  14/645"],
-  "drugs": [],
-  "members": [
-    {
-      "application_number": "18806394",
-      "patent_number": "12304938",
-      "role": "continuation",
-      "filing_date": "2024-08-15",
-      "grant_date": "2025-05-20",
-      "status_description": "Patented Case",
-      "is_dead": false
-    }
-  ],
-  "ownership": [
-    {
-      "recorded_date": "2025-10-29",
-      "conveyance_kind": "assignment",
-      "conveyance_text": "ASSIGNMENT OF ASSIGNOR'S INTEREST",
-      "assignees": ["ELI LILLY AND COMPANY"],
-      "application_numbers": ["19351688"]
-    }
-  ],
-  "events": [
-    { "event_date": "2026-09-25", "application_number": "19351688", "event_code": "ABN9", "description": "Disposal for a RCE / CPA / R129" }
-  ],
-  "events_total": 139
-}
-```
-
-## Related
-
-- [Patent and LOE check guide](/guides/patent-loe-check)
-- [FDA records](/datasets/fda): Orange Book patents and exclusivities by application.
-- [Companies](/datasets/companies): find an owner's `company_id`.
