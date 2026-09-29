@@ -16,13 +16,14 @@ works for an indication or a modality.
 
 1. **Search by meaning.** `q` finds programs whose text describes the
    mechanism, including ones with no structured `target`.
-2. **Add exact target matches.** The `target` filter catches programs that
-   state the target but word their description differently.
+2. **Add target matches.** The `target` filter catches programs that state
+   the target under any of its names (gene symbol, alias or term id) but word
+   their description differently.
 3. **Merge by program `id`, then filter.** Relevance search returns weaker
    matches further down the list; keep only programs that name the target.
 4. **Rank by phase** and read the linked trials.
 
-Running both searches matters: only about a quarter of programs publish a
+Running both searches matters: only about half of active programs publish a
 target (see [Coverage and sources](/concepts/coverage-and-sources)).
 
 ## Script
@@ -78,28 +79,28 @@ for p in landscape[:8]:
 ```
 
 ```text Example output (September 2026)
-50 KRAS programs across 27 companies
-  Approved     2
+75 KRAS programs across 34 companies
+  Approved     4
   Registration 1
-  Phase 3      16
-  Phase 2      6
-  Phase 1/2    9
-  Phase 1      12
-  Preclinical  4
+  Phase 3      15
+  Phase 2      13
+  Phase 1/2    1
+  Phase 1      36
+  Preclinical  5
 
-Approved   | Shanghai Allist Pharmaceuticals | Glecirasib | 2nd Line Treatment for NSCLC | trials=10
+Approved   | Amgen | LUMAKRAS® (sotorasib) | Metastatic Colorectal Cancer | trials=2
 Approved   | Innovent Biologics | DUPERT (Fulzerasib) |  | trials=15
+Approved   | Amgen | LUMAKRAS® (sotorasib) | Non-Small Cell Lung Cancer | trials=11
+Approved   | Shanghai Allist Pharmaceuticals | Glecirasib | 2nd Line Treatment for NSCLC | trials=0
 Registration | Royalty Pharma | Rasonque | RAS mutant pancreatic cancer | trials=13
+Phase 3    | Roche | divarasib (KRAS G12C) | 1L non small cell lung cancer (1L NSCLC) | trials=3
 Phase 3    | Merck | calderasib | Colorectal cancer | trials=1
-Phase 3    | Merck | calderasib | Non-small cell lung cancer | trials=5
-Phase 3    | Bristol Myers Squibb | KRAZATI® (adagrasib) | 1L Non-Small Cell Lung Cancer PD-L1≥50% | trials=1
-Phase 3    | Roche | divarasib (KRAS G12C) | 1L non small cell lung cancer (1L NSCLC) | trials=5
-Phase 3    | Roche | divarasib (KRAS G12C) | 2L non small cell lung cancer (2L NSCLC) | trials=5
+Phase 3    | Eli Lilly | Olomorasib | Adjuvant KRAS G12C-mutant resected NSCLC | trials=1
 ```
 
 A program is one drug in one indication, so a drug developed in several
-indications appears once per indication. Count distinct `drug` per company for
-an asset-level view.
+indications appears once per indication. Count distinct `drug_id` for an
+asset-level view.
 
 ## Extend it
 
@@ -110,8 +111,12 @@ an asset-level view.
   phase, status and sponsor. Fetch `GET /v1/trials/{nct_id}` for enrollment,
   dates and primary outcomes.
 - **By indication.** Replace the searches with `q="obesity"` plus
-  `indication=Obesity`, and group by `indication_terms[].term_id` to merge
-  phrasings such as "Obesity" and "Metabolic (Obesity)".
+  `indication=obesity`, which matches every phrasing mapped to the disease and
+  its narrower diseases. Group by `indication_terms[].term_id` to merge the
+  `q` results.
+- **Asset-level view.** Group programs by `drug_id` to count each drug once
+  across its indications and partners, or open it with
+  [`GET /v1/drugs/{drug_id}`](/datasets/drugs).
 - **Deals and patents around the landscape.** Pass each company's
   `company_id` to [`/v1/deals`](/datasets/deals) and [`/v1/patents`](/datasets/patents).
 

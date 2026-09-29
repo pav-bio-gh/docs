@@ -27,32 +27,37 @@ JSON. The same data is available to AI agents through the Pav MCP server.
 
 | Dataset | What it is | Size (September 2026) |
 | --- | --- | --- |
-| [Programs](/datasets/programs) | Drug programs from company-published pipelines: drug, indication, phase, modality, target, mechanism, linked trials | 27,000+ programs |
-| [Companies](/datasets/companies) | Biopharma companies, with their programs, trials, deals, patents and changes | 6,500+ companies |
+| [Programs](/datasets/programs) | Drug programs from company pipelines, filings and trial registrations: drug, indication, phase, modality, target, mechanism, status, linked trials | 14,000+ active programs (28,000+ in all) |
+| [Drugs](/datasets/drugs) | One drug product across every company that develops it, under all its names | 14,000+ drugs |
+| [Companies](/datasets/companies) | Biopharma companies with owners, tickers and identifiers, and their programs, trials, deals, patents and changes | 3,300+ with active programs |
 | [Clinical trials](/datasets/clinical-trials) | ClinicalTrials.gov studies, linked to Pav programs and sponsor companies | ClinicalTrials.gov registry |
-| [Deals](/datasets/deals) | M&A, licensing, collaborations, options, joint ventures; terms, lifecycle, source documents | 3,100+ deals |
-| [Patents](/datasets/patents) | US patent families with owners, members, ownership history and statutory term | 122,000+ families |
-| [FDA records](/datasets/fda) | Orange Book products, patents and exclusivities; Purple Book biologics; orphan designations; warning letters; recalls, linked to companies | 87,000+ records |
-| [Changes](/datasets/changes) | Detected pipeline movement: programs added, removed, or changing phase | Continuous feed |
+| [Deals](/datasets/deals) | M&A, licensing, collaborations, options, joint ventures; terms, lifecycle, drugs covered, source documents | 3,300+ deals |
+| [Patents](/datasets/patents) | US patent families with owners, members, ownership history, FDA-approved drugs and statutory term | 123,000+ families |
+| [FDA records](/datasets/fda) | Orange Book, Purple Book, orphan designations, drug applications, complete response letters, accelerated approvals, advisory committee meetings, warning letters and recalls | 115,000+ records |
+| [Changes](/datasets/changes) | Detected movement: programs added, removed or changing phase; trials changing status, dates, phase or results | Continuous feeds |
 
-Current program and company counts are available at any time from
+Current active program and company counts are available at any time from
 [`GET /v1/stats`](/api-reference/stats/dataset-summary-statistics).
 
 ## How the data connects
 
 Every dataset joins through Pav ids.
 
-- A **company** (`company_id`) owns **programs** (`id`).
+- A **company** (`company_id`) owns **programs** (`id`), and can own other
+  companies (`parent_company_id`).
+- A **drug** (`drug_id`) groups every company's programs of the same product.
 - A **program** lists its linked **clinical trials** (`nct_id`). A trial lists
   the Pav programs and companies linked to it.
-- A **deal** lists its party companies; filter deals by `company_id`.
-- A **patent family** lists its owner companies; filter patents by
-  `company_id`.
-- An **FDA record** carries its linked company; filter FDA records by
-  `company_id`.
-- A **change** records a program's movement and carries its `company_id`.
+- A **deal** lists its party companies and the drugs it covers; filter deals by
+  `company_id` or `drug_id`.
+- A **patent family** lists its owner companies and the FDA-approved drugs
+  listing its patents; filter patents by `company_id`.
+- An **FDA record** carries its linked company and FDA application number;
+  filter FDA records by `company_id` or `application_key`.
+- A **change** records a program's movement with its `program_id` and
+  `company_id`, or a trial's with its `nct_id`.
 
-Resolve a name to an id once, with `GET /v1/companies?q=...`, then reuse the id
+Look up a company's id once, with `GET /v1/companies?q=...`, then reuse the id
 across every dataset.
 
 ## API at a glance
@@ -63,10 +68,12 @@ across every dataset.
   See [Authentication](/authentication).
 - List endpoints return `{ "data": [...], "pagination": {...} }`.
   See [Pagination](/concepts/pagination).
-- `q=` runs relevance-ranked search on programs, companies and trials, and
-  exact-term matching on deals and patents.
+- `q=` runs relevance-ranked search on programs, companies and trials, exact
+  name lookup on drugs, and exact-term or substring matching on deals, patents
+  and FDA records.
   See [Search and filters](/concepts/search-and-filters).
-- 300 requests per minute per key. Errors share one envelope.
+- 300 requests per minute per key, across the whole service. Errors share
+  one envelope.
   See [Rate limits and errors](/rate-limits).
 
 ## Built for

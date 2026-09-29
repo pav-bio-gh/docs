@@ -1,0 +1,275 @@
+---
+title: "Drugs"
+description: "One drug product across every company that develops or markets it: names, modality, most advanced phase, companies and programs."
+---
+
+## Overview
+
+A drug is one drug product, whatever name each company uses for it: its INN,
+research codes and brand names. The originator, its partners, licensees and
+parent all list the same drug, and each of their programs carries the same
+`drug_id`. A biosimilar or generic is a separate drug.
+
+Questions this dataset answers:
+
+- Which companies hold rights to inclisiran, and how far has each taken it?
+- What is `TEV-48574` called now, and who develops it?
+- Which of Merck's drugs are shared with a partner?
+
+## Coverage
+
+| Drugs | Drugs held by more than one company | Updated |
+| --- | --- | --- |
+| 14,000+ (September 2026) | 1,000+ | With the programs they come from |
+
+Every program of a named drug has a `drug_id`. A program whose company does not
+name its asset (`drug` is `Undisclosed`) has none.
+
+## Key fields
+
+| Field | Description |
+| --- | --- |
+| `drug_id` | Pav drug id. Stable; an id that was merged into another drug returns that drug. |
+| `name`, `inn` | Display name (the INN when there is one) and the INN. |
+| `kind` | `originator` (the innovator product, whoever lists it), `biosimilar` or `generic`. |
+| `aliases[]` | Every name the drug goes by, each with its `kind`: `inn`, `code`, `brand` or `name`. |
+| `modality`, `modality_subclass`, `modality_formats[]` | The drug's modality. Every program of the drug has this `modality_norm`. |
+| `highest_phase` | Most advanced phase across all companies' programs of the drug. |
+| `program_count` | Programs of the drug across companies (one per company, indication and territory). |
+| `companies[]` | Companies with programs of the drug, most advanced first, each with its `program_count` and `highest_phase`. |
+
+`GET /v1/drugs/{drug_id}` adds `programs[]`: the drug's programs across
+companies, as light program rows.
+
+## Endpoints
+
+| Endpoint | Use |
+| --- | --- |
+| `GET /v1/drugs` | Look up drugs by name, or list a company's drugs. |
+| `GET /v1/drugs/{drug_id}` | One drug with its companies and programs. |
+| `GET /v1/programs?drug_id=` | Full program records for one or more drugs. |
+
+## Filters
+
+| Parameter | Matches | Example |
+| --- | --- | --- |
+| `q` | A complete drug name, code or brand. Case, spaces, hyphens and trademark signs are ignored; partial names do not match. Repeatable (any may match). | `Leqvio`, `TEV-48574` |
+| `company_id` | Drugs with programs at these companies and, by default, the companies they own (`include_subsidiaries`). Repeatable. | `313` |
+| `multi_company` | Only drugs with programs at more than one company. | `true` |
+| `status` | Which programs count: `active` (default), `inactive`, `discontinued`. Repeatable. | `discontinued` |
+| `limit`, `offset` | Page size (1–500, default 50) and offset. | `limit=100` |
+
+Without `q`, drugs are listed by phase, most advanced first.
+
+## Look up a drug by any name
+
+A brand, code or INN returns the same drug with every company that holds it.
+
+<CodeGroup>
+
+```bash cURL
+curl -G https://api.pav.bio/v1/drugs \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "q=Leqvio"
+```
+
+```python Python
+import os
+import requests
+
+resp = requests.get(
+    "https://api.pav.bio/v1/drugs",
+    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
+    params={"q": "Leqvio"},
+)
+resp.raise_for_status()
+for d in resp.json()["data"]:
+    print(d["drug_id"], d["name"], d["highest_phase"])
+    for c in d["companies"]:
+        print("  ", c["name"], "|", c["highest_phase"], "|", c["program_count"], "programs")
+```
+
+```javascript JavaScript
+const params = new URLSearchParams({ q: "Leqvio" });
+const resp = await fetch(`https://api.pav.bio/v1/drugs?${params}`, {
+  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
+});
+const { data } = await resp.json();
+for (const d of data) {
+  console.log(d.drug_id, d.name, d.highest_phase);
+  for (const c of d.companies) console.log("  ", c.name, "|", c.highest_phase, "|", c.program_count, "programs");
+}
+```
+
+</CodeGroup>
+
+```json Example response (trimmed)
+{
+  "data": [
+    {
+      "drug_id": 869,
+      "name": "Inclisiran",
+      "inn": "Inclisiran",
+      "kind": "originator",
+      "aliases": [
+        { "alias": "Leqvio", "kind": "brand" },
+        { "alias": "ALN-PCSSC", "kind": "code" },
+        { "alias": "KJX839", "kind": "code" },
+        { "alias": "inclisiran", "kind": "inn" }
+      ],
+      "modality": "rna",
+      "modality_subclass": "sirna",
+      "highest_phase": "Approved",
+      "program_count": 4,
+      "companies": [
+        { "company_id": 101, "name": "Alnylam Pharmaceuticals", "program_count": 1, "highest_phase": "Approved" },
+        { "company_id": 1811, "name": "The Medicines Company", "program_count": 1, "highest_phase": "Approved" },
+        { "company_id": 288, "name": "Novartis", "program_count": 2, "highest_phase": "Phase 3" }
+      ]
+    }
+  ],
+  "pagination": { "limit": 50, "offset": 0 }
+}
+```
+
+## Get one drug with its programs
+
+<CodeGroup>
+
+```bash cURL
+curl https://api.pav.bio/v1/drugs/11873 \
+  -H "Authorization: Bearer $PAV_API_KEY"
+```
+
+```python Python
+import os
+import requests
+
+resp = requests.get(
+    "https://api.pav.bio/v1/drugs/11873",
+    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
+)
+resp.raise_for_status()
+drug = resp.json()
+print(drug["name"], [a["alias"] for a in drug["aliases"]])
+for p in drug["programs"]:
+    print(p["id"], "|", p["company"], "|", p["indication"], "|", p["phase_norm"])
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.pav.bio/v1/drugs/11873", {
+  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
+});
+const drug = await resp.json();
+console.log(drug.name, drug.aliases.map((a) => a.alias));
+for (const p of drug.programs) console.log(p.id, "|", p.company, "|", p.indication, "|", p.phase_norm);
+```
+
+</CodeGroup>
+
+```json Example response (trimmed)
+{
+  "drug_id": 11873,
+  "name": "duvakitug",
+  "kind": "originator",
+  "aliases": [
+    { "alias": "TEV-'574", "kind": "code" },
+    { "alias": "TEV-48574", "kind": "code" },
+    { "alias": "duvakitug", "kind": "inn" }
+  ],
+  "modality": "antibody",
+  "highest_phase": "Phase 3",
+  "companies": [
+    { "company_id": 241, "name": "Sanofi", "program_count": 2, "highest_phase": "Phase 3" },
+    { "company_id": 144, "name": "Teva Pharmaceutical Industries", "program_count": 1, "highest_phase": "Phase 3" }
+  ],
+  "programs": [
+    { "id": 4578, "company": "Sanofi", "drug": "duvakitug", "indication": "Crohn's disease", "phase_norm": "Phase 3", "target": "TL1A", "trial_count": 2 },
+    { "id": 5078, "company": "Teva Pharmaceutical Industries", "drug": "Duvakitug (TEV-'574)", "indication": "Ulcerative Colitis, Crohn’s Disease", "phase_norm": "Phase 3", "target": "TL1A" }
+  ]
+}
+```
+
+## A company's shared drugs
+
+`company_id` with `multi_company=true` lists the company's drugs that other
+companies also hold: partnered, licensed or co-developed assets.
+
+<CodeGroup>
+
+```bash cURL
+curl -G https://api.pav.bio/v1/drugs \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "company_id=313" \
+  --data-urlencode "multi_company=true" \
+  --data-urlencode "limit=3"
+```
+
+```python Python
+import os
+import requests
+
+resp = requests.get(
+    "https://api.pav.bio/v1/drugs",
+    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
+    params={"company_id": 313, "multi_company": "true", "limit": 3},
+)
+resp.raise_for_status()
+for d in resp.json()["data"]:
+    print(d["name"], "|", d["highest_phase"], "|", ", ".join(c["name"] for c in d["companies"]))
+```
+
+```javascript JavaScript
+const params = new URLSearchParams({ company_id: "313", multi_company: "true", limit: "3" });
+const resp = await fetch(`https://api.pav.bio/v1/drugs?${params}`, {
+  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
+});
+const { data } = await resp.json();
+for (const d of data) console.log(d.name, "|", d.highest_phase, "|", d.companies.map((c) => c.name).join(", "));
+```
+
+</CodeGroup>
+
+```json Example response (trimmed)
+{
+  "data": [
+    {
+      "drug_id": 7850,
+      "name": "sacituzumab tirumotecan",
+      "kind": "originator",
+      "modality": "adc",
+      "highest_phase": "Approved",
+      "program_count": 13,
+      "companies": [
+        { "company_id": 956, "name": "Sichuan Kelun-Biotech Biopharmaceutical", "program_count": 1, "highest_phase": "Approved" },
+        { "company_id": 313, "name": "Merck", "program_count": 10, "highest_phase": "Phase 3" },
+        { "company_id": 2700, "name": "Klus Pharma Inc.", "program_count": 2, "highest_phase": "Phase 2" }
+      ]
+    },
+    {
+      "drug_id": 4217,
+      "name": "ifinatamab deruxtecan",
+      "kind": "originator",
+      "modality": "adc",
+      "highest_phase": "Filed",
+      "program_count": 30,
+      "companies": [
+        { "company_id": 91, "name": "Daiichi Sankyo", "program_count": 14, "highest_phase": "Filed" },
+        { "company_id": 313, "name": "Merck", "program_count": 16, "highest_phase": "Filed" }
+      ]
+    }
+  ],
+  "pagination": { "limit": 3, "offset": 0 }
+}
+```
+
+<Note>
+A brand name is found once one of the drug's companies uses it. Search the
+INN or a research code as well when a brand returns nothing.
+</Note>
+
+## Related
+
+- [Programs](/datasets/programs): filter with `drug_id` for full program records.
+- [Deals](/datasets/deals): filter deals with `drug_id`.
+- [Patents](/datasets/patents): `drugs[]` lists FDA-approved products on a family.

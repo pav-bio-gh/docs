@@ -1,48 +1,73 @@
 ---
 title: "Changes"
-description: "A feed of detected pipeline movement: programs added, removed, or changing phase."
+description: "Feeds of detected movement: programs added, removed or changing phase, and clinical trials changing status, dates, phase or results."
 ---
 
 ## Overview
 
-The changes feed records movement in company pipelines as Pav detects it: a
-program appears, a program disappears, or a program's phase changes. Each
-event names the company, drug and indication, the phase before and after, and
-when Pav detected it. Poll the feed instead of diffing pipeline snapshots
-yourself.
+`GET /v1/changes` serves two feeds, chosen with `entity`:
 
-Questions this dataset answers:
+- **Programs** (`entity=program`, the default): a program appears in a
+  company's pipeline, leaves it, or changes phase. Each event names the
+  program, company, drug and indication, the phase before and after, and when
+  Pav detected it.
+- **Clinical trials** (`entity=trial`): a trial is registered or removed, or
+  its status, phase, dates, enrollment, stop reason or results change on
+  ClinicalTrials.gov.
+
+Poll a feed instead of diffing snapshots yourself.
+
+Questions these feeds answer:
 
 - Which programs moved phase this week?
 - What did a company add to or drop from its pipeline since a given date?
-- Which programs entered Phase 1 across the industry this month?
+- Which trials started recruiting, completed or posted results today?
 
 ## Coverage
 
-| Scope | Order | Retractions |
-| --- | --- | --- |
-| Programs of every tracked company | Newest first by `detected_at` | Retracted events are hidden unless `include_invalidated=true` |
-
-## Key fields
-
-| Field | Description |
-| --- | --- |
-| `id` | Change event id. |
-| `company_id`, `company`, `short_name` | The company whose pipeline changed. |
-| `drug`, `indication`, `territory` | The program that changed, as published. |
-| `change_type` | `insert` (program added), `delete` (program removed), `update` (phase changed). |
-| `prev_phase`, `new_phase` | Phase before and after, as published. `insert` has only `new_phase`; `delete` has only `prev_phase`. |
-| `detected_at` | When Pav detected the change (UTC). |
-| `invalidated_at`, `invalidation_reason` | Set when a change was later retracted, for example because a removed program reappeared. Returned only with `include_invalidated=true`. |
+| Feed | Scope | Order | History |
+| --- | --- | --- | --- |
+| Programs | Programs of every tracked company | Newest first by `detected_at` | Retracted events hidden unless `include_invalidated=true` |
+| Clinical trials | Every ClinicalTrials.gov study | Newest first by `detected_at` | From 2026-06-15; updated daily |
 
 ## Endpoints
 
 | Endpoint | Use |
 | --- | --- |
-| `GET /v1/changes` | The feed across all companies. |
-| `GET /v1/companies/{company_id}/changes` | One company's feed. |
+| `GET /v1/changes` | Either feed across all companies. |
+| `GET /v1/companies/{company_id}/changes` | One company's program feed. |
 
-## Filters
+Page with `cursor`, not `offset`. Each response carries `next_cursor` while
+more events exist; the cursor stays correct while new events arrive. See
+[Pagination](/concepts/pagination).
+
+## Program changes
+
+### Key fields
+
+| Field | Description |
+| --- | --- |
+| `id` | Change event id. |
+| `program_id` | The changed program; pass it to `GET /v1/programs/{program_id}`. `null` only on some older retracted events. |
+| `company_id`, `company`, `short_name` | The company whose pipeline changed. |
+| `drug`, `indication`, `territory` | The program that changed, as published. |
+| `change_type` | `insert` (program added), `update` (phase or details changed), `delete` (program left the company's pipeline). |
+| `prev_phase`, `new_phase` | Phase before and after, as the company labels it. `insert` has only `new_phase`; `delete` has only `prev_phase`. |
+| `detected_at` | When Pav detected the change (UTC). |
+| `invalidated_at`, `invalidation_reason` | Set when a change was later retracted. Returned only with `include_invalidated=true`. |
+
+`invalidation_reason` is one of:
+
+| Value | Meaning |
+| --- | --- |
+| `reverted` | A later reading undid the change within 30 days, for example a program that left a page and came back. |
+| `restated` | The change was replaced by a corrected history in September 2026. |
+| `asset_reappeared_in_later_run` | Older events: the removed program reappeared. |
+
+A change can be retracted after you first read it. To see withdrawals, poll
+with `include_invalidated=true` and drop events that carry `invalidated_at`.
+
+### Filters
 
 | Parameter | Matches | Example |
 | --- | --- | --- |
@@ -53,10 +78,7 @@ Questions this dataset answers:
 | `cursor` | Opaque cursor from the previous response's `next_cursor`. | |
 | `limit` | Page size (1–5000, default 50). | `100` |
 
-Page with `cursor`, not `offset`. The cursor stays correct while new events
-arrive. See [Pagination](/concepts/pagination).
-
-## Latest phase changes
+### Latest phase changes
 
 <CodeGroup>
 
@@ -98,26 +120,28 @@ for (const c of data) {
 {
   "data": [
     {
-      "id": 20126,
-      "company_id": 804,
-      "company": "Ona Therapeutics",
-      "drug": "ONA-389",
-      "indication": "Prevalent solid tumors",
+      "id": 104757,
+      "program_id": 1540,
+      "company_id": 464,
+      "company": "CSPC Innovation Pharmaceutical",
+      "drug": "SYS6090 Injection",
+      "indication": "Advanced malignant tumor",
       "change_type": "update",
-      "prev_phase": "Preclinical",
-      "new_phase": "Clinical",
-      "detected_at": "2026-09-28T06:18:11.815077Z"
+      "prev_phase": "Phase 1",
+      "new_phase": "Phase 2",
+      "detected_at": "2026-09-29T05:54:43.144088Z"
     },
     {
-      "id": 20122,
-      "company_id": 809,
-      "company": "Elicio Therapeutics",
-      "drug": "ELI-008",
-      "indication": "GI tumors",
+      "id": 104756,
+      "program_id": 1539,
+      "company_id": 464,
+      "company": "CSPC Innovation Pharmaceutical",
+      "drug": "SYS6043",
+      "indication": "SCLC and other advanced solid tumors",
       "change_type": "update",
-      "prev_phase": "Preclinical",
-      "new_phase": "Phase 1",
-      "detected_at": "2026-09-28T06:18:11.815077Z"
+      "prev_phase": "Phase 1",
+      "new_phase": "Phase 2",
+      "detected_at": "2026-09-29T05:54:43.144088Z"
     }
   ],
   "pagination": { "limit": 3, "offset": 0 },
@@ -125,7 +149,7 @@ for (const c of data) {
 }
 ```
 
-## One company since a date
+### One company since a date
 
 <CodeGroup>
 
@@ -165,14 +189,26 @@ for (const c of data) console.log(c.change_type, "|", c.drug, "|", c.indication,
 {
   "data": [
     {
-      "id": 12363,
+      "id": 91322,
+      "program_id": 11282,
       "company_id": 218,
       "company": "Eli Lilly",
-      "drug": "Orforglipron",
-      "indication": "Obesity",
-      "change_type": "delete",
-      "prev_phase": "Regulatory Approval Achieved",
-      "detected_at": "2026-08-05T17:11:13.732374Z"
+      "drug": "XCL1/2 Neutralizing Antibody",
+      "indication": "Vitiligo",
+      "change_type": "insert",
+      "new_phase": "Phase 2",
+      "detected_at": "2026-08-05T17:11:03.060172Z"
+    },
+    {
+      "id": 91321,
+      "program_id": 11279,
+      "company_id": 218,
+      "company": "Eli Lilly",
+      "drug": "FXR Agonist + Mirikizumab",
+      "indication": "Crohn’s Disease",
+      "change_type": "insert",
+      "new_phase": "Phase 2",
+      "detected_at": "2026-08-05T17:11:03.060172Z"
     }
   ],
   "pagination": { "limit": 3, "offset": 0 },
@@ -181,13 +217,101 @@ for (const c of data) console.log(c.change_type, "|", c.drug, "|", c.indication,
 ```
 
 <Note>
-A `delete` means the program no longer appears in the company's published
-pipeline. It can reflect a discontinuation, an approval moving the asset off
-the pipeline page, or a relabeling that pairs with an `insert` under a new
-name. Read `delete` and `insert` events for the same company together.
+Changes are tracked per program, so a renamed program or a changed territory
+is an `update` of the same `program_id`, not a `delete` and an `insert`. A
+`delete` means the program left the company's published pipeline, for
+example a discontinuation.
 </Note>
+
+## Clinical trial changes
+
+Pass `entity=trial`. Each event is one field of one trial changing on
+ClinicalTrials.gov.
+
+### Key fields
+
+| Field | Description |
+| --- | --- |
+| `id`, `entity` | Change event id, and `trial`. |
+| `nct_id`, `title` | The changed trial. |
+| `kind` | What changed: `trial` (registered, or removed from the registry), `status`, `phase`, `start_date`, `primary_completion_date`, `completion_date`, `results_posted` (results first posted), `enrollment`, `why_stopped`. |
+| `change_type` | `insert` (value first set, or a new trial), `update` (value changed), `delete` (value removed, or the trial left the registry). |
+| `old_value`, `new_value` | Values as the registry states them. Phases are joined with `\|`; dates are `YYYY-MM-DD` or `YYYY-MM`. |
+| `change_date` | The day the registry published the update. |
+| `detected_at` | When Pav recorded the change (UTC); the feed is ordered by it. History loaded when the feed started carries its `change_date` at midnight UTC. |
+
+### Filters
+
+| Parameter | Matches | Example |
+| --- | --- | --- |
+| `kind` | What changed. Repeatable. | `status` |
+| `nct_id` | Specific trials. Repeatable. | `NCT04184622` |
+| `change_type` | `insert`, `update`, `delete`. Repeatable. | `update` |
+| `company_id` | Trials linked to these companies. Repeatable. | `218` |
+| `since`, `cursor`, `limit` | As for programs. | |
+
+`kind` and `nct_id` without `entity=trial`, and `include_invalidated` with
+`entity=trial`, return `422`.
+
+### Trials that changed status
+
+<CodeGroup>
+
+```bash cURL
+curl -G https://api.pav.bio/v1/changes \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "entity=trial" \
+  --data-urlencode "kind=status" \
+  --data-urlencode "limit=3"
+```
+
+```python Python
+import os
+import requests
+
+resp = requests.get(
+    "https://api.pav.bio/v1/changes",
+    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
+    params={"entity": "trial", "kind": "status", "limit": 3},
+)
+resp.raise_for_status()
+for c in resp.json()["data"]:
+    print(c["change_date"], "|", c["nct_id"], "|", c.get("old_value", "-"), "->", c.get("new_value", "-"))
+```
+
+```javascript JavaScript
+const params = new URLSearchParams({ entity: "trial", kind: "status", limit: "3" });
+const resp = await fetch(`https://api.pav.bio/v1/changes?${params}`, {
+  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
+});
+const { data } = await resp.json();
+for (const c of data) console.log(c.change_date, "|", c.nct_id, "|", c.old_value ?? "-", "->", c.new_value ?? "-");
+```
+
+</CodeGroup>
+
+```json Example response (trimmed)
+{
+  "data": [
+    {
+      "id": 194348,
+      "entity": "trial",
+      "nct_id": "NCT07835945",
+      "title": "Comparison of Arterial and Capillary Blood Gas Analyses in Patients With Respiratory Distress Due to COPD or APE",
+      "kind": "status",
+      "change_type": "update",
+      "old_value": "NOT_YET_RECRUITING",
+      "new_value": "RECRUITING",
+      "change_date": "2026-09-29",
+      "detected_at": "2026-09-29T14:33:36.421078Z"
+    }
+  ],
+  "pagination": { "limit": 3, "offset": 0 },
+  "next_cursor": "<opaque cursor>"
+}
+```
 
 ## Related
 
 - [Track pipeline changes guide](/guides/track-pipeline-changes)
-- [Webhook Reference](/webhooks/introduction): push delivery is planned; poll this feed today.
+- [Webhook Reference](/webhooks/introduction): push delivery is planned; poll these feeds today.

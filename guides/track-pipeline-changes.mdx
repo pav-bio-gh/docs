@@ -12,11 +12,13 @@ checkpoint. Schedule it with cron or any job runner.
 - A Pav API key in `PAV_API_KEY`. See [Quickstart](/quickstart).
 - Python 3.9+ and `pip install requests`.
 - The `company_id` of each company to watch, from `GET /v1/companies?q=<name>`.
+  The changes feed matches the company itself; add the ids of its subsidiaries
+  to watch them too.
 
 ## How the feed works
 
 - `change_type` is `insert` (program added), `delete` (program removed) or
-  `update` (phase changed).
+  `update` (phase or details changed).
 - `since` returns events detected at or after a timestamp. It is inclusive.
 - `next_cursor` pages through the results; the last page has none. Cursor
   paging never skips or repeats an event while new events arrive.
@@ -77,31 +79,37 @@ print(f"{len(events)} new events; next run starts at {state['since']}")
 First run (trimmed):
 
 ```text Example output (September 2026)
-2026-08-05 REMOVED Pfizer | IBRANCE (palbociclib) | ER+/HER2+ Metastatic Breast Cancer (PATI | Registration -> -
-2026-08-05 REMOVED Pfizer | PF-07976016 | Chronic Weight Management | Phase 2 -> -
+2026-08-05 ADDED   Pfizer | PF-08634404 (PF'4404) | Transformed Small Cell Lung Cancer (Symb | - -> Phase 2
+2026-08-05 ADDED   Pfizer | PF-08634404 (PF'4404) | 1L Small Cell Lung Cancer (Symbiotic-Lun | - -> Phase 2
 ...
-2026-08-13 PHASE   Merck | doravirine + islatravir | HIV-1 infection (EU) | Phase 3 -> Under Review
-2026-08-13 ADDED   Merck | remigromig | Diabetic macular edema | - -> Phase 3
-2026-08-13 ADDED   Merck | alimatravir | HIV-1 PrEP | - -> Phase 3
-57 new events; next run starts at 2026-08-13T06:12:06.530525Z
+2026-08-13 REMOVED Merck | KEYTRUDA® | First-line unresectable locally advanced | Under Review -> -
+2026-08-13 REMOVED Merck | enlicitide decanoate | Hypercholesterolemia (US) | Phase 3 -> -
+2026-08-13 REMOVED Merck | ENFLONSIA™ | Respiratory syncytial virus | Under Review -> -
+50 new events; next run starts at 2026-08-13T06:03:35.136493Z
 ```
 
 Second run, with no new changes:
 
 ```text Example output
-0 new events; next run starts at 2026-08-13T06:12:06.530525Z
+0 new events; next run starts at 2026-08-13T06:03:35.136493Z
 ```
 
 ## Interpreting events
 
 - Phases in the feed are the company's own labels (`Under Review`,
   `Clinical`), not normalized phases. Fetch the program for `phase_norm`.
-- A `delete` means the program left the company's published pipeline: a
-  discontinuation, an approval moving it off the page, or a rename. A rename
-  shows as a `delete` and an `insert` for the same company on the same day;
-  pair them before alerting.
+- Each event carries `program_id`; fetch `GET /v1/programs/{program_id}` for
+  the program's current record. A renamed program is an `update` of the same
+  `program_id`, not a `delete` and an `insert`.
+- A `delete` means the program left the company's published pipeline, for
+  example a discontinuation, or an approved drug moving off the page (its
+  program stays `active`).
+- A change can be retracted after you read it. To catch withdrawals, also poll
+  with `include_invalidated=true` and drop events that carry `invalidated_at`.
 - To see every company, drop `company_id`. To follow only phase moves, add
   `change_type=update`.
+- To follow trials instead, poll `entity=trial` with `kind` (for example
+  `status` or `results_posted`). See [Changes](/datasets/changes#clinical-trial-changes).
 
 ## Push delivery
 
