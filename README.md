@@ -52,9 +52,12 @@ gh run list -R pav-bio-gh/docs --workflow openapi-sync.yml --limit 1
 
 A run with an unchanged spec logs "openapi.json already matches" and opens
 nothing. The workflow rebuilds `openapi-sync` from `main` on every run, so
-merging or closing its pull request is always safe. It needs the repository
-setting "Allow GitHub Actions to create and approve pull requests". To refresh
-by hand instead:
+merging or closing its pull request is always safe. Opening the pull request
+needs "Allow GitHub Actions to create and approve pull requests", which the
+enterprise policy currently blocks. Until it is allowed, a changed spec still
+lands on the `openapi-sync` branch and the run fails with a link to open the
+pull request by hand (`/compare/main...openapi-sync`). To refresh by hand
+instead:
 
 ```bash
 npm run refresh-openapi   # re-pulls openapi.json from api.pav.bio

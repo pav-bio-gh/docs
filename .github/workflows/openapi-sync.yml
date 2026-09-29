@@ -62,8 +62,9 @@ jobs:
           pr=$(gh pr list --head "$BRANCH" --state open --json url --jq '.[0].url')
           if [ -n "$pr" ]; then
             echo "updated $pr"
-          else
-            gh pr create --base main --head "$BRANCH" --title "$PR_TITLE" --body "The spec at $SPEC_URL changed. This PR copies it byte for byte into \`openapi.json\`, which generates the API Reference tab.
+          elif ! gh pr create --base main --head "$BRANCH" --title "$PR_TITLE" --body "The spec at $SPEC_URL changed. This PR copies it byte for byte into \`openapi.json\`, which generates the API Reference tab.
 
-          Before merging, update any dataset page, the MCP tool table or a guide that describes the change, and run \`mint validate\` and \`mint broken-links\`. See README.md, \"Updating after an API change\"."
+          Before merging, update any dataset page, the MCP tool table or a guide that describes the change, and run \`mint validate\` and \`mint broken-links\`. See README.md, \"Updating after an API change\"."; then
+            echo "::error::The spec changed and is on branch $BRANCH, but GitHub Actions could not open the pull request (the enterprise setting 'Allow GitHub Actions to create and approve pull requests' is off). Open it by hand: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/compare/main...$BRANCH"
+            exit 1
           fi
