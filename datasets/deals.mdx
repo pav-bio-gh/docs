@@ -46,7 +46,7 @@ tracks; platform and portfolio deals carry none.
 | `total_potential_value` | `total_value` when stated; otherwise upfront plus milestones in one currency. `raw_text` shows the parts that were added. |
 | `upfront`, `development_milestones`, `regulatory_milestones`, `commercial_milestones` | Stated economics, in the same shape. |
 | `assets[]` | Drugs the deal covers: `drug_id`, `name`, `modality`, and `program_ids` (the deal parties' programs of that drug). |
-| `targets[]`, `modalities[]`, `therapeutic_areas[]` | Tags that come from the drugs the deal covers: target terms with `gene_symbol`, modalities, and therapeutic-area slugs. |
+| `targets[]`, `modalities[]`, `therapeutic_areas[]` | Tags that come from the drugs the deal covers: target terms with `gene_symbol` (`null` for a target with no single gene, such as integrin α4β7), modalities, and therapeutic-area slugs. |
 | `source_document_count`, `event_count` | How many documents and lifecycle events back the deal. |
 
 `GET /v1/deals/{deal_id}` adds `terms` (headline value, total potential value,
@@ -313,7 +313,7 @@ for (const d of body.data) {
       "announced_at": "2026-07-16T00:00:00Z"
     }
   ],
-  "pagination": { "limit": 3, "offset": 0, "total": 48 }
+  "pagination": { "limit": 3, "offset": 0, "total": 49 }
 }
 ```
 

@@ -6,8 +6,9 @@ description: "Drug development programs: drug, indication, phase, modality, targ
 ## Overview
 
 A program is one drug in one indication at one company. Programs come from the
-pipelines companies publish, their filings and announcements, and, for
-companies that publish no pipeline, their registered clinical trials. Each
+pipelines companies publish, their filings and announcements, FDA-approved uses
+of drugs the company still develops, and, for companies that publish no
+pipeline, their registered clinical trials (see `basis`). Each
 program carries a normalized phase, a modality, the molecular target and
 mechanism when known, a lifecycle status, the clinical trials linked to it,
 and the page it was read from.
@@ -42,7 +43,9 @@ programs unless you pass `status`.
 | `discontinued` | Dropped from the company's pipeline. |
 
 Repeat `status` to combine values: `status=active&status=discontinued`. An
-unknown value returns `422`.
+unknown value returns `422`. A `discontinued` program carries
+`discontinued_at`, for example Novartis's lifonebart in ALS (program `10521`):
+`"discontinued_at": "2026-08-25T00:00:00Z"`.
 
 ## How phase is decided
 
@@ -55,6 +58,11 @@ can list a trial at a later stage than its phase. A program's trials are the
 registered trials of the same drug in the same disease; trials of the drug in
 other diseases belong to those programs.
 
+Failing all of these, phase is the phase a public source (a press release,
+filing or registry record) states for the program. When the developer's
+pipeline page has not been readable for a long time, a public source dated
+after its last reading takes the place of the page's phase.
+
 `phase` keeps the developer's own label. `phase_norm` is the normalized phase,
 and is `Approved` when a US or EU approval covers the indication, even if the
 developer still lists an earlier stage.
@@ -65,6 +73,8 @@ developer still lists an earlier stage.
 | --- | --- |
 | `id` | Pav program id. Stable: a phase change updates the program, and a discontinued program keeps its id. |
 | `status` | `active`, `inactive` or `discontinued`. See [Status](#status). |
+| `discontinued_at` | For a `discontinued` program, when it stopped: the date the company or a reviewer stated the stop, or the first check that found it gone from the pipeline. `null` while `active` or `inactive`. |
+| `basis` | How Pav knows of the program: `company_pipeline` (the company lists or announces it), `regulatory_approval` (an FDA-approved use of a drug the company still develops that its pipeline does not list; `phase_norm` is `Approved` and `source_url` is the FDA label), or `clinical_trial_registry` (known only from registered clinical trials). |
 | `company_id`, `company`, `short_name` | Owning company: Pav id, display name, slug. |
 | `drug` | Drug or asset name as the company publishes it. |
 | `drug_id`, `aliases` | The Pav drug shared by every company's programs of the same drug product, and the drug's other names (INN, research codes, brands). `null` for an undisclosed asset. See [Drugs](/datasets/drugs). |
@@ -78,7 +88,7 @@ developer still lists an earlier stage.
 | `clinical_trials[]` | Linked ClinicalTrials.gov studies (`nct_id`, phase, status, sponsor, conditions). |
 | `indication_terms[]` | MONDO disease terms for the indication. A program that covers several diseases has one term per disease. |
 | `target_terms[]` | NCIT or HGNC terms for the target, each with `gene_symbol` (the official HGNC symbol, `null` for non-gene targets). Group and match targets by `gene_symbol`. |
-| `source_url`, `source_checked_at` | The page the program was read from, and when Pav last read it. |
+| `source_url`, `source_checked_at` | The page the program was read from (the FDA label for a `regulatory_approval` program), and when Pav last read it. |
 
 Fields with no value are omitted from the JSON. List fields such as
 `partners` and `modality_formats` can be empty arrays.
@@ -181,6 +191,7 @@ for (const p of data) console.log(p.company, "|", p.drug, "|", p.indication, "|"
     {
       "id": 4397,
       "status": "active",
+      "basis": "company_pipeline",
       "company_id": 187,
       "company": "Roche",
       "drug": "divarasib (KRAS G12C)",
@@ -271,7 +282,7 @@ for (const p of body.data) console.log(p.company, "|", p.drug, "|", p.indication
     { "id": 13371, "company": "Alveus Therapeutics, Inc.", "drug": "ALV-100", "indication": "Overweight or Obese Adults", "phase_norm": "Phase 2" },
     { "id": 359, "company": "Amgen", "drug": "MARIDEBART CAFRAGLUTIDE (MariTide, formerly AMG 133)", "indication": "Obesity", "phase_norm": "Phase 3" }
   ],
-  "pagination": { "limit": 3, "offset": 0, "total": 94 }
+  "pagination": { "limit": 3, "offset": 0, "total": 101 }
 }
 ```
 
@@ -352,7 +363,7 @@ for (const p of body.data) console.log(p.company, "|", p.drug, "|", p.target, "|
       "trial_count": 1
     }
   ],
-  "pagination": { "limit": 3, "offset": 0, "total": 40 }
+  "pagination": { "limit": 3, "offset": 0, "total": 43 }
 }
 ```
 
@@ -402,9 +413,9 @@ for (const p of data) console.log(p.company, "|", p.drug, "|", p.indication, "|"
 {
   "program_id": 1833,
   "data": [
-    { "id": 4404, "company": "Roche", "drug": "enicepatide", "indication": "obesity +/- Type 2 diabetes (T2D)", "phase_norm": "Phase 3", "target": "GLP-1/GIP receptor" },
-    { "id": 12075, "company": "Viking Therapeutics", "drug": "VK2735", "indication": "Obesity", "phase_norm": "Phase 3", "target": "GLP-1 receptor / GIP receptor" },
-    { "id": 33733, "company": "Huadong Medicine", "drug": "HDM1005", "indication": "Diabetes mellitus (vs. Mazdutide)", "phase_norm": "Phase 3", "target": "GLP-1 receptor / GIP receptor" }
+    { "id": 2315, "company": "Hanmi Pharmaceutical", "drug": "efocipegtrutide", "indication": "MASH (formerly NASH)", "phase_norm": "Phase 2", "target": "glucagon, GIP and GLP-1" },
+    { "id": 2897, "company": "Jiangsu Hengrui Medicine", "drug": "HRS9531", "indication": "Overweight or obesity", "phase_norm": "Phase 3", "target": "GLP-1/GIP" },
+    { "id": 4404, "company": "Roche", "drug": "enicepatide", "indication": "obesity +/- Type 2 diabetes (T2D)", "phase_norm": "Phase 3", "target": "GLP-1/GIP receptor" }
   ]
 }
 ```
@@ -424,6 +435,7 @@ curl https://api.pav.bio/v1/programs/1833 \
 {
   "id": 1833,
   "status": "active",
+  "basis": "company_pipeline",
   "company_id": 218,
   "company": "Eli Lilly",
   "drug": "Tirzepatide",
