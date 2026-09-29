@@ -1,15 +1,19 @@
-/* "Soon" badge on the Webhook Reference tab in the top tab strip. */
+/* "Soon" badge on the Webhook Reference tab in the navbar tab strip. */
 a.nav-tabs-item[href="/webhooks/introduction"]::after {
   content: "Soon";
   display: inline-block;
-  margin-left: 0.375rem;
-  transform: translateY(-0.45em);
-  padding: 0.05rem 0.3rem;
-  font-size: 0.6rem;
-  font-weight: 600;
-  line-height: 1.45;
-  letter-spacing: 0.01em;
-  border-radius: 0.3rem;
-  background: rgba(76, 124, 255, 0.12);
-  color: #4c7cff;
+  margin-left: 0.125rem;
+  padding: 0.0625rem 0.375rem;
+  font-size: 0.625rem;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  border-radius: 9999px;
+  border: 1px solid rgba(17, 24, 39, 0.14);
+  color: rgb(107, 114, 128);
+}
+
+html.dark a.nav-tabs-item[href="/webhooks/introduction"]::after {
+  border-color: rgba(255, 255, 255, 0.16);
+  color: rgb(156, 163, 175);
 }

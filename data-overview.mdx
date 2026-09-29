@@ -1,0 +1,50 @@
+---
+title: "Data overview"
+description: "What each dataset holds, how large it is, and how the datasets join through Pav ids."
+icon: "network"
+---
+
+## Datasets
+
+| Dataset | What it is | Size (September 2026) |
+| --- | --- | --- |
+| [Programs](/datasets/programs) | Drug programs from company pipelines, filings and trial registrations: drug, indication, phase, modality, target, mechanism, status, linked trials | 14,000+ active programs (28,000+ in all) |
+| [Drugs](/datasets/drugs) | One drug product across every company that develops it, under all its names | 14,000+ drugs |
+| [Companies](/datasets/companies) | Biopharma companies with owners, tickers and identifiers, and their programs, trials, deals, patents and changes | 3,300+ with active programs |
+| [Clinical trials](/datasets/clinical-trials) | ClinicalTrials.gov studies, linked to Pav programs and sponsor companies | ClinicalTrials.gov registry |
+| [Deals](/datasets/deals) | M&A, licensing, collaborations, options, joint ventures; terms, lifecycle, drugs covered, source documents | 3,300+ deals |
+| [Patents](/datasets/patents) | US patent families with owners, members, ownership history, FDA-approved drugs and statutory term | 123,000+ families |
+| [FDA records](/datasets/fda) | Orange Book, Purple Book, orphan designations, drug applications, complete response letters, accelerated approvals, advisory committee meetings, warning letters and recalls | 115,000+ records |
+| [Changes](/datasets/changes) | Detected movement: programs added, removed or changing phase; trials changing status, dates, phase or results | Continuous feeds |
+
+Current active program and company counts are available at any time from
+[`GET /v1/stats`](/api-reference/stats/dataset-summary-statistics).
+
+## How the data connects
+
+Every dataset joins through Pav ids.
+
+- A **company** (`company_id`) owns **programs** (`id`), and can own other
+  companies (`parent_company_id`).
+- A **drug** (`drug_id`) groups every company's programs of the same product.
+- A **program** lists its linked **clinical trials** (`nct_id`). A trial lists
+  the Pav programs and companies linked to it.
+- A **deal** lists its party companies and the drugs it covers; filter deals by
+  `company_id` or `drug_id`.
+- A **patent family** lists its owner companies and the FDA-approved drugs
+  listing its patents; filter patents by `company_id`.
+- An **FDA record** carries its linked company and FDA application number;
+  filter FDA records by `company_id` or `application_key`.
+- A **change** records a program's movement with its `program_id` and
+  `company_id`, or a trial's with its `nct_id`.
+
+Look up a company's id once, with `GET /v1/companies?q=...`, then reuse the id
+across every dataset.
+
+## Built for
+
+- Competitive landscapes by target, indication or modality.
+- Deal screening and comparable-transaction work.
+- Patent, exclusivity and loss-of-exclusivity checks.
+- Pipeline monitoring and alerting.
+- AI agents that answer biopharma questions with sourced data.

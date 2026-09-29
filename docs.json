@@ -1,59 +1,118 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
+  "theme": "almond",
   "name": "Pav API",
   "description": "The Pav API and MCP server: biopharma programs, drugs, companies, clinical trials, deals, patents, FDA records, and change feeds.",
   "colors": {
-    "primary": "#4C7CFF",
-    "light": "#7B9CFF",
-    "dark": "#2B4DBF"
+    "primary": "#15171C",
+    "light": "#E8EAEE",
+    "dark": "#15171C"
   },
   "appearance": {
-    "default": "light"
+    "default": "dark"
+  },
+  "fonts": {
+    "family": "Inter"
+  },
+  "icons": {
+    "library": "lucide"
+  },
+  "styling": {
+    "eyebrows": "section",
+    "codeblocks": "system"
+  },
+  "interaction": {
+    "drilldown": false
+  },
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "claude"
+    ],
+    "display": "header"
   },
   "logo": {
     "light": "/logo/pav-api-light.svg",
     "dark": "/logo/pav-api-dark.svg"
   },
   "favicon": "/favicon.svg",
+  "api": {
+    "examples": {
+      "languages": [
+        "bash",
+        "python",
+        "javascript",
+        "go"
+      ]
+    },
+    "playground": {
+      "display": "interactive"
+    }
+  },
   "navigation": {
     "tabs": [
       {
         "tab": "Documentation",
         "groups": [
           {
-            "group": "Get started",
+            "group": "Overview",
             "pages": [
               "introduction",
               "quickstart",
-              "authentication",
-              "rate-limits"
+              "data-overview"
             ]
           },
           {
             "group": "Datasets",
             "pages": [
-              "datasets/programs",
-              "datasets/drugs",
-              "datasets/companies",
-              "datasets/clinical-trials",
-              "datasets/deals",
-              "datasets/patents",
-              "datasets/fda",
-              "datasets/fda-applications",
-              "datasets/changes"
+              {
+                "group": "Pipeline",
+                "icon": "layers",
+                "pages": [
+                  "datasets/programs",
+                  "datasets/drugs",
+                  "datasets/companies"
+                ]
+              },
+              {
+                "group": "Clinical and regulatory",
+                "icon": "shield-check",
+                "pages": [
+                  "datasets/clinical-trials",
+                  "datasets/fda",
+                  "datasets/fda-applications"
+                ]
+              },
+              {
+                "group": "Deals and patents",
+                "icon": "briefcase",
+                "pages": [
+                  "datasets/deals",
+                  "datasets/patents"
+                ]
+              },
+              {
+                "group": "Monitoring",
+                "icon": "radio-tower",
+                "pages": [
+                  "datasets/changes"
+                ]
+              }
             ]
           },
           {
-            "group": "Working with the API",
+            "group": "REST API",
             "pages": [
+              "authentication",
               "concepts/search-and-filters",
               "concepts/pagination",
-              "concepts/coverage-and-sources"
+              "rate-limits"
             ]
           },
           {
-            "group": "Integrations",
+            "group": "AI agents",
             "pages": [
               "mcp-server",
               "openapi-and-agents"
@@ -67,12 +126,26 @@
               "guides/patent-loe-check",
               "guides/track-pipeline-changes"
             ]
+          },
+          {
+            "group": "Resources",
+            "pages": [
+              "concepts/coverage-and-sources"
+            ]
           }
         ]
       },
       {
         "tab": "API Reference",
-        "openapi": "openapi.json"
+        "openapi": "openapi.json",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api-reference/overview"
+            ]
+          }
+        ]
       },
       {
         "tab": "Webhook Reference",
@@ -83,16 +156,16 @@
     ]
   },
   "redirects": [
-    { "source": "/concepts/entities", "destination": "/datasets/programs" },
-    { "source": "/concepts/data-quality-and-coverage", "destination": "/concepts/coverage-and-sources" }
+    {
+      "source": "/concepts/entities",
+      "destination": "/datasets/programs"
+    },
+    {
+      "source": "/concepts/data-quality-and-coverage",
+      "destination": "/concepts/coverage-and-sources"
+    }
   ],
   "navbar": {
-    "links": [
-      {
-        "label": "Production API",
-        "href": "https://api.pav.bio"
-      }
-    ],
     "primary": {
       "type": "button",
       "label": "Get API key",
@@ -102,6 +175,42 @@
   "footer": {
     "socials": {
       "website": "https://pav.bio"
-    }
+    },
+    "links": [
+      {
+        "header": "Documentation",
+        "items": [
+          {
+            "label": "Quickstart",
+            "href": "/quickstart"
+          },
+          {
+            "label": "Data overview",
+            "href": "/data-overview"
+          },
+          {
+            "label": "MCP server",
+            "href": "/mcp-server"
+          }
+        ]
+      },
+      {
+        "header": "API Reference",
+        "items": [
+          {
+            "label": "Overview",
+            "href": "/api-reference/overview"
+          },
+          {
+            "label": "Rate limits and errors",
+            "href": "/rate-limits"
+          },
+          {
+            "label": "OpenAPI spec",
+            "href": "https://api.pav.bio/v1/openapi.json"
+          }
+        ]
+      }
+    ]
   }
 }

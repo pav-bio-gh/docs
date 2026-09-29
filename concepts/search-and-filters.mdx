@@ -1,6 +1,7 @@
 ---
 title: "Search and filters"
 description: "How q and filters behave on each dataset, and which values filters accept."
+icon: "search"
 ---
 
 Every list endpoint takes an optional free-text `q` and a set of structured
@@ -83,12 +84,12 @@ with [`GET /v1/stats`](/api-reference/stats/dataset-summary-statistics):
 
 ```json Example response (trimmed): GET /v1/stats
 {
-  "assets": 14428,
+  "assets": 14375,
   "companies": 3387,
   "distinct_phases": 9,
   "distinct_modalities": 19,
-  "by_phase": { "Phase 1": 3729, "Phase 2": 2984, "Phase 3": 2290, "Preclinical": 1641, "Approved": 1449 },
-  "by_modality": { "small_molecule": 4350, "antibody": 2269, "cell_therapy": 1063, "adc": 817, "biologic_other": 656 }
+  "by_phase": { "Phase 1": 3729, "Phase 2": 2984, "Phase 3": 2290, "Preclinical": 1641, "Approved": 1554 },
+  "by_modality": { "small_molecule": 4355, "antibody": 2345, "cell_therapy": 1063, "adc": 820, "biologic_other": 674 }
 }
 ```
 

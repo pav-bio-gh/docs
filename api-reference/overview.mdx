@@ -1,0 +1,53 @@
+---
+title: "API Reference"
+sidebarTitle: "Introduction"
+description: "Every /v1 endpoint, parameter and response schema."
+icon: "book-open"
+---
+
+The Pav API is a read-only REST API. Every endpoint is a `GET` under
+`https://api.pav.bio/v1`, takes query parameters, and returns JSON. This
+reference is generated from the [OpenAPI spec](/openapi-and-agents).
+
+- Authenticate with a Pav API key: `Authorization: Bearer <api_key>`.
+  See [Authentication](/authentication).
+- List endpoints return `{ "data": [...], "pagination": {...} }`.
+  See [Pagination](/concepts/pagination).
+- `q=` runs relevance-ranked search on programs, companies and trials, exact
+  name lookup on drugs, and exact-term or substring matching on deals, patents
+  and FDA records. See [Search and filters](/concepts/search-and-filters).
+- 300 requests per minute per key, across the whole service. Errors share
+  one envelope. See [Rate limits and errors](/rate-limits).
+
+## Resources
+
+<CardGroup cols={2}>
+  <Card title="Programs" icon="flask-conical" href="/api-reference/programs/list-and-search-pipeline-programs">
+    List, search and fetch programs, suggestions and similar programs.
+  </Card>
+  <Card title="Drugs" icon="pill" href="/api-reference/drugs/look-up-drugs-by-name">
+    Look up drugs by name and fetch a drug with its programs across companies.
+  </Card>
+  <Card title="Companies" icon="building-2" href="/api-reference/companies/list-and-search-companies">
+    List, search and fetch companies, with their programs and clinical trials.
+  </Card>
+  <Card title="Trials" icon="stethoscope" href="/api-reference/trials/list-and-search-clinical-trials">
+    List, search and fetch clinical trials by NCT id.
+  </Card>
+  <Card title="Deals" icon="handshake" href="/api-reference/deals/list-and-search-deals">
+    List, search and fetch deals.
+  </Card>
+  <Card title="Patents" icon="scroll-text" href="/api-reference/patents/list-and-search-patent-families">
+    List, search and fetch patent families.
+  </Card>
+  <Card title="FDA" icon="landmark" href="/api-reference/fda/list-and-search-fda-records">
+    FDA records, drug applications, complete response letters, accelerated
+    approvals and advisory committee meetings.
+  </Card>
+  <Card title="Changes" icon="history" href="/api-reference/changes/list-pipeline-and-clinical-trial-change-events">
+    Program and clinical trial change events, overall or per company.
+  </Card>
+  <Card title="Stats" icon="chart-column" href="/api-reference/stats/dataset-summary-statistics">
+    Dataset summary statistics.
+  </Card>
+</CardGroup>
