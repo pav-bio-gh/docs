@@ -5,7 +5,8 @@ description: "Connect Claude, Cursor or any MCP client to Pav data with one URL 
 
 Pav runs a remote [Model Context Protocol](https://modelcontextprotocol.io)
 server. Every read endpoint of the API is an MCP tool, so an agent can search
-programs, trials, deals, patents and FDA records and cite the records it used.
+programs, drugs, companies, trials, deals, patents and FDA records, follow
+their changes, and cite the records it used.
 
 | | |
 | --- | --- |
@@ -13,7 +14,7 @@ programs, trials, deals, patents and FDA records and cite the records it used.
 | Transport | Streamable HTTP |
 | Auth | Your Pav API key: `Authorization: Bearer <api_key>`. See [Authentication](/authentication). |
 | Access | Read-only. Every tool is marked read-only. |
-| Tools | 18, one per API endpoint |
+| Tools | 25, one per API endpoint |
 
 ## Connect a client
 
@@ -104,10 +105,10 @@ programs, trials, deals, patents and FDA records and cite the records it used.
     ```
 
     ```text Output
-    18 tools
-    Pfizer acquisition of Seagen | approximately $43 billion
+    25 tools
+    Pfizer acquisition of Seagen | Transaction value of approximately $43 billion (inclusive of net debt)
+    AstraZeneca definitive agreement to acquire Alexion | $39bn
     Amgen acquisition of Horizon Therapeutics plc | transaction equity value of approximately $27.8 billion
-    Abbott acquisition of Exact Sciences | enterprise value of ~$23 billion
     ```
   </Tab>
 </Tabs>
@@ -126,26 +127,34 @@ fields and filters.
 | `list_programs` | `GET /v1/programs` | Search and filter programs. |
 | `get_program` | `GET /v1/programs/{program_id}` | One program with trials and ontology terms. |
 | `get_similar_programs` | `GET /v1/programs/{program_id}/similar-programs` | Competitors and analogues of a program. |
-| `list_companies` | `GET /v1/companies` | Resolve a company name to `company_id`. |
+| `list_drugs` | `GET /v1/drugs` | Find a drug by any of its names. |
+| `get_drug` | `GET /v1/drugs/{drug_id}` | One drug with every company's programs of it. |
+| `list_companies` | `GET /v1/companies` | Find a company's `company_id` by name. |
 | `get_company` | `GET /v1/companies/{company_id}` | One company. |
 | `list_company_programs` | `GET /v1/companies/{company_id}/programs` | A company's pipeline. |
 | `list_company_trials` | `GET /v1/companies/{company_id}/trials` | Trials linked to a company. |
 | `list_company_changes` | `GET /v1/companies/{company_id}/changes` | A company's pipeline changes. |
-| `list_trials` | `GET /v1/trials` | Search and browse clinical trials. |
+| `list_trials` | `GET /v1/trials` | Search and browse clinical trials by condition, phase, status, sponsor, company and start date. |
 | `get_trial` | `GET /v1/trials/{nct_id}` | One trial. |
 | `list_deals` | `GET /v1/deals` | Search and filter deals. |
 | `get_deal` | `GET /v1/deals/{deal_id}` | One deal with terms, events and sources. |
 | `list_patents` | `GET /v1/patents` | Search and filter patent families. |
 | `get_patent_family` | `GET /v1/patents/{family_id}` | One family with members, ownership and term. |
-| `list_fda_records` | `GET /v1/fda` | Search Orange Book, Purple Book, orphan, warning-letter and recall records. |
+| `list_fda_records` | `GET /v1/fda` | Search FDA records of every type. |
+| `list_fda_applications` | `GET /v1/fda/applications` | FDA drug applications (NDA, ANDA, BLA). |
+| `get_fda_application` | `GET /v1/fda/applications/{application_key}` | One application with its FDA records and submissions. |
+| `list_fda_complete_response_letters` | `GET /v1/fda/complete-response-letters` | Complete response letters. |
+| `list_fda_accelerated_approvals` | `GET /v1/fda/accelerated-approvals` | Accelerated approvals and their confirmatory requirements. |
+| `list_fda_advisory_committee_meetings` | `GET /v1/fda/advisory-committee-meetings` | FDA advisory committee meetings, past and scheduled. |
 | `get_fda_record` | `GET /v1/fda/{record_key}` | One FDA record. |
-| `list_changes` | `GET /v1/changes` | The pipeline change feed. |
+| `list_changes` | `GET /v1/changes` | The program change feed, or trial changes with `entity=trial`. |
 | `get_stats` | `GET /v1/stats` | Dataset counts by phase and modality. |
 
 <Tip>
-Resolve a company name with `list_companies` first, then pass its `company_id`
-to `list_company_programs`, `list_deals`, `list_patents`, `list_fda_records` or
-`list_changes`.
+Look up a company with `list_companies` first, then pass its `company_id`
+to `list_company_programs`, `list_drugs`, `list_deals`, `list_patents`,
+`list_fda_records` or `list_changes`. Look up a drug with `list_drugs` and pass
+its `drug_id` to `list_programs` or `list_deals`.
 </Tip>
 
 ## Example prompts
@@ -157,6 +166,9 @@ to `list_company_programs`, `list_deals`, `list_patents`, `list_fda_records` or
 - "List the Orange Book patents and exclusivities for Mounjaro and when each expires."
 - "What changed in Eli Lilly's pipeline since June 1?"
 - "Find programs similar to Merck's calderasib."
+- "Which companies hold rights to inclisiran, and how far has each taken it?"
+- "Which ulcerative colitis trials changed status or posted results this week?"
+- "Which accelerated approvals in oncology still have confirmatory trials pending?"
 
 ## Errors and limits
 

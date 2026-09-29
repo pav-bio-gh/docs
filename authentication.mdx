@@ -44,7 +44,17 @@ otherwise requests return `403 forbidden`.
   "error": {
     "code": "unauthorized",
     "message": "Missing or invalid API key",
-    "request_id": "77c9734bd1ed47d8bf126ebcf58dc393"
+    "request_id": "e961695acf3b443290107b0215526414"
+  }
+}
+```
+
+```json Example 403 response (key created with other scopes)
+{
+  "error": {
+    "code": "forbidden",
+    "message": "API key is missing pav:pipeline:read scope",
+    "request_id": "e6694922cbe8436ba0869d5458ca553e"
   }
 }
 ```

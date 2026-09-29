@@ -24,9 +24,10 @@ on them.
 ## Approach
 
 1. **Find the owner** of the drug from its programs.
-2. **Search families by every name** of the drug. Patent `q` matches title,
-   owner name or patent number as a substring, with no synonyms, so search the
-   generic name and code names separately.
+2. **Search families by every name** of the drug. Patent `q` matches the
+   title, an owner name, or the trade name or ingredient of an approved drug
+   listing the family's patents, with no synonyms, so search the generic name
+   and code names separately.
 3. **Open each live family** for its term, members and owners.
 4. **Search by compound class** within the owner's portfolio. Compound patents
    are often titled by chemical class rather than drug name.
@@ -82,8 +83,12 @@ for term_end, family_id, title, owner, granted in rows:
 ```
 
 ```text Example output (September 2026)
-owner: {218: 'Eli Lilly'}
-7 live families mention tirzepatide or LY3298176
+owner: {218: 'Eli Lilly', 610: 'Lexaria Bioscience'}
+11 live families mention tirzepatide or LY3298176
+2036-01-05 | 62101488 | GIP AND GLP-1 CO-AGONIST COMPOUNDS | ELI LILLY AND COMPANY | granted=1
+2039-06-14 | 62688632 | GIP/GLP1 AGONIST COMPOSITIONS | ELI LILLY AND COMPANY | granted=5
+2039-07-22 | 62702061 | METHODS OF USING A GIP/GLP1 CO-AGONIST FOR THERAPY | ELI LILLY AND COMPANY | granted=2
+2039-07-22 | 62702180 | METHOD OF USING A GIP/GLP1 CO-AGONIST FOR DIABETES | ELI LILLY AND COMPANY | granted=2
 2041-01-22 | 62967867 | THERAPEUTIC USES OF TIRZEPATIDE | ELI LILLY AND COMPANY | granted=1
 2042-02-02 | 63150187 | TIRZEPATIDE THERAPEUTIC METHODS | ELI LILLY AND COMPANY | granted=0
 2042-11-22 | PCTIB2022061286 | PROCESS FOR THE PREPARATION OF TIRZEPATIDE OR PHARMACEU | SUN PHARMACEUTICAL INDUSTRIES LIMITED | granted=0
@@ -127,11 +132,11 @@ for f in resp.json()["data"]:
 2023-01-31 | 63482404 | GIP/GLP1/GCG TRI-RECEPTOR AGONISTS AND USES THEREOF
 2022-11-21 | 63426904 | PROCESS FOR PREPARING A GIP/GLP1 DUAL AGONIST
 2022-10-19 | 63417339 | PRESERVED GIP/GLP AGONIST COMPOSITIONS
+2022-09-15 | 63406995 | GIP AND GLP-1 DUAL AGONIST COMPOUNDS
 2022-09-12 | 63405565 | A GIP/GLP1 FOR USE IN THERAPY
+2021-02-17 | 63150408 | GIP/GLP1 DUAL AGONIST THERAPEUTIC METHODS
 2020-01-23 | 62964932 | GIP/GLP1 CO-AGONIST COMPOUNDS
 2019-08-01 | 62881685 | GIPR-AGONIST COMPOUNDS
-2019-01-29 | 62797963 | PROCESS FOR PREPARING A GIP/GLP1 DUAL AGONIST
-2018-07-23 | 62702061 | METHODS OF USING A GIP/GLP1 CO-AGONIST FOR THERAPY
 ```
 
 Narrow further with `cpc` (for example `C07K` for peptides), `granted=true`, or
@@ -142,8 +147,9 @@ Narrow further with `cpc` (for example `C07K` for peptides), `granted=true`, or
 The Orange Book lists the patents a sponsor has submitted for an approved drug,
 with their expiry dates, and the regulatory
 exclusivities FDA has granted. Pull both from [FDA records](/datasets/fda) by
-the drug's application numbers. Application numbers are stable across FDA
-editions; `record_key` values are not.
+the drug's application numbers. A family's `drugs[]` already names the
+application (`application_key`) for each product that lists one of its
+patents.
 
 ```python orange_book.py
 import os

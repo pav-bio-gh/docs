@@ -1,6 +1,6 @@
 ---
 title: "Deals"
-description: "Biopharma M&A, licensing, collaborations, options and joint ventures, with terms, lifecycle and source documents."
+description: "Biopharma M&A, licensing, collaborations, options and joint ventures, with terms, lifecycle, the drugs they cover, and source documents."
 ---
 
 ## Overview
@@ -8,25 +8,27 @@ description: "Biopharma M&A, licensing, collaborations, options and joint ventur
 A deal is one biopharma transaction: an acquisition, merger, asset purchase,
 licensing agreement, collaboration, option, joint venture or distribution
 agreement. Each deal keeps one stable `deal_id` as new filings and releases
-report on it, and carries its parties, its headline economics, its lifecycle
-from proposal to completion or termination, and the source documents behind
-every term.
+report on it, and carries its parties and their roles, its headline
+economics, its lifecycle from proposal to completion or termination, the drugs
+it covers, and the source documents behind every term.
 
 Questions this dataset answers:
 
 - What are the largest biopharma acquisitions by headline value?
 - Which deals has Eli Lilly done this year, and on what terms?
-- Which licensing deals were announced since January, and for which rights?
+- Which deals cover a TL1A antibody, or an ADC?
 - Where does a stated upfront or milestone figure come from?
 
 ## Coverage
 
-| Deals | Sources | Updated |
-| --- | --- | --- |
-| 3,100+ (September 2026) | SEC filings and company press releases | As new filings and releases are published |
+| Deals | Sources | Tagged with a drug | Updated |
+| --- | --- | --- | --- |
+| 3,300+ (September 2026) | SEC filings and company press releases | 43% | As new filings and releases are published |
 
-Many deals disclose no value. `min_value_usd` and `sort=headline_value` only
-consider deals with a stated USD headline value.
+About half of deals state a value. `min_value_usd` and the value sorts consider
+only deals with a stated value. A deal carries drug, target, modality and
+therapeutic-area tags only when its documents name a specific drug that Pav
+tracks; platform and portfolio deals carry none.
 
 ## Key fields
 
@@ -35,15 +37,21 @@ consider deals with a stated USD headline value.
 | `deal_id` | Stable Pav deal id (UUID). |
 | `deal_name`, `summary` | Headline and a one-paragraph summary. |
 | `deal_type` | `acquisition`, `merger`, `asset_purchase`, `licensing`, `collaboration`, `option`, `joint_venture`, `distribution`, `other`. |
-| `latest_event_type` | Current state: `proposed`, `announced`, `completed`, `amended`, `terminated`, or `update` (a report that changed no state). |
-| `announced_at`, `completed_at`, `activity_date` | Lifecycle dates (UTC). |
-| `companies[]` | Parties linked to Pav companies, with their `roles`. |
-| `total_value` | Headline value: `raw_text`, `amount`, `currency`, `not_disclosed`, and the `evidence` sentence it came from. |
+| `latest_event_type` | Current lifecycle state: `proposed`, `announced`, `amended`, `completed` or `terminated`. It never moves backwards: a completed deal stays completed, and a takeover bid that lost to another buyer is `terminated`. |
+| `latest_event_name`, `latest_event_at` | The event that set the current state, and when it took effect. `latest_event_at` is `null` when a closing is reported with no date. |
+| `announced_at`, `completed_at`, `latest_update_at` | Lifecycle dates (UTC). |
+| `activity_date` | The later of `latest_event_at` and `latest_update_at`. Default sort. |
+| `companies[]` | Parties linked to Pav companies, with their `roles`: `acquirer`, `target`, `seller`, `licensor`, `licensee`, `collaborator`, `investor`, `issuer` or `other`. |
+| `total_value` | Headline value as the announcement states it: `raw_text`, `amount`, `currency`, `not_disclosed`, and the `evidence` sentence it came from. Never a per-share price. |
+| `total_potential_value` | `total_value` when stated; otherwise upfront plus milestones in one currency. `raw_text` shows the parts that were added. |
+| `upfront`, `development_milestones`, `regulatory_milestones`, `commercial_milestones` | Stated economics, in the same shape. |
+| `assets[]` | Drugs the deal covers: `drug_id`, `name`, `modality`, and `program_ids` (the deal parties' programs of that drug). |
+| `targets[]`, `modalities[]`, `therapeutic_areas[]` | Tags that come from the drugs the deal covers: target terms with `gene_symbol`, modalities, and therapeutic-area slugs. |
 | `source_document_count`, `event_count` | How many documents and lifecycle events back the deal. |
 
-`GET /v1/deals/{deal_id}` adds `terms` (headline value, upfront, equity,
-milestones, royalties, territories, rights), `events[]` with the source URL of
-each lifecycle step, and `source_documents[]`.
+`GET /v1/deals/{deal_id}` adds `terms` (headline value, total potential value,
+upfront, equity, milestones, royalties, territories, rights), `events[]` with
+the source URL of each lifecycle step, and `source_documents[]`.
 
 ## Endpoints
 
@@ -63,11 +71,19 @@ recent deal activity.
 | `company_id` | Deals with this company as a party. Repeatable. | `218` |
 | `deal_type` | Deal type. Repeatable. | `licensing` |
 | `event_type` | Current lifecycle state. Repeatable. | `completed` |
+| `drug_id` | Deals covering this drug, whatever name each document uses. Repeatable. | `11873` |
+| `target` | Deals covering a drug with this target. Same matching as the program `target` filter: `TL1A`, `TNFSF15` and `NCIT:C18289` are the same. | `TL1A` |
+| `modality` | Deals covering a drug of this modality. Same values as the program `modality` filter. | `adc`, `siRNA`, `bispecific` |
+| `therapeutic_area` | Deals covering a drug developed for a disease in this area. Slugs: `cardiovascular`, `dermatology`, `endocrine_metabolic`, `gastroenterology`, `hematology`, `hepatology`, `immunology`, `infectious_disease`, `musculoskeletal`, `nephrology`, `neurology`, `oncology`, `ophthalmology`, `otolaryngology`, `psychiatry`, `reproductive_womens_health`, `respiratory`, `urology_mens_health`. Others return `422`. | `oncology` |
 | `announced_from`, `announced_to` | Announcement date range, inclusive. | `2026-01-01` |
-| `min_value_usd` | Minimum stated USD headline value. | `1000000000` |
-| `sort` | `latest_activity` (default), `announced_at`, `completed_at`, `headline_value`; newest or largest first. | `headline_value` |
+| `min_value_usd` | Minimum `total_potential_value` in USD. | `1000000000` |
+| `sort` | `latest_activity` (default), `announced_at`, `completed_at`, `headline_value`, `total_potential_value`; newest or largest first. | `headline_value` |
 | `include_total` | Exact match count. | `true` |
 | `limit`, `offset` | Page size (1–100, default 25) and offset. | `limit=50` |
+
+`q` searches deal text; `target`, `modality`, `drug_id` and
+`therapeutic_area` use the drug tags. A deal whose drugs have no known target
+or modality never matches those filters.
 
 ## Largest deals
 
@@ -114,24 +130,118 @@ for (const d of data) console.log(d.deal_name, "|", d.total_value.raw_text, "|",
       "deal_name": "Pfizer acquisition of Seagen",
       "deal_type": "acquisition",
       "latest_event_type": "completed",
+      "latest_event_name": "Pfizer completed its acquisition of Seagen",
+      "latest_event_at": "2023-12-14T00:00:00Z",
       "announced_at": "2023-03-13T00:00:00Z",
       "completed_at": "2023-12-14T00:00:00Z",
       "companies": [
         { "company_id": 506, "short_name": "pfizer", "name": "Pfizer", "roles": ["acquirer"] },
-        { "company_id": 10479, "short_name": "seagen", "name": "Seagen", "roles": ["acquired company"] }
+        { "company_id": 10479, "short_name": "seagen", "name": "Seagen", "roles": ["target"] }
       ],
       "total_value": {
-        "raw_text": "approximately $43 billion",
+        "raw_text": "Transaction value of approximately $43 billion (inclusive of net debt)",
         "amount": 43000000000.0,
         "currency": "USD",
         "not_disclosed": false,
-        "evidence": "including approximately $43 billion for the acquisition of Seagen Inc."
+        "evidence": "Transaction value of approximately $43 billion (inclusive of net debt)"
       },
+      "assets": [
+        { "drug_id": 1638, "name": "enfortumab vedotin", "modality": "adc", "program_ids": [4070, 4071, 11401] },
+        { "drug_id": 3137, "name": "tucatinib", "modality": "small_molecule", "program_ids": [4125, 4126, 4127, 4128, 4129, 4130] }
+      ],
+      "modalities": ["adc", "small_molecule"],
+      "therapeutic_areas": ["hematology", "oncology"],
       "source_document_count": 24,
       "event_count": 14
     }
   ],
   "pagination": { "limit": 3, "offset": 0 }
+}
+```
+
+## Deals by target
+
+`target` finds deals whose drugs act on a target, under any of its names.
+
+<CodeGroup>
+
+```bash cURL
+curl -G https://api.pav.bio/v1/deals \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "target=TL1A" \
+  --data-urlencode "include_total=true" \
+  --data-urlencode "limit=5"
+```
+
+```python Python
+import os
+import requests
+
+resp = requests.get(
+    "https://api.pav.bio/v1/deals",
+    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
+    params={"target": "TL1A", "include_total": "true", "limit": 5},
+)
+resp.raise_for_status()
+body = resp.json()
+print("total:", body["pagination"]["total"])
+for d in body["data"]:
+    value = (d.get("total_potential_value") or {}).get("raw_text", "undisclosed")
+    print(d["announced_at"][:10], "|", d["deal_name"], "|", [a["name"] for a in d["assets"]], "|", value)
+```
+
+```javascript JavaScript
+const params = new URLSearchParams({ target: "TL1A", include_total: "true", limit: "5" });
+const resp = await fetch(`https://api.pav.bio/v1/deals?${params}`, {
+  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
+});
+const body = await resp.json();
+console.log("total:", body.pagination.total);
+for (const d of body.data) {
+  const value = d.total_potential_value?.raw_text ?? "undisclosed";
+  console.log(d.announced_at.slice(0, 10), "|", d.deal_name, "|", d.assets.map((a) => a.name), "|", value);
+}
+```
+
+</CodeGroup>
+
+```json Example response (trimmed)
+{
+  "data": [
+    {
+      "deal_id": "f7c2d9ce-7296-49c5-869a-018d9e551e30",
+      "deal_name": "Entered exclusive license agreement with Bionyra Pharma for TL-001 and TL-003 antibodies",
+      "deal_type": "licensing",
+      "latest_event_type": "announced",
+      "announced_at": "2026-06-22T00:00:00Z",
+      "total_potential_value": {
+        "raw_text": "up to $985 million in total consideration",
+        "amount": 985000000.0,
+        "currency": "USD"
+      },
+      "assets": [
+        { "drug_id": 2663, "name": "BYN-002", "modality": "antibody", "program_ids": [6948] },
+        { "drug_id": 2664, "name": "BYN-003", "modality": "antibody", "program_ids": [6949] }
+      ],
+      "targets": [
+        { "term_id": "NCIT:C18289", "term_label": "Tumor Necrosis Factor Ligand Superfamily Member 15", "gene_symbol": "TNFSF15" },
+        { "term_id": "NCIT:C61152", "term_label": "Interleukin-23 Subunit Alpha", "gene_symbol": "IL23A" }
+      ]
+    },
+    {
+      "deal_id": "2071f617-8116-4945-8fda-2c32d0fea75d",
+      "deal_name": "Sanofi and Teva exclusive collaboration for TEV ‘574",
+      "deal_type": "collaboration",
+      "latest_event_type": "completed",
+      "announced_at": "2023-10-04T00:00:00Z",
+      "total_potential_value": {
+        "raw_text": "an upfront payment of €469 million ($500 million) + up to €940 million ($1 billion) in development and launch milestones"
+      },
+      "assets": [{ "drug_id": 11873, "name": "duvakitug", "modality": "antibody", "program_ids": [4578, 4579, 5078] }],
+      "targets": [{ "term_id": "NCIT:C18289", "term_label": "Tumor Necrosis Factor Ligand Superfamily Member 15", "gene_symbol": "TNFSF15" }]
+    }
+  ],
+  "pagination": { "limit": 5, "offset": 0, "total": 5 }
 }
 ```
 
@@ -160,7 +270,7 @@ resp.raise_for_status()
 body = resp.json()
 print("total:", body["pagination"]["total"])
 for d in body["data"]:
-    value = d.get("total_value", {}).get("raw_text", "undisclosed")
+    value = (d.get("total_value") or {}).get("raw_text", "undisclosed")
     print(d["announced_at"][:10], "|", d["deal_type"], "|", d["deal_name"], "|", value)
 ```
 
@@ -194,9 +304,16 @@ for (const d of body.data) {
       "deal_type": "collaboration",
       "latest_event_type": "announced",
       "announced_at": "2026-09-15T00:00:00Z"
+    },
+    {
+      "deal_id": "06503715-e5cd-4d8c-8c7c-409a43e31135",
+      "deal_name": "Eli Lilly and Company acquisition of AtaiBeckley Inc.",
+      "deal_type": "acquisition",
+      "latest_event_type": "completed",
+      "announced_at": "2026-07-16T00:00:00Z"
     }
   ],
-  "pagination": { "limit": 3, "offset": 0, "total": 35 }
+  "pagination": { "limit": 3, "offset": 0, "total": 48 }
 }
 ```
 
@@ -213,20 +330,20 @@ curl https://api.pav.bio/v1/deals/4d5ce8f8-7d53-4c79-8d26-873e0d90166e \
   "deal_name": "Pfizer acquisition of Seagen",
   "terms": {
     "headline_value": {
-      "raw_text": "approximately $43 billion",
+      "raw_text": "Transaction value of approximately $43 billion (inclusive of net debt)",
       "amount": 43000000000.0,
       "currency": "USD",
-      "evidence": "including approximately $43 billion for the acquisition of Seagen Inc."
+      "evidence": "Transaction value of approximately $43 billion (inclusive of net debt)"
     },
     "territories": [],
     "rights_summary": "Pfizer acquired all outstanding common stock of Seagen."
   },
   "events": [
     {
-      "event_type": "announced",
-      "event_name": "Pfizer acquisition of Seagen",
+      "event_type": "proposed",
+      "event_name": "Pfizer’s proposed acquisition of Seagen",
       "effective_at": "2023-03-13T00:00:00Z",
-      "source_url": "https://www.sec.gov/Archives/edgar/data/1060736/000119312523068474/d467472dex991.htm"
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1060736/000119312523068474/d467472dex992.htm"
     }
   ],
   "source_documents": [
@@ -242,4 +359,5 @@ curl https://api.pav.bio/v1/deals/4d5ce8f8-7d53-4c79-8d26-873e0d90166e \
 ## Related
 
 - [Deal screening guide](/guides/deal-screening)
-- [Companies](/datasets/companies): resolve a party name to `company_id`.
+- [Drugs](/datasets/drugs): look up a `drug_id` by name.
+- [Companies](/datasets/companies): find a party's `company_id`.

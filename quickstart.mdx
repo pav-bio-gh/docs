@@ -64,17 +64,33 @@ are ordered best match first.
 {
   "data": [
     {
-      "id": 33544,
-      "company_id": 671,
-      "company": "Schrödinger",
-      "drug": "GSBR-1290",
+      "id": 7089,
+      "status": "active",
+      "company_id": 1186,
+      "company": "Rivus Pharmaceuticals",
+      "drug": "RV-8451",
+      "drug_id": 11613,
+      "indication": "obesity",
+      "phase_norm": "Preclinical",
+      "modality_norm": "small_molecule",
+      "target": "GLP-1 non-peptide",
+      "mechanism_of_action": "GLP-1 non-peptide",
+      "partners": [],
+      "source_url": "https://www.rivuspharma.com/our-pipeline/"
+    },
+    {
+      "id": 12453,
+      "status": "active",
+      "company_id": 10390,
+      "company": "Structure Therapeutics",
+      "drug": "aleniglipron",
+      "drug_id": 5557,
       "indication": "Metabolic (Obesity)",
       "phase_norm": "Phase 3",
       "modality_norm": "small_molecule",
-      "target": "GLP-1R Selective",
-      "mechanism_of_action": "Oral small-molecule selective GLP-1R agonist (beta-arrestin-biased)",
-      "partners": ["Structure Therapeutics"],
-      "source_url": "https://www.schrodinger.com/pipeline/"
+      "target": "GLP-1 receptor",
+      "mechanism_of_action": "oral small molecule selective glucagon-like peptide-1 receptor (GLP-1R) agonist",
+      "partners": ["Schrödinger"]
     }
   ],
   "pagination": { "limit": 3, "offset": 0 }
@@ -82,8 +98,9 @@ are ordered best match first.
 ```
 
 <Note>
-Fields with no value are omitted from the JSON rather than returned as `null`.
-Check for a key before reading it.
+Fields with no value are omitted from the JSON rather than returned as `null`;
+list fields such as `partners` can be empty. Check for a key before reading
+it. Lists return `active` programs unless you pass `status`.
 </Note>
 
 ## 4. Try more datasets
@@ -91,7 +108,7 @@ Check for a key before reading it.
 <AccordionGroup>
   <Accordion title="Find a company and list its Phase 3 programs">
     ```bash
-    # Resolve the name to a company_id (Eli Lilly is 218)
+    # Look up the company_id (Eli Lilly is 218)
     curl -G https://api.pav.bio/v1/companies \
       -H "Authorization: Bearer $PAV_API_KEY" \
       --data-urlencode "q=Eli Lilly" --data-urlencode "limit=3"
@@ -135,6 +152,22 @@ Check for a key before reading it.
     curl -G https://api.pav.bio/v1/changes \
       -H "Authorization: Bearer $PAV_API_KEY" \
       --data-urlencode "change_type=update" \
+      --data-urlencode "limit=10"
+    ```
+  </Accordion>
+  <Accordion title="Every company holding a drug, by any of its names">
+    ```bash
+    curl -G https://api.pav.bio/v1/drugs \
+      -H "Authorization: Bearer $PAV_API_KEY" \
+      --data-urlencode "q=Leqvio"
+    ```
+  </Accordion>
+  <Accordion title="Trials that posted results most recently">
+    ```bash
+    curl -G https://api.pav.bio/v1/changes \
+      -H "Authorization: Bearer $PAV_API_KEY" \
+      --data-urlencode "entity=trial" \
+      --data-urlencode "kind=results_posted" \
       --data-urlencode "limit=10"
     ```
   </Accordion>

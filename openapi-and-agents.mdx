@@ -38,8 +38,11 @@ Both use the same Pav API key, return the same JSON, and share the same
 
 ## Tips for agent builders
 
-- Resolve names to ids first: `list_companies` (or `GET /v1/companies?q=`)
-  returns `company_id`, which every other dataset filters on.
+- Look up ids first: `list_companies` (or `GET /v1/companies?q=`) returns
+  `company_id`, which every other dataset filters on; `list_drugs` (or
+  `GET /v1/drugs?q=`) returns `drug_id` for programs and deals.
+- Use `view=slim` on program lists to scan many programs cheaply, then fetch
+  the ones you need with `get_program`.
 - Pass phases as labels (`Phase 3`), not tokens. See
   [Search and filters](/concepts/search-and-filters).
 - Keep `limit` small (5–25) in agent loops. Responses for programs and trials
@@ -48,3 +51,5 @@ Both use the same Pav API key, return the same JSON, and share the same
   back to the user. Every record carries its source.
 - Treat a missing field as "not disclosed", not as `false` or zero. Fields with
   no value are omitted.
+- Program lists return `active` programs by default. Pass
+  `status=discontinued` or `status=inactive` to include others.

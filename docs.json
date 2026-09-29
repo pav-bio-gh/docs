@@ -2,7 +2,7 @@
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
   "name": "Pav API",
-  "description": "The Pav API and MCP server: biopharma programs, companies, clinical trials, deals, patents, and change feeds.",
+  "description": "The Pav API and MCP server: biopharma programs, drugs, companies, clinical trials, deals, patents, FDA records, and change feeds.",
   "colors": {
     "primary": "#4C7CFF",
     "light": "#7B9CFF",
@@ -34,11 +34,13 @@
             "group": "Datasets",
             "pages": [
               "datasets/programs",
+              "datasets/drugs",
               "datasets/companies",
               "datasets/clinical-trials",
               "datasets/deals",
               "datasets/patents",
               "datasets/fda",
+              "datasets/fda-applications",
               "datasets/changes"
             ]
           },

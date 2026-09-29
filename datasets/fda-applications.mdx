@@ -1,0 +1,328 @@
+---
+title: "FDA applications and reviews"
+description: "FDA drug applications with their submissions and records, complete response letters, accelerated approvals and advisory committee meetings."
+---
+
+## Overview
+
+Four FDA datasets follow a drug through review:
+
+- **Drug applications**: every NDA, ANDA (generic) and BLA FDA lists, one
+  record per application, with the sponsor linked to a Pav company where
+  possible, and the full dossier of FDA records and submissions on it.
+- **Complete response letters**: the letters FDA sends when it will not
+  approve an application as submitted, one per letter, linked to the letter
+  PDF.
+- **Accelerated approvals**: one record per product and approved indication,
+  with the confirmatory requirements and whether they were verified.
+- **Advisory committee meetings**: FDA's advisory committee calendar, past and
+  scheduled, with the materials FDA posted.
+
+Each is also a `record_type` on [`GET /v1/fda`](/datasets/fda) and shares its
+fields.
+
+Questions these datasets answer:
+
+- Which applications has a company had approved, and what did FDA act on most recently?
+- Which drugs received a complete response letter this year?
+- Which accelerated approvals still have confirmatory trials pending?
+- When does the Oncologic Drugs Advisory Committee next meet?
+
+## Coverage
+
+| Dataset | Records (September 2026) | Linked to a Pav company |
+| --- | --- | --- |
+| Drug applications | 29,359 | 68% |
+| Complete response letters | 365 | 87% |
+| Accelerated approvals | 370 | 59% |
+| Advisory committee meetings | 556 | Meetings name no company |
+
+## Endpoints
+
+| Endpoint | Use |
+| --- | --- |
+| `GET /v1/fda/applications` | List and search drug applications. |
+| `GET /v1/fda/applications/{application_key}` | One application with every FDA record on it and its submissions. |
+| `GET /v1/fda/complete-response-letters` | List complete response letters. |
+| `GET /v1/fda/accelerated-approvals` | List accelerated approvals. |
+| `GET /v1/fda/advisory-committee-meetings` | List advisory committee meetings. |
+
+## Filters
+
+The four list endpoints take the same filters.
+
+| Parameter | Matches | Example |
+| --- | --- | --- |
+| `q` | Case-insensitive substring of the title, description, company name or an FDA identifier. | `oncologic` |
+| `company_id` | Records linked to these Pav companies or the companies they own. Repeatable. | `218` |
+| `application_key` | Exact FDA application: `N:` (NDA), `A:` (ANDA) or `BLA:` plus the number. | `N:215866` |
+| `status` | Exact status, case-insensitive. Repeatable. See each dataset below. | `ongoing` |
+| `date_from`, `date_to` | `document_date` range, inclusive. | `2026-01-01` |
+| `sort`, `direction` | `document_date` (default) or `event_date`; `desc` (default) or `asc`. Missing dates sort last. | `sort=event_date` |
+| `include_total` | Exact match count. | `true` |
+| `limit`, `offset` | Page size (1–100, default 25) and offset. | `limit=50` |
+
+## Drug applications
+
+`document_date` is the first approval and `event_date` the most recent FDA
+action. `status` is `approved` once the original application was approved,
+otherwise FDA's latest action code. `details` names the products, the
+application type and the latest submission.
+
+<CodeGroup>
+
+```bash cURL
+curl -G https://api.pav.bio/v1/fda/applications \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "company_id=218" \
+  --data-urlencode "include_total=true" \
+  --data-urlencode "limit=3"
+```
+
+```python Python
+import os
+import requests
+
+resp = requests.get(
+    "https://api.pav.bio/v1/fda/applications",
+    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
+    params={"company_id": 218, "include_total": "true", "limit": 3},
+)
+resp.raise_for_status()
+body = resp.json()
+print("total:", body["pagination"]["total"])
+for r in body["data"]:
+    print(r["application_key"], "|", r["title"], "|", r.get("document_date"), "|", r["status"])
+```
+
+```javascript JavaScript
+const params = new URLSearchParams({ company_id: "218", include_total: "true", limit: "3" });
+const resp = await fetch(`https://api.pav.bio/v1/fda/applications?${params}`, {
+  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
+});
+const body = await resp.json();
+console.log("total:", body.pagination.total);
+for (const r of body.data) console.log(r.application_key, "|", r.title, "|", r.document_date, "|", r.status);
+```
+
+</CodeGroup>
+
+```json Example response (trimmed)
+{
+  "data": [
+    {
+      "record_key": "drug_application:BLA:761408",
+      "record_type": "drug_application",
+      "fda_organization_name": "ELI LILLY AND CO",
+      "company": { "company_id": 218, "short_name": "eli_lilly", "name": "Eli Lilly" },
+      "application_key": "BLA:761408",
+      "title": "ONSWIK",
+      "document_date": "2026-09-23",
+      "event_date": "2026-09-23",
+      "event_date_type": "latest_action",
+      "status": "approved",
+      "source_url": "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761408",
+      "details": {
+        "application_type": "BLA",
+        "products": "ONSWIK",
+        "submission_count": 1,
+        "latest_submission": { "submission_type": "ORIG", "submission_number": "1", "status": "AP", "status_date": "2026-09-23" }
+      }
+    }
+  ],
+  "pagination": { "limit": 3, "offset": 0, "total": 152 }
+}
+```
+
+## An application dossier
+
+`GET /v1/fda/applications/{application_key}` returns the application, the
+other FDA records on it (Orange Book products, patents and exclusivities,
+Purple Book products, complete response letters, accelerated approvals), and
+up to 200 submissions with FDA's action on each, newest first. `records` holds
+up to 500 rows; for an application with more, page its records with
+`GET /v1/fda?application_key=`.
+
+<CodeGroup>
+
+```bash cURL
+curl https://api.pav.bio/v1/fda/applications/N:215866 \
+  -H "Authorization: Bearer $PAV_API_KEY"
+```
+
+```python Python
+import collections
+import os
+
+import requests
+
+resp = requests.get(
+    "https://api.pav.bio/v1/fda/applications/N:215866",
+    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
+)
+resp.raise_for_status()
+dossier = resp.json()
+app = dossier["application"]
+print(app["application_key"], "|", app["title"], "| first approved", app["document_date"])
+print(dict(collections.Counter(r["record_type"] for r in dossier["records"])))
+for s in dossier["submissions"][:3]:
+    print(s["status_date"], s["submission_type"], s["submission_number"], s["status"], s.get("submission_class"))
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.pav.bio/v1/fda/applications/N:215866", {
+  headers: { Authorization: `Bearer ${process.env.PAV_API_KEY}` },
+});
+const dossier = await resp.json();
+const app = dossier.application;
+console.log(app.application_key, "|", app.title, "| first approved", app.document_date);
+for (const s of dossier.submissions.slice(0, 3)) {
+  console.log(s.status_date, s.submission_type, s.submission_number, s.status, s.submission_class);
+}
+```
+
+</CodeGroup>
+
+```json Example response (trimmed)
+{
+  "application": {
+    "record_key": "drug_application:N:215866",
+    "record_type": "drug_application",
+    "company": { "company_id": 218, "short_name": "eli_lilly", "name": "Eli Lilly" },
+    "application_key": "N:215866",
+    "title": "MOUNJARO, MOUNJARO (AUTOINJECTOR), MOUNJARO KWIKPEN",
+    "document_date": "2022-05-13",
+    "event_date": "2026-08-27",
+    "event_date_type": "latest_action",
+    "status": "approved",
+    "details": { "application_type": "NDA", "submission_count": 14 }
+  },
+  "records": [
+    { "record_key": "orange_book_product:N:215866:019", "record_type": "orange_book_product", "title": "MOUNJARO KWIKPEN", "event_date": "2026-01-20", "status": "RX" }
+  ],
+  "submissions": [
+    { "submission_type": "SUPPL", "submission_number": "45", "status": "AP", "status_date": "2026-08-27", "submission_class": "Efficacy", "review_priority": "STANDARD" },
+    { "submission_type": "SUPPL", "submission_number": "44", "status": "AP", "status_date": "2026-08-27", "submission_class": "Efficacy", "review_priority": "STANDARD" }
+  ]
+}
+```
+
+## Complete response letters
+
+One record per letter. `document_date` is the letter date, `source_url` the
+letter PDF, and `status` is `Approved` when the application was later approved
+and `Unapproved` otherwise.
+
+```bash
+curl -G https://api.pav.bio/v1/fda/complete-response-letters \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "include_total=true" \
+  --data-urlencode "limit=2"
+```
+
+```json Example response (trimmed)
+{
+  "data": [
+    {
+      "record_key": "complete_response_letter:CRL_NDA218705_20260807.pdf",
+      "record_type": "complete_response_letter",
+      "fda_organization_name": "ITM Solucin GmbH",
+      "company": { "company_id": 2877, "short_name": "itm_solucin", "name": "ITM Solucin GmbH" },
+      "application_key": "N:218705",
+      "title": "ITM Solucin GmbH — Complete response letter",
+      "description": "COMPLETE RESPONSE",
+      "document_date": "2026-08-07",
+      "status": "Unapproved",
+      "source_url": "https://download.open.fda.gov/crl/CRL_NDA218705_20260807.pdf"
+    }
+  ],
+  "pagination": { "limit": 2, "offset": 0, "total": 365 }
+}
+```
+
+## Accelerated approvals
+
+One record per product and approved indication (`description`), with the
+accelerated approval date (`document_date`) and its confirmatory requirements
+in `details`. `status` is `ongoing` (confirmatory trial pending; `event_date` is
+its projected completion), `verified` (converted to traditional approval) or
+`withdrawn`.
+
+```bash
+curl -G https://api.pav.bio/v1/fda/accelerated-approvals \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "status=ongoing" \
+  --data-urlencode "include_total=true" \
+  --data-urlencode "limit=2"
+```
+
+```json Example response (trimmed)
+{
+  "data": [
+    {
+      "record_type": "accelerated_approval",
+      "fda_organization_name": "BAYER HEALTHCARE",
+      "company": { "company_id": 267, "short_name": "bayer", "name": "Bayer" },
+      "application_key": "N:219972",
+      "title": "Hyrnuo (sevabertinib)",
+      "description": "Treatment of adult patients with locally advanced or metastatic non-squamous non-small cell lung cancer (NSCLC) whose tumors have HER2 (ERBB2) tyrosine kinase domain (TKD) activating mutations, as detected by an FDA-authorized test",
+      "document_date": "2026-09-09",
+      "event_date": "2029-10-31",
+      "event_date_type": "projected_completion",
+      "status": "ongoing",
+      "details": {
+        "category": "cancer",
+        "confirmatory_requirements": [
+          { "requirement": "4933-1: Complete the ongoing multicenter, randomized clinical trial, Study SOHO-02, ...", "projected_completion": "2029-10-31" }
+        ]
+      }
+    }
+  ],
+  "pagination": { "limit": 2, "offset": 0, "total": 107 }
+}
+```
+
+## Advisory committee meetings
+
+Meetings from FDA's calendar, past and scheduled: the meeting title (committee
+and topic), the convening center, the meeting day (`document_date`), start and
+end times, and links to the briefing documents, minutes and other materials
+FDA posted. `status` is `held` or `scheduled`. Meetings name no company;
+search the committee or topic with `q`.
+
+```bash
+curl -G https://api.pav.bio/v1/fda/advisory-committee-meetings \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "q=oncologic" \
+  --data-urlencode "include_total=true" \
+  --data-urlencode "limit=2"
+```
+
+```json Example response (trimmed)
+{
+  "data": [
+    {
+      "record_type": "advisory_committee_meeting",
+      "title": "April 30, 2026: Meeting of the Oncologic Drugs Advisory Committee Meeting Announcement - 04/30/2026",
+      "description": "Center for Drug Evaluation and Research",
+      "document_date": "2026-04-30",
+      "event_date_type": "meeting",
+      "status": "held",
+      "source_url": "https://www.fda.gov/advisory-committees/advisory-committee-calendar/april-30-2026-meeting-oncologic-drugs-advisory-committee-meeting-announcement-04302026",
+      "details": {
+        "center": "Center for Drug Evaluation and Research",
+        "meeting_start": "2026-04-30T12:00:00Z",
+        "meeting_end": "2026-04-30T21:00:00Z",
+        "documents": []
+      }
+    }
+  ],
+  "pagination": { "limit": 2, "offset": 0, "total": 59 }
+}
+```
+
+## Related
+
+- [FDA records](/datasets/fda): every FDA record type in one endpoint.
+- [Patents](/datasets/patents): `drugs[].application_key` joins a patent family to its application.
+- [Companies](/datasets/companies)

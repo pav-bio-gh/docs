@@ -13,20 +13,22 @@ block:
 }
 ```
 
-`total` appears only when an exact count is available. It is `null` or absent
-on relevance search and on trials.
+`total` is `null` or absent unless you pass `include_total=true`, which returns
+the exact count wherever the table below allows it.
 
 ## Limits per endpoint
 
 | Endpoint | `limit` range (default) | Paging | Exact `total` |
 | --- | --- | --- | --- |
-| `/v1/programs` | 1–5000 (50) | `offset` | `include_total=true` on filter-only listings |
-| `/v1/companies`, `/v1/companies/{id}/programs` | 1–5000 (50) | `offset` | No |
-| `/v1/trials` | 1–1000 (100) | `offset`; `offset + limit` at most 1000 | No |
-| `/v1/companies/{id}/trials` | 1–1000 (100) | `offset` | `include_total=true` |
+| `/v1/programs`, `/v1/companies/{id}/programs` | 1–5000 (50) | `offset` | `include_total=true`, with or without `q` |
+| `/v1/drugs` | 1–500 (50) | `offset` up to 100,000 | No |
+| `/v1/companies` | 1–5000 (50) | `offset` | No |
+| `/v1/trials` | 1–1000 (100) | `offset`; `offset + limit` at most 1000 | `include_total=true` without `q` |
+| `/v1/companies/{id}/trials` | 1–1000 (100) | `offset`; with a filter or `sort`, `offset + limit` at most 1000 | `include_total=true` |
 | `/v1/deals` | 1–100 (25) | `offset` up to 100,000 | `include_total=true` |
 | `/v1/patents` | 1–100 (25) | `offset` up to 10,000 | `include_total=true` |
-| `/v1/fda` | 1–100 (25) | `offset` up to 100,000 | `include_total=true` |
+| `/v1/fda` and its per-type endpoints | 1–100 (25) | `offset` up to 100,000 | `include_total=true` |
+| `/v1/programs/{id}/similar-programs` | 1–50 (5) | None | No |
 | `/v1/changes`, `/v1/companies/{id}/changes` | 1–5000 (50) | `cursor` | No |
 
 Each page is one request against your [rate limit](/rate-limits).
@@ -146,4 +148,5 @@ done
 
 Relevance search (`q` on programs, companies and trials) pages with `offset`
 the same way. Results are ranked, so later pages hold weaker matches; most
-workflows need only the first few pages.
+workflows need only the first few pages. On programs, a page past 1,000 rows
+switches `q` to a listing of every program matching all of its words.
