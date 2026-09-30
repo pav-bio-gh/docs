@@ -2,7 +2,7 @@
   "$schema": "https://mintlify.com/docs.json",
   "theme": "almond",
   "name": "Pav API",
-  "description": "The Pav API and MCP server: biopharma programs, drugs, companies, clinical trials, deals, patents, FDA records, and change feeds.",
+  "description": "The Pav API and MCP server: biopharma programs, drugs, companies, clinical trials, deals, patents and FDA records.",
   "colors": {
     "primary": "#15171C",
     "light": "#E8EAEE",
@@ -71,7 +71,6 @@
                 "group": "Pipeline",
                 "icon": "layers",
                 "pages": [
-                  "search",
                   "datasets/programs",
                   "datasets/drugs",
                   "datasets/companies"
@@ -92,13 +91,6 @@
                   "datasets/deals",
                   "datasets/patents"
                 ]
-              },
-              {
-                "group": "Monitoring",
-                "icon": "radio-tower",
-                "pages": [
-                  "datasets/changes"
-                ]
               }
             ]
           },
@@ -106,7 +98,6 @@
             "group": "REST API",
             "pages": [
               "authentication",
-              "conventions",
               "rate-limits"
             ]
           },
@@ -122,8 +113,7 @@
             "pages": [
               "guides/competitive-landscape",
               "guides/deal-screening",
-              "guides/patent-loe-check",
-              "guides/track-pipeline-changes"
+              "guides/patent-loe-check"
             ]
           },
           {
@@ -165,15 +155,31 @@
     },
     {
       "source": "/concepts/pagination",
-      "destination": "/conventions"
+      "destination": "/api-reference/overview"
     },
     {
       "source": "/concepts/search-and-filters",
-      "destination": "/conventions"
+      "destination": "/api-reference/overview"
     },
     {
       "source": "/datasets/fda-applications",
       "destination": "/datasets/fda"
+    },
+    {
+      "source": "/conventions",
+      "destination": "/api-reference/overview"
+    },
+    {
+      "source": "/search",
+      "destination": "/api-reference/overview"
+    },
+    {
+      "source": "/datasets/changes",
+      "destination": "/datasets/programs"
+    },
+    {
+      "source": "/guides/track-pipeline-changes",
+      "destination": "/guides/competitive-landscape"
     }
   ],
   "navbar": {
@@ -194,10 +200,6 @@
           {
             "label": "Quickstart",
             "href": "/quickstart"
-          },
-          {
-            "label": "Conventions",
-            "href": "/conventions"
           },
           {
             "label": "Data overview",

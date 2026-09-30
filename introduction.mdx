@@ -5,17 +5,19 @@ icon: "book-open"
 ---
 
 The Pav API serves drug programs and the evidence around them (trials, deals,
-patents, FDA records and changes) as JSON over a read-only REST API and an
-MCP server. Both use one API key and one rate limit.
+patents and FDA records) as JSON over a read-only REST API and an MCP server.
+Both use one API key and one rate limit. Every resource is one list endpoint,
+filtered by plain values you already know (a ticker, a phase, a modality),
+and one get endpoint by id.
 
 ## Start
 
 <CardGroup cols={2}>
   <Card title="Quickstart" icon="rocket" href="/quickstart">
-    Create a key and make a first request.
+    Create a key and list something specific — no ids needed.
   </Card>
-  <Card title="Conventions" icon="list-checks" href="/conventions">
-    Ids, filters, dates, sorting and paging.
+  <Card title="Data overview" icon="network" href="/data-overview">
+    What each dataset holds and how they join.
   </Card>
   <Card title="MCP server" icon="bot" href="/mcp-server">
     Connect Claude, Cursor or any MCP client.
@@ -28,7 +30,6 @@ MCP server. Both use one API key and one rate limit.
 ## Datasets
 
 <CardGroup cols={3}>
-  <Card title="Search" icon="search" href="/search">Names to ids.</Card>
   <Card title="Programs" icon="flask-conical" href="/datasets/programs">Drug, indication, phase, target.</Card>
   <Card title="Drugs" icon="pill" href="/datasets/drugs">One product across companies.</Card>
   <Card title="Companies" icon="building-2" href="/datasets/companies">Owners, tickers, identifiers.</Card>
@@ -36,7 +37,6 @@ MCP server. Both use one API key and one rate limit.
   <Card title="Deals" icon="handshake" href="/datasets/deals">M&A, licensing, terms.</Card>
   <Card title="Patents" icon="scroll-text" href="/datasets/patents">US patent families.</Card>
   <Card title="FDA records" icon="landmark" href="/datasets/fda">Orange Book to advisory committees.</Card>
-  <Card title="Changes" icon="history" href="/datasets/changes">Program and trial movement.</Card>
 </CardGroup>
 
 ## Guides
@@ -49,9 +49,6 @@ MCP server. Both use one API key and one rate limit.
     Comparable deals ranked by value.
   </Card>
   <Card title="Patents and exclusivity" icon="calendar-clock" href="/guides/patent-loe-check">
-    Patent families and Orange Book listings for a drug.
-  </Card>
-  <Card title="Track pipeline changes" icon="bell-ring" href="/guides/track-pipeline-changes">
-    Poll changes for a watchlist.
+    Patent families and Orange Book listings for a company.
   </Card>
 </CardGroup>

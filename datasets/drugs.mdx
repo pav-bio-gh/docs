@@ -18,21 +18,20 @@ research codes and brands.
 | --- | --- |
 | `drug_id`, `name`, `inn` | Pav drug id, display name, INN. |
 | `aliases[]` | Other names, each with `kind`: `inn`, `code` or `brand`. |
-| `modality`, `modality_subclass` | Modality, and nucleic-acid class (`sirna`, `mrna`, …). |
-| `highest_phase` | Most advanced phase across all holders. |
+| `modality`, `modality_subclass` | Normalized modality, and nucleic-acid class (`sirna`, `mrna`, …). |
+| `highest_phase` | Most advanced phase across all holders, normalized. |
 | `companies[]` | Each holder with `company_id`, `program_count`, `highest_phase`. |
 
 ## Parameters
 
 | Name | Values | Example |
 | --- | --- | --- |
-| `q` | Exact name, code or brand; case and punctuation ignored | `Leqvio` |
-| `drug_id`, `company_id` | Ids | `869` |
+| `drug` | Exact name, code or brand; case and punctuation ignored | `Leqvio` |
+| `company` | Ticker, company slug or exact name; rolls up subsidiaries | `sanofi` |
+| `drug_id`, `company_id` | Ids, for values from an earlier response | `869` |
 | `multi_company` | `true`: held by more than one company | `true` |
 | `status` | Which programs count: `active` (default), `inactive`, `discontinued` | `active` |
 | `sort` | `highest_phase` (default descending), `name`, `program_count` | `-program_count` |
-
-Shared rules: [Conventions](/conventions).
 
 ## Example
 
@@ -41,7 +40,7 @@ Shared rules: [Conventions](/conventions).
 ```bash cURL
 curl -G https://api.pav.bio/v1/drugs \
   -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "q=Leqvio"
+  --data-urlencode "drug=Leqvio"
 ```
 
 ```python Python
@@ -51,7 +50,7 @@ import requests
 resp = requests.get(
     "https://api.pav.bio/v1/drugs",
     headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"q": "Leqvio"},
+    params={"drug": "Leqvio"},
 )
 resp.raise_for_status()
 for d in resp.json()["data"]:
@@ -73,11 +72,11 @@ for d in resp.json()["data"]:
       ],
       "modality": "rna",
       "modality_subclass": "sirna",
-      "highest_phase": "Approved",
+      "highest_phase": "approved",
       "program_count": 5,
       "companies": [
-        { "company_id": 101, "name": "Alnylam Pharmaceuticals", "program_count": 1, "highest_phase": "Approved" },
-        { "company_id": 288, "name": "Novartis", "program_count": 3, "highest_phase": "Approved" }
+        { "company_id": 101, "name": "Alnylam Pharmaceuticals", "program_count": 1, "highest_phase": "approved" },
+        { "company_id": 288, "name": "Novartis", "program_count": 3, "highest_phase": "approved" }
       ]
     }
   ],

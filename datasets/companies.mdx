@@ -9,15 +9,15 @@ other dataset and includes the companies it owns.
 
 | Endpoint | Returns |
 | --- | --- |
-| `GET /v1/companies` | Companies by name or filter. |
+| `GET /v1/companies` | Companies by name, ticker or filter. |
 | `GET /v1/companies/{company_id}` | One company with tickers, owner and website. |
-| `GET /v1/companies/{company_id}/trials` | Trials linked to the company or a company it owns. |
 
 ## Key fields
 
 | Field | Description |
 | --- | --- |
 | `company_id`, `name` | Pav company id and name. |
+| `company_type` | `public` or `private`, maintained directly. |
 | `parent_company_id` | Owning company, when owned. |
 | `country`, `website` | Headquarters country and website. |
 | `tickers[]`, `cik` | Stock tickers and SEC CIK. |
@@ -28,15 +28,16 @@ other dataset and includes the companies it owns.
 
 | Name | Values | Example |
 | --- | --- | --- |
-| `q` | Name or known alias, ranked | `MSD` |
-| `company_id` | Ids | `313` |
+| `company` | Slug or exact registered name/synonym | `MSD` |
+| `ticker` | Current stock ticker | `PFE` |
+| `company_type` | `public`, `private` | `public` |
+| `country` | Headquarters, exact name | `United States` |
+| `company_id` | Ids, for values from an earlier response | `313` |
 | `has_pipeline` | `true` or `false` | `true` |
 | `sort` | `asset_count` (default descending), `name` | `name` |
 
-`/companies/{company_id}/trials` takes `via` (`program`, `sponsor`, `any`),
-`phase`, `status`, `from`/`to` on `start_date`, and `sort`, as on
-[Clinical trials](/datasets/clinical-trials). Shared rules:
-[Conventions](/conventions).
+`company` and `ticker` are exact, not full-text: a value that matches more
+than one tracked company is a `400` naming the candidates.
 
 ## Example
 
@@ -45,8 +46,7 @@ other dataset and includes the companies it owns.
 ```bash cURL
 curl -G https://api.pav.bio/v1/companies \
   -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "q=MSD" \
-  --data-urlencode "limit=2"
+  --data-urlencode "company=MSD"
 ```
 
 ```python Python
@@ -56,11 +56,11 @@ import requests
 resp = requests.get(
     "https://api.pav.bio/v1/companies",
     headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"q": "MSD", "limit": 2},
+    params={"company": "MSD"},
 )
 resp.raise_for_status()
 for c in resp.json()["data"]:
-    print(c["company_id"], c["name"], c["asset_count"])
+    print(c["company_id"], c["name"], c["company_type"], c["asset_count"])
 ```
 
 </CodeGroup>
@@ -71,19 +71,15 @@ for c in resp.json()["data"]:
     {
       "company_id": 313,
       "name": "Merck & Co., Inc.",
+      "company_type": "public",
       "country": "United States",
-      "asset_count": 136,
+      "asset_count": 140,
       "tickers": [{ "ticker": "MRK" }],
       "cik": "0000310158",
       "website": "https://www.merck.com"
-    },
-    {
-      "company_id": 6375,
-      "name": "MSD R&D (China) Co., Ltd.",
-      "asset_count": 2,
-      "tickers": []
     }
   ],
-  "next_cursor": "eyJyIjoiY29tcGFuaWVzIiwicyI6InJlbGV2YW5jZSIsInAiOjJ9"
+  "next_cursor": "eyJyIjoiY29tcGFuaWVzIiwicyI6Ii1hc3NldF9jb3VudCIsInYiOiIxMzYiLCJrIjoiMzEzIn0",
+  "total": 1
 }
 ```

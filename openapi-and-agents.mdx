@@ -17,7 +17,9 @@ For assistants with MCP support, use the [MCP server](/mcp-server) instead.
 
 Tips for agents:
 
-- Call `search` first to get ids, then filter lists by id.
+- Filter lists by a plain value you already have (a ticker, a company name,
+  a phase, a modality); use `company_id`/`drug_id`/`program_id` once you have
+  one from a previous response.
 - Use `view=slim` and a small `limit` (5–25) to scan; fetch details by id.
 - Cite `source_url`, `nct_url` and FDA or patent numbers.
 - A missing field means not disclosed.

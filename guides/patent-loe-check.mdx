@@ -1,17 +1,18 @@
 ---
 title: "Check patents and loss of exclusivity"
-description: "Orange Book patents, exclusivities and US patent families around a drug."
+description: "Orange Book patents, exclusivities and US patent families around a company's drug."
 icon: "calendar-clock"
 ---
 
-List a drug's Orange Book patent and exclusivity expiries and its live US
-patent families. Requires `PAV_API_KEY` and `pip install requests`.
+List a company's Orange Book patent and exclusivity expiries and its live US
+patent families, then narrow to one product. Requires `PAV_API_KEY` and
+`pip install requests`.
 
-1. `GET /v1/search?types=drug` confirms the drug and its id.
-2. `GET /v1/fda/orange-book-patents` and `/orange-book-exclusivities` with
-   `q=<ingredient>` list listings; follow `next_cursor` and keep one row per
-   patent.
-3. `GET /v1/patents?q=<name>&status=live` lists live families.
+1. `GET /v1/fda/orange-book-patents` and `/orange-book-exclusivities` with
+   `company=<ticker or name>` list every listing for the company; follow
+   `next_cursor` and keep the rows for the product you want.
+2. `GET /v1/patents?company=<ticker or name>&status=live` lists its live
+   families.
 
 ```python loe_check.py
 import os
@@ -38,29 +39,32 @@ def every(path, **params):
         params["cursor"] = page["next_cursor"]
 
 
-drug = get("/search", q="tirzepatide", types="drug", limit=1)["data"][0]
-name = drug["name"]
+company, product = "lilly", "tirzepatide"
 expiry = {}
-for r in every("/fda/orange-book-patents", q=name, sort="event_date"):
-    expiry[r["patent_number"]] = r["event_date"]
-print(f"{name} (drug_id {drug['id']}): {len(expiry)} Orange Book patents, last expires {max(expiry.values())}")
-for r in every("/fda/orange-book-exclusivities", q=name, sort="-event_date"):
-    print(f"  exclusivity {r['status']} until {r['event_date']}")
-    break
-families = get("/patents", q=name, status="live", view="slim", limit=3)
-print(f"{families['total']} live US patent families, e.g.:")
-for f in families["data"]:
+for r in every("/fda/orange-book-patents", company=company, sort="event_date"):
+    if product in (r.get("description") or "").lower():
+        expiry[r["patent_number"]] = r["event_date"]
+print(f"{product}: {len(expiry)} Orange Book patents, last expires {max(expiry.values())}")
+for r in every("/fda/orange-book-exclusivities", company=company, sort="-event_date"):
+    if product in (r.get("description") or "").lower():
+        print(f"  exclusivity {r['status']} until {r['event_date']}")
+        break
+families = get("/patents", company=company, status="live", view="slim", limit=200)
+matches = [f for f in families["data"] if product in (f["representative_title"] or "").lower()]
+print(f"{len(matches)} of {families['total']} live US patent families mention {product}, e.g.:")
+for f in matches[:3]:
     print(f"  {f['family_id']} | priority {f['earliest_priority_date']} | {f['representative_title']}")
 ```
 
 ```text Example output
-Tirzepatide (drug_id 4781): 10 Orange Book patents, last expires 2041-12-30
+tirzepatide: 10 Orange Book patents, last expires 2041-12-30
   exclusivity NPP until 2028-12-19
-11 live US patent families, e.g.:
+3 of 334 live US patent families mention tirzepatide, e.g.:
   63477734 | priority 2022-12-29 | PROCESSES AND INTERMEDIATES FOR PREPARING TIRZEPATIDE
-  19062335 | priority 2025-02-25 | MULTI-DOSE PEN OF TIRZEPATIDE
   63150187 | priority 2021-02-17 | TIRZEPATIDE THERAPEUTIC METHODS
+  63357285 | priority 2022-06-30 | TIRZEPATIDE COMPOSITIONS AND USE
 ```
 
 `statutory_term_end` on `GET /v1/patents/{family_id}` is the earliest
-nonprovisional filing plus 20 years, without extensions.
+nonprovisional filing plus 20 years, without extensions. Look up one patent
+directly with `GET /v1/patents/{patent_number}`.

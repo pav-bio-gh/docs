@@ -10,7 +10,7 @@ claim, with their owners and the FDA-approved drugs that list them.
 | Endpoint | Returns |
 | --- | --- |
 | `GET /v1/patents` | Families, filtered. |
-| `GET /v1/patents/{family_id}` | One family with members, ownership changes, prosecution events, FDA-listed drugs and statutory term. |
+| `GET /v1/patents/{id}` | One family, by Pav `family_id` or by a member's patent, publication or application number. |
 
 ## Key fields
 
@@ -28,16 +28,15 @@ claim, with their owners and the FDA-approved drugs that list them.
 
 | Name | Values | Example |
 | --- | --- | --- |
-| `q` | Patent, publication or application number, or part of a title, owner or FDA-listed drug | `tirzepatide` |
-| `company_id` | Ids; owners of live members | `218` |
+| `company` | Ticker, company slug or exact name; owner of a live member | `lilly` |
+| `patent_number` | A member's patent, publication or application number | `12295987` |
 | `cpc` | CPC prefix on any member | `A61K38/26` |
 | `status` | `live`, `lapsed` | `live` |
 | `granted` | `true`, `false` | `true` |
+| `company_id` | Ids, for values from an earlier response | `218` |
 | `from`, `to` | `earliest_priority_date` range | `2020-01-01` |
 | `sort` | `latest_status_date` (default descending), `earliest_priority_date`, `member_count` | `-member_count` |
 | `view` | `full`, `slim` | `slim` |
-
-Shared rules: [Conventions](/conventions).
 
 ## Example
 
@@ -46,7 +45,7 @@ Shared rules: [Conventions](/conventions).
 ```bash cURL
 curl -G https://api.pav.bio/v1/patents \
   -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "q=tirzepatide" \
+  --data-urlencode "company=lilly" \
   --data-urlencode "status=live" \
   --data-urlencode "view=slim" \
   --data-urlencode "limit=2"
@@ -59,11 +58,13 @@ import requests
 resp = requests.get(
     "https://api.pav.bio/v1/patents",
     headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"q": "tirzepatide", "status": "live", "view": "slim", "limit": 2},
+    params={"company": "lilly", "status": "live", "view": "slim", "limit": 2},
 )
 resp.raise_for_status()
-for f in resp.json()["data"]:
-    print(f["family_id"], f["earliest_priority_date"], f["representative_title"])
+page = resp.json()
+for f in page["data"]:
+    print(f["family_id"], f["latest_status_date"], f["representative_title"])
+print("total:", page["total"])
 ```
 
 </CodeGroup>
@@ -72,27 +73,26 @@ for f in resp.json()["data"]:
 {
   "data": [
     {
-      "family_id": "63477734",
-      "representative_title": "PROCESSES AND INTERMEDIATES FOR PREPARING TIRZEPATIDE",
-      "member_count": 3,
-      "granted_count": 1,
-      "pending_count": 2,
-      "earliest_priority_date": "2022-12-29",
+      "family_id": "63129878",
+      "representative_title": "RNA THERAPEUTICS AND METHODS OF USE THEREOF",
+      "member_count": 1,
+      "granted_count": 0,
+      "pending_count": 1,
+      "earliest_priority_date": "2020-12-23",
+      "latest_status_date": "2026-09-29",
       "has_live_member": true,
       "owner_names": ["ELI LILLY AND COMPANY"],
-      "companies": [{ "company_id": 218, "name": "Eli Lilly" }]
-    },
-    {
-      "family_id": "19062335",
-      "representative_title": "MULTI-DOSE PEN OF TIRZEPATIDE",
-      "member_count": 1,
-      "earliest_priority_date": "2025-02-25",
-      "has_live_member": true,
-      "owner_names": ["ORBICULAR PHARMACEUTICAL TECHNOLOGIES PRIVATE LIMITED"],
-      "companies": []
+      "companies": [{ "company_id": 218, "short_name": "eli_lilly", "name": "Eli Lilly" }]
     }
   ],
-  "next_cursor": "eyJyIjoicGF0ZW50cyIsInMiOiItbGF0ZXN0X3N0YXR1c19kYXRlIiwidiI6IjIwMjYtMDctMTUiLCJrIjoiMTkwNjIzMzUifQ",
-  "total": 11
+  "next_cursor": "eyJyIjoicGF0ZW50cyIsInMiOiItbGF0ZXN0X3N0YXR1c19kYXRlIiwidiI6IjIwMjYtMDktMjkiLCJrIjoiNjM1MTEyMDkifQ",
+  "total": 334
 }
+```
+
+Look up a patent directly by number:
+
+```bash
+curl https://api.pav.bio/v1/patents/12295987 \
+  -H "Authorization: Bearer $PAV_API_KEY"
 ```

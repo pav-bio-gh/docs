@@ -45,25 +45,27 @@ Book patents `patent_number`; orphan designations `designation_id`.
 
 | Name | Values | Example |
 | --- | --- | --- |
-| `q` | Part of the title, description, company or FDA id | `tirzepatide` |
-| `company_id` | Ids | `218` |
+| `company` | Ticker, company slug or exact name | `lilly` |
+| `company_id` | Ids, for values from an earlier response | `218` |
 | `application_key` | FDA application | `N:215866` |
 | `status` | Statuses, case-insensitive | `listed` |
 | `from`, `to` | The date in the table above | `2027-01-01` |
 | `sort` | `document_date`, `event_date` | `-event_date` |
 
-Shared rules: [Conventions](/conventions).
+Company coverage varies by type: most Orange Book, Purple Book and orphan
+records carry a linked Pav company; many warning-letter and recall recipients
+do not, so a `company`/`company_id` filter under-counts those two types.
 
 ## Example
 
-Orange Book patents on tirzepatide products, latest expiry first:
+Orange Book patents held by Eli Lilly, latest expiry first:
 
 <CodeGroup>
 
 ```bash cURL
 curl -G https://api.pav.bio/v1/fda/orange-book-patents \
   -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "q=tirzepatide" \
+  --data-urlencode "company=lilly" \
   --data-urlencode "sort=-event_date" \
   --data-urlencode "limit=2"
 ```
@@ -75,7 +77,7 @@ import requests
 resp = requests.get(
     "https://api.pav.bio/v1/fda/orange-book-patents",
     headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"q": "tirzepatide", "sort": "-event_date", "limit": 2},
+    params={"company": "lilly", "sort": "-event_date", "limit": 2},
 )
 resp.raise_for_status()
 for r in resp.json()["data"]:
@@ -105,6 +107,6 @@ for r in resp.json()["data"]:
     }
   ],
   "next_cursor": "eyJyIjoiZmRhL29yYW5nZV9ib29rX3BhdGVudCIsInMiOiItZXZlbnRfZGF0ZSIsInYiOiIyMDQxLTEyLTMwIiwiayI6Im9yYW5nZV9ib29rX3BhdGVudDpOOjIxNTg2NjowMDE6MTIyOTU5ODc6VS00MTkzIn0",
-  "total": 828
+  "total": 1009
 }
 ```

@@ -4,13 +4,12 @@ description: "Comparable deals for a target, ranked by stated value."
 icon: "scale"
 ---
 
-Find the target's id, list its deals by potential value, and open the top
-deal. Requires `PAV_API_KEY` and `pip install requests`.
+List deals against a target by potential value, and open the top deal.
+Requires `PAV_API_KEY` and `pip install requests`.
 
-1. `GET /v1/search?types=target` returns the target's ontology id.
-2. `GET /v1/deals?target=<id>&sort=-total_potential_value` lists deals
+1. `GET /v1/deals?target=<name>&sort=-total_potential_value` lists deals
    covering drugs against it; follow `next_cursor` for more.
-3. `GET /v1/deals/{deal_id}` returns full terms, events and sources.
+2. `GET /v1/deals/{deal_id}` returns full terms, events and sources.
 
 ```python deal_screen.py
 import os
@@ -27,10 +26,10 @@ def get(path, **params):
     return resp.json()
 
 
-target = get("/search", q="GLP-1 receptor", types="target", limit=1)["data"][0]
-page = get("/deals", target=target["id"], deal_type="licensing,collaboration",
+target = "GLP-1R"
+page = get("/deals", target=target, deal_type="licensing,collaboration",
            sort="-total_potential_value", limit=3)
-print(f"{target['name']}: {page['total']} licensing and collaboration deals")
+print(f"{target}: {page['total']} licensing and collaboration deals")
 for d in page["data"]:
     value = d.get("total_potential_value", {}).get("amount")
     print(f"{d['announced_at'][:10]} | ${value / 1e9:.2f}B | {d['deal_name']}" if value else d["deal_name"])
@@ -40,7 +39,7 @@ print("Upfront:", top.get("upfront", {}).get("raw_text"))
 ```
 
 ```text Example output
-Glucagon-Like Peptide 1 Receptor: 8 licensing and collaboration deals
+GLP-1R: 8 licensing and collaboration deals
 2025-07-30 | $2.12B | Exclusive global license agreement for SYH2086
 2023-11-09 | $2.01B | AstraZeneca exclusive license agreement for ECC5004
 2025-03-24 | $2.00B | Novo Nordisk enters exclusive license agreement for UBT251 with United Biotechnology
@@ -48,4 +47,5 @@ Upfront: an upfront payment of $120 million
 ```
 
 Read `raw_text` and `evidence` for qualifiers such as "up to". `min_value_usd`
-and value sorts consider only deals with a stated value.
+and value sorts consider only deals with a stated value. Filter by company
+instead with `company=<ticker or name>`.

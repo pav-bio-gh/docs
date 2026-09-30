@@ -15,7 +15,9 @@ icon: "database"
 | Ontology terms | MONDO, NCIT, HGNC |
 
 Every record links to its source (`source_url`, `nct_url`, deal source
-documents, patent and FDA numbers). A filter on a partly populated field,
-such as `target`, returns only rows where the field is set. Report a data
-issue with the record id and the response `request_id` at
+documents, patent and FDA numbers). A filter on a partly populated field
+returns only rows where the field is set — `company_type` is maintained
+directly and reliable, but only around a fifth of tracked companies with an
+active program have a `country` on file, so a `country` filter under-counts.
+Report a data issue with the record id and the response `request_id` at
 [pav.bio](https://pav.bio).

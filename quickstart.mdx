@@ -1,6 +1,6 @@
 ---
 title: "Quickstart"
-description: "Create an API key, find an id, and list a company's programs."
+description: "Create an API key and list, then look up, biopharma programs by plain filters."
 icon: "rocket"
 ---
 
@@ -13,52 +13,33 @@ and create a key. The secret is shown once.
 export PAV_API_KEY="<your_api_key>"
 ```
 
-## 2. Find an id
+## 2. List something specific — no ids needed
 
-Filters take ids. [Search](/search) turns a name into one.
-
-```bash
-curl -G https://api.pav.bio/v1/search \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "q=Eli Lilly" \
-  --data-urlencode "types=company" \
-  --data-urlencode "limit=1"
-```
-
-```json Example response
-{ "data": [{ "type": "company", "id": "218", "name": "Eli Lilly", "detail": "United States", "program_count": 94 }] }
-```
-
-## 3. List by id
-
-Eli Lilly's Phase 3 programs:
+Preclinical antibody-drug conjugates at private companies:
 
 <CodeGroup>
 
 ```bash cURL
 curl -G https://api.pav.bio/v1/programs \
   -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "company_id=218" \
-  --data-urlencode "phase=3" \
-  --data-urlencode "view=slim" \
-  --data-urlencode "limit=2"
+  --data-urlencode "phase=preclinical" \
+  --data-urlencode "modality=adc" \
+  --data-urlencode "company_type=private"
 ```
 
 ```python Python
 import os
 import requests
 
-API = "https://api.pav.bio/v1"
-HEADERS = {"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"}
-
-hit = requests.get(f"{API}/search", headers=HEADERS,
-                   params={"q": "Eli Lilly", "types": "company", "limit": 1}).json()["data"][0]
-resp = requests.get(f"{API}/programs", headers=HEADERS,
-                    params={"company_id": hit["id"], "phase": "3", "view": "slim", "limit": 2})
+resp = requests.get(
+    "https://api.pav.bio/v1/programs",
+    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
+    params={"phase": "preclinical", "modality": "adc", "company_type": "private"},
+)
 resp.raise_for_status()
 page = resp.json()
-for p in page["data"]:
-    print(p["program_id"], p["drug"], "|", p["indication"], "|", p["phase_norm"])
+for p in page["data"][:3]:
+    print(p["program_id"], p["company"], "|", p["drug"], "|", p["indication"])
 print("total:", page["total"])
 ```
 
@@ -68,52 +49,89 @@ print("total:", page["total"])
 {
   "data": [
     {
-      "program_id": 1766,
-      "status": "active",
-      "company_id": 218,
-      "company": "Eli Lilly",
-      "drug": "Baricitinib",
-      "drug_id": 4752,
-      "indication": "Type 1 Diabetes",
-      "phase_norm": "Phase 3",
-      "modality_norm": "small_molecule",
-      "target": "JAK1/JAK2",
-      "trial_count": 2
-    },
-    {
-      "program_id": 1768,
-      "status": "active",
-      "company_id": 218,
-      "company": "Eli Lilly",
-      "drug": "Brenipatide",
-      "drug_id": 4754,
-      "indication": "Alcohol Use Disorder",
-      "phase_norm": "Phase 3",
-      "modality_norm": "peptide",
-      "trial_count": 2
+      "program_id": 6544,
+      "company_id": 714,
+      "company": "Earendil Labs",
+      "drug": "HXN-2001",
+      "indication": "Colorectal cancer",
+      "phase": "preclinical",
+      "modality": "adc",
+      "target": "CDH17"
     }
   ],
-  "next_cursor": "eyJyIjoicHJvZ3JhbXMiLCJzIjoiY29tcGFueSIsInYiOiJFbGkgTGlsbHkiLCJrIjoiMTc2OCJ9",
-  "total": 40
+  "next_cursor": "eyJyIjoicHJvZ3JhbXMiLCJzIjoiY29tcGFueSIsInYiOiJFYXJlbmRpbCBMYWJzIiwiayI6IjY1NDQifQ",
+  "total": 16
 }
 ```
 
-Pass `next_cursor` as `cursor` for the next page. The same ids, filters and
-paging work on every list; see [Conventions](/conventions).
+## 3. Fetch one by id
+
+```bash
+curl https://api.pav.bio/v1/programs/6544 \
+  -H "Authorization: Bearer $PAV_API_KEY"
+```
+
+## 4. More list examples
+
+Phase 3 ADCs targeting HER2:
+
+```bash
+curl -G https://api.pav.bio/v1/programs \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "phase=phase_3" \
+  --data-urlencode "modality=adc" \
+  --data-urlencode "target=HER2"
+```
+
+Pfizer's active programs, by ticker:
+
+```bash
+curl -G https://api.pav.bio/v1/programs \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "company=PFE"
+```
+
+Oncology licensing deals announced in 2025 over $100M:
+
+```bash
+curl -G https://api.pav.bio/v1/deals \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "deal_type=licensing" \
+  --data-urlencode "therapeutic_area=oncology" \
+  --data-urlencode "from=2025-01-01" \
+  --data-urlencode "to=2025-12-31" \
+  --data-urlencode "min_value_usd=100000000"
+```
+
+Recruiting Phase 2 trials in obesity:
+
+```bash
+curl -G https://api.pav.bio/v1/trials \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "indication=obesity" \
+  --data-urlencode "phase=2" \
+  --data-urlencode "status=recruiting"
+```
+
+Every list returns `{ "data": [...], "next_cursor": "...", "total": N }`.
+Pass `next_cursor` back as `cursor` for the next page. `company=` accepts a
+ticker, a company slug or an exact registered name, and rolls up
+subsidiaries; a name that matches more than one company is a `400` naming
+the candidates.
 
 ## Next
 
 <CardGroup cols={2}>
-  <Card title="Conventions" icon="list-checks" href="/conventions">
-    Ids, `q`, filters, dates, sorting and paging.
-  </Card>
   <Card title="Datasets" icon="database" href="/datasets/programs">
     Fields and filters for each dataset.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/overview">
+    Every list and get endpoint.
   </Card>
   <Card title="MCP server" icon="bot" href="/mcp-server">
     The same data as agent tools.
   </Card>
   <Card title="Guides" icon="book-open" href="/guides/competitive-landscape">
-    Landscapes, deals, patents, monitoring.
+    Landscapes, deals and patents.
   </Card>
 </CardGroup>

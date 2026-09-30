@@ -4,13 +4,12 @@ description: "Every program against a target, counted by phase."
 icon: "chart-column"
 ---
 
-Find the target's id, list every program against it, and count by phase.
-Requires `PAV_API_KEY` and `pip install requests`.
+List every program against a target and count by phase. Requires
+`PAV_API_KEY` and `pip install requests`.
 
-1. `GET /v1/search?types=target` returns the target's ontology id.
-2. `GET /v1/programs?target=<id>` lists programs under any name for the
+1. `GET /v1/programs?target=<name>` lists programs under any name for the
    target; follow `next_cursor` to the end.
-3. Count by `phase_norm` and print the most advanced.
+2. Count by `phase` and print the most advanced.
 
 ```python landscape.py
 import collections
@@ -28,8 +27,8 @@ def get(path, **params):
     return resp.json()
 
 
-target = get("/search", q="TL1A", types="target", limit=1)["data"][0]
-programs, params = [], {"target": target["id"], "view": "slim", "sort": "-phase", "limit": 200}
+target = "TL1A"
+programs, params = [], {"target": target, "view": "slim", "sort": "-phase", "limit": 200}
 while True:
     page = get("/programs", **params)
     programs += page["data"]
@@ -37,25 +36,25 @@ while True:
         break
     params["cursor"] = page["next_cursor"]
 
-print(f"{target['name']} ({target['id']}): {len(programs)} programs")
-for phase, n in collections.Counter(p["phase_norm"] for p in programs).most_common():
+print(f"{target}: {len(programs)} programs")
+for phase, n in collections.Counter(p["phase"] for p in programs).most_common():
     print(f"  {phase:<12} {n}")
 for p in programs[:4]:
-    print(f"{p['phase_norm']:<8} | {p['company']} | {p['drug']} | {p['indication']}")
+    print(f"{p['phase']:<10} | {p['company']} | {p['drug']} | {p['indication']}")
 ```
 
 ```text Example output
-Tumor Necrosis Factor Ligand Superfamily Member 15 (NCIT:C18289): 43 programs
-  Phase 2      18
-  Phase 3      9
-  Phase 1      8
-  Preclinical  8
-Phase 3  | Chugai Pharmaceutical | afimkibart | Crohn’s disease
-Phase 3  | Chugai Pharmaceutical | afimkibart | Ulcerative Colitis
-Phase 3  | Merck | tulisokibart | Crohn’s disease
-Phase 3  | Merck | tulisokibart | Ulcerative colitis
+TL1A: 43 programs
+  phase_2      18
+  phase_3      9
+  phase_1      8
+  preclinical  8
+phase_3    | Chugai Pharmaceutical | afimkibart | Crohn’s disease
+phase_3    | Chugai Pharmaceutical | afimkibart | Ulcerative Colitis
+phase_3    | Merck | tulisokibart | Crohn’s disease
+phase_3    | Merck | tulisokibart | Ulcerative colitis
 ```
 
-For one asset's nearest competitors, call
-`GET /v1/programs/{program_id}/similar-programs`. For an indication, search
-`types=indication` and filter with `indication=<id>`.
+For a company's own pipeline instead of a target, filter with
+`company=<ticker or name>`; it rolls up subsidiaries. For an indication, use
+`indication=<name>`.
