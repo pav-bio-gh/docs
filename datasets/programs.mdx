@@ -67,18 +67,17 @@ curl -G https://api.pav.bio/v1/programs \
   --data-urlencode "limit=3"
 ```
 
-```python Python
-import os
-import requests
+```python Python SDK
+from pav_bio import Pav
 
-resp = requests.get(
-    "https://api.pav.bio/v1/programs",
-    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"target": "TL1A", "phase": "phase_2,phase_3", "sort": "-phase", "limit": 3},
-)
-resp.raise_for_status()
-for p in resp.json()["data"]:
-    print(p["program_id"], p["company"], "|", p["drug"], "|", p["indication"], "|", p["phase"])
+client = Pav()  # reads PAV_API_KEY
+page = client.programs.list(target=["TL1A"], phase=["phase_2", "phase_3"], sort="-phase", limit=3)
+for p in page.items:
+    print(p.program_id, p.company, "|", p.drug, "|", p.indication, "|", p.phase)
+```
+
+```bash CLI
+pav programs list --target TL1A --phase phase_2,phase_3 --sort=-phase --limit 3
 ```
 
 </CodeGroup>

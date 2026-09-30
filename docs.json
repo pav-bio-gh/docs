@@ -41,10 +41,7 @@
   "api": {
     "examples": {
       "languages": [
-        "bash",
-        "python",
-        "javascript",
-        "go"
+        "bash"
       ]
     },
     "playground": {
@@ -99,6 +96,13 @@
             "pages": [
               "authentication",
               "rate-limits"
+            ]
+          },
+          {
+            "group": "SDK and CLI",
+            "pages": [
+              "clients/python-sdk",
+              "clients/cli"
             ]
           },
           {

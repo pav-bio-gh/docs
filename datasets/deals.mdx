@@ -55,20 +55,23 @@ curl -G https://api.pav.bio/v1/deals \
   --data-urlencode "limit=2"
 ```
 
-```python Python
-import os
-import requests
+```python Python SDK
+import datetime as dt
 
-resp = requests.get(
-    "https://api.pav.bio/v1/deals",
-    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"deal_type": "licensing", "therapeutic_area": "oncology", "from": "2025-01-01",
-            "to": "2025-12-31", "min_value_usd": 100_000_000, "sort": "-total_potential_value",
-            "limit": 2},
-)
-resp.raise_for_status()
-for d in resp.json()["data"]:
-    print(d["announced_at"][:10], d["deal_name"], "|", d["total_potential_value"]["amount"])
+from pav_bio import Pav
+
+client = Pav()  # reads PAV_API_KEY
+page = client.deals.list(deal_type=["licensing"], therapeutic_area=["oncology"],
+                         from_=dt.date(2025, 1, 1), to=dt.date(2025, 12, 31),
+                         min_value_usd=100_000_000, sort="-total_potential_value", limit=2)
+for d in page.items:
+    print(d.announced_at.date(), d.deal_name, "|", d.total_potential_value.amount)
+```
+
+```bash CLI
+pav deals list --deal-type licensing --therapeutic-area oncology \
+  --from 2025-01-01 --to 2025-12-31 --min-value-usd 100000000 \
+  --sort=-total_potential_value --limit 2
 ```
 
 </CodeGroup>

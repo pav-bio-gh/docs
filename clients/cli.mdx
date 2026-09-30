@@ -1,0 +1,54 @@
+---
+title: "CLI"
+description: "The pav command: every endpoint from your terminal or an agent's shell."
+icon: "terminal"
+---
+
+`pav` is one static binary. Commands mirror the API: `pav <resource> list`
+and `pav <resource> get`, with each query parameter as a flag.
+
+## Install
+
+```bash
+curl -LsSf https://pav.bio/install.sh | sh
+```
+
+Installs `pav` to `~/.local/bin`. On Windows:
+`powershell -c "irm https://pav.bio/install.ps1 | iex"`.
+
+## Authenticate
+
+```bash
+pav auth login            # stores the key in your OS keychain
+export PAV_API_KEY=...    # or use an environment variable
+```
+
+## List and get
+
+```bash
+pav programs list --company MRNA --phase phase_3
+pav recalls list --limit 5 --sort=-document_date
+pav drug-applications get --application-key N:209637
+```
+
+Output is a table in a terminal and JSON when piped. `--format json|jsonl|csv|yaml`
+picks one; `--query` takes a JMESPath expression:
+
+```bash
+pav programs list --company MRNA --format json --query "data[].{drug: drug, phase: phase}"
+```
+
+## Every page
+
+`--page-all` follows `next_cursor` (up to `--page-limit` pages, default 10):
+
+```bash
+pav programs list --company PFE --page-all --page-limit 100 \
+  --format jsonl | jq -c '.data[]? // .' > pfizer_programs.jsonl
+```
+
+## For agents
+
+`--help` and `--schema` describe every command and parameter, so an agent in
+a shell can discover the API as it goes. `pav generate-skills` writes a
+`SKILL.md` per command for Claude Code and similar tools.

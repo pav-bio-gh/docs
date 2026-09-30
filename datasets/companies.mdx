@@ -49,18 +49,16 @@ curl -G https://api.pav.bio/v1/companies \
   --data-urlencode "company=MSD"
 ```
 
-```python Python
-import os
-import requests
+```python Python SDK
+from pav_bio import Pav
 
-resp = requests.get(
-    "https://api.pav.bio/v1/companies",
-    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"company": "MSD"},
-)
-resp.raise_for_status()
-for c in resp.json()["data"]:
-    print(c["company_id"], c["name"], c["company_type"], c["asset_count"])
+client = Pav()  # reads PAV_API_KEY
+for c in client.companies.list(company=["MSD"]).items:
+    print(c.company_id, c.name, c.company_type, c.asset_count)
+```
+
+```bash CLI
+pav companies list --company MSD
 ```
 
 </CodeGroup>
