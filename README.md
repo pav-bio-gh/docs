@@ -10,13 +10,13 @@ Source for the public Pav API and MCP server documentation, built with
 - `docs.json`: site config and navigation. Sidebar groups of the
   **Documentation** tab:
   - Overview: `introduction.mdx`, `quickstart.mdx`, `data-overview.mdx`.
-  - Datasets: `search.mdx` and `datasets/`, one page per dataset in
-    collapsible sub-groups (Pipeline, Clinical and regulatory, Deals and
-    patents, Monitoring). Each page has one sentence, a key-fields table, a
-    parameters table and one example (cURL and Python) with a real trimmed
-    response. Shared rules link to `conventions.mdx` instead of repeating.
-  - REST API: `authentication.mdx`, `conventions.mdx` (ids, `q`, filters,
-    dates, sorting, paging, errors), `rate-limits.mdx`.
+  - Datasets: `datasets/`, one page per dataset in collapsible sub-groups
+    (Pipeline, Clinical and regulatory, Deals and patents). Each page has one
+    sentence, a key-fields table, a parameters table and one example (cURL
+    and Python) with a real trimmed response. There is no shared
+    "Conventions" page; each parameter's own description states its rule
+    (ids, comma-separated values, dates, sorting, paging).
+  - REST API: `authentication.mdx`, `rate-limits.mdx` (errors, retries).
   - AI agents: `mcp-server.mdx`, `openapi-and-agents.mdx`. The MCP page lives
     at `/mcp-server` because Mintlify serves its own `/mcp`.
   - Guides: `guides/`, task walkthroughs with runnable scripts and example

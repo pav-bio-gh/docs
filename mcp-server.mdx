@@ -9,7 +9,7 @@ icon: "bot"
 | URL | `https://api.pav.bio/mcp` |
 | Transport | Streamable HTTP |
 | Auth | `Authorization: Bearer <api_key>` ([Authentication](/authentication)) |
-| Tools | 30, one per endpoint, all read-only |
+| Tools | 26, one per endpoint, all read-only |
 
 ## Connect
 
@@ -49,41 +49,42 @@ icon: "bot"
 
     async def main():
         async with Client(transport) as client:
-            hit = await client.call_tool("search", {"q": "tirzepatide", "types": "drug", "limit": 1})
-            drug_id = hit.structured_content["data"][0]["id"]
-            programs = await client.call_tool("list_programs", {"drug_id": drug_id, "view": "slim", "limit": 3})
+            programs = await client.call_tool(
+                "list_programs",
+                {"phase": ["preclinical"], "modality": ["adc"], "company_type": "private", "view": "slim", "limit": 3},
+            )
             for p in programs.structured_content["data"]:
-                print(p["company"], "|", p["indication"], "|", p["phase_norm"])
+                print(p["company"], "|", p["indication"], "|", p["phase"])
 
 
     asyncio.run(main())
     ```
 
     ```text Example output
-    Eli Lilly | Cardiovascular Outcomes | Approved
-    Eli Lilly | Higher Doses | Phase 2
-    Eli Lilly | Metabolic Dysfunction-Associated Steatotic Liver Disease | Phase 3
+    Earendil Labs | Colorectal cancer | preclinical
+    Earendil Labs | Colorectal cancer | preclinical
+    Earendil Labs | Other solid tumors | preclinical
     ```
   </Tab>
 </Tabs>
 
 ## Tools
 
-Each tool takes the endpoint's parameters and returns its JSON. Agents
-should call `search` first to turn names into ids.
+Each tool takes the endpoint's parameters and returns its JSON. Filter by a
+plain value you already have (a ticker, a phase, a modality) — `company_id`,
+`drug_id` and `program_id` are also accepted for ids from a previous
+response.
 
 | Tool | Endpoint |
 | --- | --- |
-| `search` | `GET /v1/search` |
-| `list_programs`, `get_program`, `get_similar_programs` | `/v1/programs`, `/{program_id}`, `/{program_id}/similar-programs` |
+| `list_programs`, `get_program` | `/v1/programs`, `/{program_id}` |
 | `list_drugs`, `get_drug` | `/v1/drugs`, `/{drug_id}` |
-| `list_companies`, `get_company`, `list_company_trials` | `/v1/companies`, `/{company_id}`, `/{company_id}/trials` |
+| `list_companies`, `get_company` | `/v1/companies`, `/{company_id}` |
 | `list_trials`, `get_trial` | `/v1/trials`, `/{nct_id}` |
 | `list_deals`, `get_deal` | `/v1/deals`, `/{deal_id}` |
-| `list_patents`, `get_patent_family` | `/v1/patents`, `/{family_id}` |
+| `list_patents`, `get_patent_family` | `/v1/patents`, `/{id}` |
 | `list_fda_orange_book_products`, `list_fda_orange_book_patents`, `list_fda_orange_book_exclusivities`, `list_fda_purple_book_products`, `list_fda_orphan_designations`, `list_fda_warning_letters`, `list_fda_recalls`, `list_fda_applications`, `list_fda_complete_response_letters`, `list_fda_accelerated_approvals`, `list_fda_advisory_committee_meetings` | One per [FDA record type](/datasets/fda) |
 | `get_fda_application`, `get_fda_record` | `/v1/fda/applications/{application_key}`, `/v1/fda/{record_key}` |
-| `list_changes` | `/v1/changes` |
 | `get_stats` | `/v1/stats` |
 
 Each tool call counts toward the [rate limit](/rate-limits).

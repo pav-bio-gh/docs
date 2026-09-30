@@ -7,18 +7,19 @@ icon: "book-open"
 
 Every endpoint is a read-only `GET` under `https://api.pav.bio/v1`, generated
 from the [OpenAPI spec](/openapi-and-agents). Send
-`Authorization: Bearer <api_key>` ([Authentication](/authentication)). Ids,
-filters, dates, sorting and paging follow [Conventions](/conventions).
+`Authorization: Bearer <api_key>` ([Authentication](/authentication)). Each
+resource has one list endpoint, filtered by plain values (a ticker, a phase,
+a modality) or by an id from an earlier response, and one get endpoint.
+Lists return `{ "data": [...], "next_cursor": "...", "total": N }`; pass
+`next_cursor` back as `cursor` for the next page.
 
 <CardGroup cols={2}>
-  <Card title="Search" icon="search" href="/api-reference/search/search">Names to ids.</Card>
-  <Card title="Programs" icon="flask-conical" href="/api-reference/programs/list-programs">Programs and similar programs.</Card>
+  <Card title="Programs" icon="flask-conical" href="/api-reference/programs/list-programs">Drug development programs.</Card>
   <Card title="Drugs" icon="pill" href="/api-reference/drugs/list-drugs">Drugs across companies.</Card>
-  <Card title="Companies" icon="building-2" href="/api-reference/companies/list-companies">Companies and their trials.</Card>
+  <Card title="Companies" icon="building-2" href="/api-reference/companies/list-companies">Companies, tickers and owners.</Card>
   <Card title="Trials" icon="stethoscope" href="/api-reference/trials/list-trials">Clinical trials.</Card>
   <Card title="Deals" icon="handshake" href="/api-reference/deals/list-deals">Deals with terms.</Card>
   <Card title="Patents" icon="scroll-text" href="/api-reference/patents/list-patent-families">Patent families.</Card>
   <Card title="FDA" icon="landmark" href="/api-reference/fda/list-orange-book-products">One list per FDA record type.</Card>
-  <Card title="Changes" icon="history" href="/api-reference/changes/list-changes">Program and trial changes.</Card>
   <Card title="Stats" icon="chart-column" href="/api-reference/stats/get-dataset-stats">Dataset counts.</Card>
 </CardGroup>

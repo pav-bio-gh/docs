@@ -28,29 +28,29 @@ events, drugs covered and source documents.
 
 | Name | Values | Example |
 | --- | --- | --- |
-| `q` | Every word in the deal text, or part of a party name | `bispecific` |
-| `company_id`, `drug_id` | Ids | `203` |
+| `company` | Ticker, company slug or exact name; any party | `abbvie` |
 | `deal_type` | See key fields | `licensing` |
 | `status` | `proposed`, `announced`, `completed`, `amended`, `terminated`, `update` | `completed` |
 | `target`, `modality`, `therapeutic_area` | As on [Programs](/datasets/programs); areas such as `oncology` | `oncology` |
-| `min_value_usd` | Minimum `total_potential_value` | `1000000000` |
-| `from`, `to` | `announced_at` range | `2026-01-01` |
+| `min_value_usd` | Minimum `total_potential_value` | `100000000` |
+| `company_id`, `drug_id` | Ids, for values from an earlier response | `203` |
+| `from`, `to` | `announced_at` range | `2025-01-01` |
 | `sort` | `activity_date` (default descending), `announced_at`, `completed_at`, `total_value`, `total_potential_value` | `-total_potential_value` |
-
-Shared rules: [Conventions](/conventions).
 
 ## Example
 
-Largest oncology licensing deals announced in 2026:
+Oncology licensing deals announced in 2025 over $100M:
 
 <CodeGroup>
 
 ```bash cURL
 curl -G https://api.pav.bio/v1/deals \
   -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "therapeutic_area=oncology" \
   --data-urlencode "deal_type=licensing" \
-  --data-urlencode "from=2026-01-01" \
+  --data-urlencode "therapeutic_area=oncology" \
+  --data-urlencode "from=2025-01-01" \
+  --data-urlencode "to=2025-12-31" \
+  --data-urlencode "min_value_usd=100000000" \
   --data-urlencode "sort=-total_potential_value" \
   --data-urlencode "limit=2"
 ```
@@ -62,8 +62,9 @@ import requests
 resp = requests.get(
     "https://api.pav.bio/v1/deals",
     headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"therapeutic_area": "oncology", "deal_type": "licensing", "from": "2026-01-01",
-            "sort": "-total_potential_value", "limit": 2},
+    params={"deal_type": "licensing", "therapeutic_area": "oncology", "from": "2025-01-01",
+            "to": "2025-12-31", "min_value_usd": 100_000_000, "sort": "-total_potential_value",
+            "limit": 2},
 )
 resp.raise_for_status()
 for d in resp.json()["data"]:
@@ -76,31 +77,25 @@ for d in resp.json()["data"]:
 {
   "data": [
     {
-      "deal_id": "27714451-ce9c-4cc3-9c54-35c0ed4721fe",
-      "deal_name": "AbbVie and RemeGen exclusive license for RC148 outside Greater China",
+      "deal_id": "af5a9a5e-0359-4be2-b4cd-8d89cb485f3d",
+      "deal_name": "Pfizer enters exclusive global ex-China license agreement with 3SBio for SSGJ-707",
       "deal_type": "licensing",
-      "latest_event_type": "announced",
-      "announced_at": "2026-01-12T00:00:00Z",
+      "latest_event_type": "completed",
+      "announced_at": "2025-05-20T00:00:00Z",
       "companies": [
-        { "company_id": 203, "name": "AbbVie", "roles": ["licensee"] },
-        { "company_id": 877, "name": "Remegen", "roles": ["licensor"] }
+        { "company_id": 10427, "name": "3SBio", "roles": ["licensor"] },
+        { "company_id": 506, "name": "Pfizer", "roles": ["licensee"] }
       ],
       "total_potential_value": {
-        "raw_text": "an upfront payment of USD $650 million + up to USD $4.95 billion in aggregate development, regulatory, and commercial milestone payments",
-        "amount": 5600000000.0,
+        "raw_text": "an upfront payment of $1.25 billion + milestone payments associated with certain development, regulatory and commercial milestones up to $4.8 billion",
+        "amount": 6050000000.0,
         "currency": "USD"
       },
+      "assets": [{ "drug_id": 12374, "name": "SSGJ-707", "modality": "antibody" }],
       "therapeutic_areas": ["oncology"]
-    },
-    {
-      "deal_id": "0c3e3cf7-971e-4890-9eb6-0a07fed1f713",
-      "deal_name": "Roche enters exclusive licensing and collaboration agreement with Nurix for bexobrutideg (NX-5948)",
-      "deal_type": "licensing",
-      "announced_at": "2026-06-08T00:00:00Z",
-      "total_potential_value": { "raw_text": "TOTAL PAYMENTS UP TO $2.3B", "amount": 2300000000.0, "currency": "USD" }
     }
   ],
-  "next_cursor": "eyJyIjoiZGVhbHMiLCJzIjoiLXRvdGFsX3BvdGVudGlhbF92YWx1ZSIsInYiOiIyMzAwMDAwMDAwLjAiLCJrIjoiMGMzZTNjZjctOTcxZS00ODkwLTllYjYtMGEwN2ZlZDFmNzEzIn0",
-  "total": 12
+  "next_cursor": "eyJyIjoiZGVhbHMiLCJzIjoiLXRvdGFsX3BvdGVudGlhbF92YWx1ZSIsInYiOiIyMDE1MDAwMDAwLjAiLCJrIjoiZmQ2NzZhZDQtYWQzNi00NzIzLTk5NmMtZDBjZDMzZGE2YzBkIn0",
+  "total": 17
 }
 ```

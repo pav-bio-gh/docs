@@ -13,7 +13,8 @@ icon: "network"
 | [Deals](/datasets/deals) | One transaction | `deal_id`, `company_id`, `drug_id` |
 | [Patents](/datasets/patents) | One US patent family | `family_id`, `company_id` |
 | [FDA records](/datasets/fda) | One FDA record | `record_key`, `application_key`, `company_id` |
-| [Changes](/datasets/changes) | One detected change | `program_id`, `nct_id`, `company_id` |
 
-Look up an id once with [Search](/search) and reuse it across every dataset.
+Every list takes plain filters — a ticker, a company name, a phase, a
+modality — so you rarely need an id up front. `company_id`, `drug_id` and
+`program_id` are there for values you already have from an earlier response.
 Current program and company counts: `GET /v1/stats`.

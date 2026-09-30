@@ -9,9 +9,8 @@ programs and companies linked to it.
 
 | Endpoint | Returns |
 | --- | --- |
-| `GET /v1/trials` | Trials, filtered or searched with `q`. |
+| `GET /v1/trials` | Trials, filtered. |
 | `GET /v1/trials/{nct_id}` | One trial. |
-| `GET /v1/companies/{company_id}/trials` | One company's trials. |
 
 ## Key fields
 
@@ -28,21 +27,18 @@ programs and companies linked to it.
 
 | Name | Values | Example |
 | --- | --- | --- |
-| `q` | Free text, ranked by relevance | `semaglutide sleep apnea` |
-| `company_id` | Ids; matches sponsors and collaborators | `76` |
-| `nct_id` | NCT ids | `NCT07668414` |
-| `phase` | `1`–`4` | `3` |
-| `status` | Recruitment statuses | `RECRUITING` |
-| `study_type` | Study types | `INTERVENTIONAL` |
+| `company` | Ticker, company slug or exact name; matches sponsors, collaborators and linked programs | `pfizer` |
 | `indication` | Condition name, synonym, MeSH or MONDO id | `obesity` |
+| `phase` | `1`–`4` | `2` |
+| `status` | Recruitment statuses | `recruiting` |
+| `study_type` | Study types | `interventional` |
+| `nct_id`, `company_id` | Ids, for values from an earlier response | `NCT07668414` |
 | `from`, `to` | `start_date` range | `2026-01-01` |
 | `sort` | `start_date`, `last_update_post_date`, `enrollment_count`, `nct_id` (default) | `-start_date` |
 
-Shared rules: [Conventions](/conventions).
-
 ## Example
 
-Recruiting Phase 3 obesity trials, newest first:
+Recruiting Phase 2 obesity trials, newest first:
 
 <CodeGroup>
 
@@ -50,8 +46,8 @@ Recruiting Phase 3 obesity trials, newest first:
 curl -G https://api.pav.bio/v1/trials \
   -H "Authorization: Bearer $PAV_API_KEY" \
   --data-urlencode "indication=obesity" \
-  --data-urlencode "phase=3" \
-  --data-urlencode "status=RECRUITING" \
+  --data-urlencode "phase=2" \
+  --data-urlencode "status=recruiting" \
   --data-urlencode "sort=-start_date" \
   --data-urlencode "limit=2"
 ```
@@ -63,7 +59,7 @@ import requests
 resp = requests.get(
     "https://api.pav.bio/v1/trials",
     headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"indication": "obesity", "phase": "3", "status": "RECRUITING",
+    params={"indication": "obesity", "phase": "2", "status": "recruiting",
             "sort": "-start_date", "limit": 2},
 )
 resp.raise_for_status()
@@ -77,27 +73,29 @@ for t in resp.json()["data"]:
 {
   "data": [
     {
-      "nct_id": "NCT07668414",
-      "title": "A Research Study Investigating How Well the Medicine Zenagamtide Helps People With Excess Body Weight Lose Weight Compared to Semaglutide",
-      "phase": "PHASE3",
+      "nct_id": "NCT06899178",
+      "title": "Atomoxetine in Melanocortin Obesity Syndrome",
+      "phase": "PHASE2",
       "status": "RECRUITING",
-      "sponsor": "Novo Nordisk A/S",
-      "company_ids": [76],
-      "programs": [{ "program_id": 3838, "company_id": 76, "drug": "Oral Zenagamtide", "indication": "Obesity" }],
-      "start_date": "2026-09-22",
-      "enrollment_count": 650
+      "sponsor": "Icahn School of Medicine at Mount Sinai",
+      "company_ids": [],
+      "programs": [],
+      "start_date": "2026-09-01",
+      "enrollment_count": 20
     },
     {
-      "nct_id": "NCT07823608",
-      "phase": "PHASE3",
+      "nct_id": "NCT07783802",
+      "title": "A Study of Clazakizumab (LY5724886) in Adults With Elevated hsCRP and at Increased Risk for Cardiovascular Event",
+      "phase": "PHASE2",
       "status": "RECRUITING",
-      "sponsor": "Pfizer",
-      "company_ids": [506],
-      "start_date": "2026-09-17",
-      "enrollment_count": 258
+      "sponsor": "Eli Lilly and Company",
+      "company_ids": [218],
+      "programs": [{ "program_id": 11277, "company_id": 218, "drug": "Clazakizumab", "indication": "Inflammatory Disorders" }],
+      "start_date": "2026-08-27",
+      "enrollment_count": 120
     }
   ],
-  "next_cursor": "eyJyIjoidHJpYWxzIiwicyI6Ii1zdGFydF9kYXRlIiwidiI6IjIwMjYtMDktMTciLCJrIjoiTkNUMDc4MjM2MDgifQ",
-  "total": 84
+  "next_cursor": "eyJyIjoidHJpYWxzIiwicyI6Ii1zdGFydF9kYXRlIiwidiI6IjIwMjYtMDgtMjciLCJrIjoiTkNUMDc3ODM4MDIifQ",
+  "total": 102
 }
 ```
