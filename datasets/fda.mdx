@@ -72,18 +72,17 @@ curl -G https://api.pav.bio/v1/orange-book-patents \
   --data-urlencode "limit=2"
 ```
 
-```python Python
-import os
-import requests
+```python Python SDK
+from pav_bio import Pav
 
-resp = requests.get(
-    "https://api.pav.bio/v1/orange-book-patents",
-    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"company": "lilly", "sort": "-event_date", "limit": 2},
-)
-resp.raise_for_status()
-for r in resp.json()["data"]:
-    print(r["patent_number"], r["event_date"], r["title"])
+client = Pav()  # reads PAV_API_KEY
+page = client.orange_book_patents.list(company=["lilly"], sort="-event_date", limit=2)
+for r in page.items:
+    print(r.patent_number, r.event_date, r.title)
+```
+
+```bash CLI
+pav orange-book-patents list --company lilly --sort=-event_date --limit 2
 ```
 
 </CodeGroup>

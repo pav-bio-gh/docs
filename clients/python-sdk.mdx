@@ -1,0 +1,98 @@
+---
+title: "Python SDK"
+description: "Typed Python client for every endpoint: list and get on each resource, pages followed for you."
+icon: "code"
+---
+
+The `pav-bio` package wraps the REST API one to one: every resource has a
+`list` and a `get`, named after the endpoint (`GET /v1/recalls` is
+`client.recalls.list()`). Responses are typed models; lists page for you.
+
+## Install
+
+```bash
+pip install pav-bio
+```
+
+Python 3.9+. Import it as `pav_bio`.
+
+## Authenticate
+
+The client reads your key from `PAV_API_KEY`, or takes it directly.
+
+```python
+from pav_bio import Pav
+
+client = Pav()                        # reads PAV_API_KEY
+client = Pav(api_key="<your_api_key>")
+```
+
+## List and get
+
+```python
+# Every Phase 3 program at Moderna
+for program in client.programs.list(company=["MRNA"], phase=["phase_3"]):
+    print(program.drug, "|", program.indication)
+
+# One recall, by the record_key a list returned
+recall = next(iter(client.recalls.list(limit=1)))
+print(client.recalls.get(recall.record_key).title)
+
+# A drug application with every FDA record on it
+dossier = client.drug_applications.get("N:209637")
+print(dossier.application.title, dossier.records_total)
+```
+
+Parameters are the endpoint's query parameters. Multi-value filters take a
+list, and `from` is `from_`.
+
+## Pages
+
+A list returns a pager. Iterating it follows `next_cursor` until the last
+page; `iter_pages()` gives each page with its `total`.
+
+```python
+pager = client.programs.list(company=["PFE"], view="slim", limit=200)
+first = next(iter(pager.iter_pages()))
+print(first.response.total)           # rows across all pages
+rows = list(pager)                    # every row, page by page
+```
+
+## Errors
+
+Each error status has its own exception; `body.error` carries `code`,
+`message` and `request_id`.
+
+```python
+from pav_bio import BadRequestError, NotFoundError
+
+try:
+    client.programs.list(phase=["phase_9"])
+except BadRequestError as exc:
+    print(exc.body.error.message)     # lists the allowed phases
+```
+
+| Status | Exception |
+| --- | --- |
+| 400 | `BadRequestError` |
+| 401 | `UnauthorizedError` |
+| 403 | `ForbiddenError` |
+| 404 | `NotFoundError` |
+| 429 | `TooManyRequestsError` (retried for you) |
+| 503 | `ServiceUnavailableError` (retried for you) |
+
+## Async
+
+```python
+import asyncio
+from pav_bio import AsyncPav
+
+async def main() -> None:
+    client = AsyncPav()
+    stats = await client.stats.get()
+    pager = await client.companies.list(ticker=["PFE"], limit=1)
+    async for company in pager:
+        print(company.name, stats.companies)
+
+asyncio.run(main())
+```

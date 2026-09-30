@@ -5,38 +5,49 @@ icon: "scale"
 ---
 
 List deals against a target by potential value, and open the top deal.
-Requires `PAV_API_KEY` and `pip install requests`.
+Requires `PAV_API_KEY`; the cURL and CLI versions also use `jq`.
 
 1. `GET /v1/deals?target=<name>&sort=-total_potential_value` lists deals
    covering drugs against it; follow `next_cursor` for more.
 2. `GET /v1/deals/{deal_id}` returns full terms, events and sources.
 
-```python deal_screen.py
-import os
+<CodeGroup>
 
-import requests
-
-API = "https://api.pav.bio/v1"
-HEADERS = {"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"}
-
-
-def get(path, **params):
-    resp = requests.get(f"{API}{path}", headers=HEADERS, params=params, timeout=60)
-    resp.raise_for_status()
-    return resp.json()
-
-
-target = "GLP-1R"
-page = get("/deals", target=target, deal_type="licensing,collaboration",
-           sort="-total_potential_value", limit=3)
-print(f"{target}: {page['total']} licensing and collaboration deals")
-for d in page["data"]:
-    value = d.get("total_potential_value", {}).get("amount")
-    print(f"{d['announced_at'][:10]} | ${value / 1e9:.2f}B | {d['deal_name']}" if value else d["deal_name"])
-
-top = get(f"/deals/{page['data'][0]['deal_id']}")
-print("Upfront:", top.get("upfront", {}).get("raw_text"))
+```bash cURL
+page=$(curl -sfG https://api.pav.bio/v1/deals -H "Authorization: Bearer $PAV_API_KEY" \
+  --data-urlencode "target=GLP-1R" --data-urlencode "deal_type=licensing,collaboration" \
+  --data-urlencode "sort=-total_potential_value" --data-urlencode "limit=3")
+jq -r '"GLP-1R: \(.total) licensing and collaboration deals"' <<< "$page"
+jq -r '.data[] | "\(.announced_at[:10]) | $\((.total_potential_value.amount // 0) / 1e7 | round / 100)B | \(.deal_name)"' <<< "$page"
+top=$(jq -r '.data[0].deal_id' <<< "$page")
+curl -sf "https://api.pav.bio/v1/deals/$top" -H "Authorization: Bearer $PAV_API_KEY" | jq -r '"Upfront: \(.upfront.raw_text)"'
 ```
+
+```python Python SDK
+from pav_bio import Pav
+
+client = Pav()  # reads PAV_API_KEY
+target = "GLP-1R"
+page = client.deals.list(target=[target], deal_type=["licensing", "collaboration"],
+                         sort="-total_potential_value", limit=3)
+print(f"{target}: {page.response.total} licensing and collaboration deals")
+for d in page.items:
+    value = d.total_potential_value.amount if d.total_potential_value else None
+    print(f"{d.announced_at.date()} | ${value / 1e9:.2f}B | {d.deal_name}" if value else d.deal_name)
+
+top = client.deals.get(page.items[0].deal_id)
+print("Upfront:", top.upfront.raw_text if top.upfront else None)
+```
+
+```bash CLI
+page=$(pav deals list --target GLP-1R --deal-type licensing,collaboration \
+  --sort=-total_potential_value --limit 3 --format json)
+jq -r '"GLP-1R: \(.total) licensing and collaboration deals"' <<< "$page"
+jq -r '.data[] | "\(.announced_at[:10]) | $\((.total_potential_value.amount // 0) / 1e7 | round / 100)B | \(.deal_name)"' <<< "$page"
+pav deals get --deal-id "$(jq -r '.data[0].deal_id' <<< "$page")" --format json --query upfront.raw_text
+```
+
+</CodeGroup>
 
 ```text Example output
 GLP-1R: 8 licensing and collaboration deals

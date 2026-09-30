@@ -52,19 +52,18 @@ curl -G https://api.pav.bio/v1/trials \
   --data-urlencode "limit=2"
 ```
 
-```python Python
-import os
-import requests
+```python Python SDK
+from pav_bio import Pav
 
-resp = requests.get(
-    "https://api.pav.bio/v1/trials",
-    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"indication": "obesity", "phase": "2", "status": "recruiting",
-            "sort": "-start_date", "limit": 2},
-)
-resp.raise_for_status()
-for t in resp.json()["data"]:
-    print(t["nct_id"], t["start_date"], t["sponsor"], "|", t["title"][:60])
+client = Pav()  # reads PAV_API_KEY
+page = client.trials.list(indication=["obesity"], phase=["2"], status=["recruiting"],
+                          sort="-start_date", limit=2)
+for t in page.items:
+    print(t.nct_id, t.start_date, t.sponsor, "|", t.title[:60])
+```
+
+```bash CLI
+pav trials list --indication obesity --phase 2 --status recruiting --sort=-start_date --limit 2
 ```
 
 </CodeGroup>

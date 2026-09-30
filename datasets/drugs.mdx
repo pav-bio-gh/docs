@@ -43,18 +43,16 @@ curl -G https://api.pav.bio/v1/drugs \
   --data-urlencode "drug=Leqvio"
 ```
 
-```python Python
-import os
-import requests
+```python Python SDK
+from pav_bio import Pav
 
-resp = requests.get(
-    "https://api.pav.bio/v1/drugs",
-    headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    params={"drug": "Leqvio"},
-)
-resp.raise_for_status()
-for d in resp.json()["data"]:
-    print(d["drug_id"], d["name"], [c["name"] for c in d["companies"]])
+client = Pav()  # reads PAV_API_KEY
+for d in client.drugs.list(drug=["Leqvio"]).items:
+    print(d.drug_id, d.name, [c.name for c in d.companies])
+```
+
+```bash CLI
+pav drugs list --drug Leqvio
 ```
 
 </CodeGroup>
