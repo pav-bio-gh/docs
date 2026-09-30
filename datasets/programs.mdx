@@ -24,6 +24,7 @@ modality, target, status and linked trials.
 | `phase` | Normalized: `preclinical`, `phase_1`, `phase_1_2`, `phase_2`, `phase_2_3`, `phase_3`, `filed`, `registration`, `approved`. |
 | `modality`, `target`, `target_terms[]` | Normalized modality, target as published, and its NCIT or HGNC terms. |
 | `clinical_trials[]`, `source_url`, `last_updated` | Linked trials, source page, last change. |
+| `source_checked_at` | When Pav last read `source_url`. Set only when Pav reads the company's own page directly; null when the program has no such page (e.g. a trial- or approval-only program), even if `basis` still reads `company_pipeline`. |
 
 `view=slim` returns light rows with `trial_count` instead of nested trials
 and terms.

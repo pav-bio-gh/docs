@@ -4,7 +4,21 @@ description: "Push delivery of change events. Planned, not yet available."
 icon: "webhook"
 ---
 
-Webhooks are planned. They will push the same records the
-[changes feed](/datasets/changes) returns (programs added, dropped or changing
-phase), signed so you can verify them. Until then, poll `GET /v1/changes`
-with `since`; see [Track pipeline changes](/guides/track-pipeline-changes).
+Webhooks are planned. They will push the same kind of records a program
+change makes (added, dropped or changing phase), signed so you can verify
+them.
+
+There is no public change feed to poll today. In the meantime, the closest
+approximation is sorting and filtering [`GET /v1/programs`](/datasets/programs)
+by `last_updated`:
+
+```bash
+curl "https://api.pav.bio/v1/programs?sort=-last_updated&from=2026-09-01" \
+  -H "Authorization: Bearer $PAV_API_KEY"
+```
+
+This returns programs whose latest event (a phase change, readout, filing or
+approval) falls on or after `from`, newest first — re-run it periodically with
+an updated `from` to approximate polling. It surfaces the same phase/status
+changes a future webhook would push, but not the full event history (what
+changed, from what, to what) a dedicated feed would carry.
