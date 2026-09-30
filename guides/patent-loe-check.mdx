@@ -8,7 +8,7 @@ List a company's Orange Book patent and exclusivity expiries and its live US
 patent families, then narrow to one product. Requires `PAV_API_KEY` and
 `pip install requests`.
 
-1. `GET /v1/fda/orange-book-patents` and `/orange-book-exclusivities` with
+1. `GET /v1/orange-book-patents` and `/v1/orange-book-exclusivities` with
    `company=<ticker or name>` list every listing for the company; follow
    `next_cursor` and keep the rows for the product you want.
 2. `GET /v1/patents?company=<ticker or name>&status=live` lists its live
@@ -41,11 +41,11 @@ def every(path, **params):
 
 company, product = "lilly", "tirzepatide"
 expiry = {}
-for r in every("/fda/orange-book-patents", company=company, sort="event_date"):
+for r in every("/orange-book-patents", company=company, sort="event_date"):
     if product in (r.get("description") or "").lower():
         expiry[r["patent_number"]] = r["event_date"]
 print(f"{product}: {len(expiry)} Orange Book patents, last expires {max(expiry.values())}")
-for r in every("/fda/orange-book-exclusivities", company=company, sort="-event_date"):
+for r in every("/orange-book-exclusivities", company=company, sort="-event_date"):
     if product in (r.get("description") or "").lower():
         print(f"  exclusivity {r['status']} until {r['event_date']}")
         break

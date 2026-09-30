@@ -180,6 +180,58 @@
     {
       "source": "/guides/track-pipeline-changes",
       "destination": "/guides/competitive-landscape"
+    },
+    {
+      "source": "/api-reference/fda/list-orange-book-products",
+      "destination": "/api-reference/orange-book-products/list-orange-book-products"
+    },
+    {
+      "source": "/api-reference/fda/list-orange-book-patents",
+      "destination": "/api-reference/orange-book-patents/list-orange-book-patents"
+    },
+    {
+      "source": "/api-reference/fda/list-orange-book-exclusivities",
+      "destination": "/api-reference/orange-book-exclusivities/list-orange-book-exclusivities"
+    },
+    {
+      "source": "/api-reference/fda/list-purple-book-products",
+      "destination": "/api-reference/purple-book-products/list-purple-book-products"
+    },
+    {
+      "source": "/api-reference/fda/list-orphan-designations",
+      "destination": "/api-reference/orphan-designations/list-orphan-designations"
+    },
+    {
+      "source": "/api-reference/fda/list-warning-letters",
+      "destination": "/api-reference/warning-letters/list-warning-letters"
+    },
+    {
+      "source": "/api-reference/fda/list-recalls",
+      "destination": "/api-reference/recalls/list-recalls"
+    },
+    {
+      "source": "/api-reference/fda/list-drug-applications",
+      "destination": "/api-reference/drug-applications/list-drug-applications"
+    },
+    {
+      "source": "/api-reference/fda/get-a-drug-application",
+      "destination": "/api-reference/drug-applications/get-a-drug-application"
+    },
+    {
+      "source": "/api-reference/fda/list-complete-response-letters",
+      "destination": "/api-reference/complete-response-letters/list-complete-response-letters"
+    },
+    {
+      "source": "/api-reference/fda/list-accelerated-approvals",
+      "destination": "/api-reference/accelerated-approvals/list-accelerated-approvals"
+    },
+    {
+      "source": "/api-reference/fda/list-advisory-committee-meetings",
+      "destination": "/api-reference/advisory-committee-meetings/list-advisory-committee-meetings"
+    },
+    {
+      "source": "/api-reference/fda/get-an-fda-record",
+      "destination": "/datasets/fda"
     }
   ],
   "navbar": {

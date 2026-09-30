@@ -4,24 +4,26 @@ description: "Orange Book, Purple Book, orphan designations, applications, lette
 icon: "landmark"
 ---
 
-FDA regulatory records, one list endpoint per record type, each linked to a
-Pav company where possible and keyed by FDA identifiers.
+FDA regulatory records. Each record type is its own resource with one list
+and one get endpoint, each record linked to a Pav company where possible and
+keyed by FDA identifiers.
 
-| Record type | Endpoint (`/v1/fda/…`) | `from`/`to` date | `status` |
+| Record type | Resource (`/v1/…`) | `from`/`to` date | `status` |
 | --- | --- | --- | --- |
 | Orange Book products | `orange-book-products` | Approval | `RX`, `OTC`, `DISCN` |
 | Orange Book patents | `orange-book-patents` | Patent expiry | `listed` |
 | Orange Book exclusivities | `orange-book-exclusivities` | Exclusivity expiry | Exclusivity code |
 | Purple Book products | `purple-book-products` | License | Marketing status (`Rx`, …) |
 | Orphan designations | `orphan-designations` | Designation | `Designated`, … |
-| Drug applications (NDA, ANDA, BLA) | `applications` | First approval | `approved`, … |
+| Drug applications (NDA, ANDA, BLA) | `drug-applications` | First approval | `approved`, … |
 | Complete response letters | `complete-response-letters` | Letter | `Approved`, `Unapproved` |
 | Accelerated approvals | `accelerated-approvals` | Approval | `ongoing`, `verified`, `withdrawn` |
 | Advisory committee meetings | `advisory-committee-meetings` | Meeting | `held`, `scheduled` |
 | Warning letters | `warning-letters` | Letter | `issued`, … |
 | Recalls | `recalls` | Recall | `active`, … |
 
-`GET /v1/fda/{record_key}` returns one record; URL-encode the key. `GET /v1/fda/applications/{application_key}`
+`GET /v1/<resource>/{record_key}` returns one record of that type, e.g.
+`GET /v1/recalls/{record_key}`; URL-encode the key. `GET /v1/drug-applications/{application_key}`
 returns an application with every FDA record on it and its submissions
 (`records_total`, `submissions_total`).
 
@@ -63,7 +65,7 @@ Orange Book patents held by Eli Lilly, latest expiry first:
 <CodeGroup>
 
 ```bash cURL
-curl -G https://api.pav.bio/v1/fda/orange-book-patents \
+curl -G https://api.pav.bio/v1/orange-book-patents \
   -H "Authorization: Bearer $PAV_API_KEY" \
   --data-urlencode "company=lilly" \
   --data-urlencode "sort=-event_date" \
@@ -75,7 +77,7 @@ import os
 import requests
 
 resp = requests.get(
-    "https://api.pav.bio/v1/fda/orange-book-patents",
+    "https://api.pav.bio/v1/orange-book-patents",
     headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
     params={"company": "lilly", "sort": "-event_date", "limit": 2},
 )

@@ -83,8 +83,8 @@ response.
 | `list_trials`, `get_trial` | `/v1/trials`, `/{nct_id}` |
 | `list_deals`, `get_deal` | `/v1/deals`, `/{deal_id}` |
 | `list_patents`, `get_patent_family` | `/v1/patents`, `/{id}` |
-| `list_fda_orange_book_products`, `list_fda_orange_book_patents`, `list_fda_orange_book_exclusivities`, `list_fda_purple_book_products`, `list_fda_orphan_designations`, `list_fda_warning_letters`, `list_fda_recalls`, `list_fda_applications`, `list_fda_complete_response_letters`, `list_fda_accelerated_approvals`, `list_fda_advisory_committee_meetings` | One per [FDA record type](/datasets/fda) |
-| `get_fda_application`, `get_fda_record` | `/v1/fda/applications/{application_key}`, `/v1/fda/{record_key}` |
+| `list_orange_book_products`, `list_orange_book_patents`, `list_orange_book_exclusivities`, `list_purple_book_products`, `list_orphan_designations`, `list_warning_letters`, `list_recalls`, `list_drug_applications`, `list_complete_response_letters`, `list_accelerated_approvals`, `list_advisory_committee_meetings` | One list per [FDA record type](/datasets/fda): `/v1/recalls`, `/v1/orange-book-patents`, … |
+| `get_orange_book_product`, `get_orange_book_patent`, `get_orange_book_exclusivity`, `get_purple_book_product`, `get_orphan_designation`, `get_warning_letter`, `get_recall`, `get_drug_application`, `get_complete_response_letter`, `get_accelerated_approval`, `get_advisory_committee_meeting` | `/v1/<resource>/{record_key}`; a drug application by `/v1/drug-applications/{application_key}` |
 | `get_stats` | `/v1/stats` |
 
 Each tool call counts toward the [rate limit](/rate-limits).
