@@ -1,14 +1,20 @@
 ---
 title: "Authentication"
-description: "Send a Pav API key as a bearer token on every request."
+description: "Send a Pav API key as a bearer token. The MCP server signs you in with your Pav account."
 icon: "key-round"
 ---
 
-Every `/v1` endpoint and the MCP server take a Pav API key:
+Every `/v1` endpoint takes a Pav API key:
 
 ```http
 Authorization: Bearer <your_api_key>
 ```
+
+The [MCP server](/mcp-server) needs no key: your MCP client opens a browser
+and you sign in with your Pav account. That sign-in works only for the MCP
+server; REST calls to `/v1` need an API key.
+
+## API keys
 
 Create a personal or organization key at [app.pav.bio](https://app.pav.bio)
 under **Settings → Developer**. The secret is shown once. To rotate, create a

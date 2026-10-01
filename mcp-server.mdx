@@ -1,72 +1,40 @@
 ---
 title: "MCP server"
-description: "Connect Claude, Cursor or any MCP client to Pav data."
+description: "Connect Claude Code, Codex, Cursor, ChatGPT or any MCP client to Pav data."
 icon: "bot"
 ---
+
+import { McpClientSelector } from "/snippets/mcp-client-selector.jsx";
+
+Add the server to your client, then sign in with your Pav account in the
+browser. No API key needed.
+
+<McpClientSelector />
+
+<Note>
+  `https://api.pav.bio/mcp` is a server URL for your MCP client, not a page to
+  open in a browser. Your client starts the browser sign-in.
+</Note>
+
+## ChatGPT
+
+Add a connector with these settings, then sign in with your Pav account when
+ChatGPT asks.
+
+| Field | Value |
+| --- | --- |
+| Server URL | `https://api.pav.bio/mcp` |
+| Authentication | OAuth |
+| Client ID and secret | Leave blank |
+
+## Server details
 
 | | |
 | --- | --- |
 | URL | `https://api.pav.bio/mcp` |
 | Transport | Streamable HTTP |
-| Auth | `Authorization: Bearer <api_key>` ([Authentication](/authentication)) |
+| Auth | Sign in with your Pav account (OAuth) |
 | Tools | 26, one per endpoint, all read-only |
-
-## Connect
-
-<Tabs>
-  <Tab title="Claude Code">
-    ```bash
-    claude mcp add --transport http pav https://api.pav.bio/mcp --header "Authorization: Bearer <api_key>"
-    ```
-  </Tab>
-  <Tab title="Cursor and others">
-    For clients that take a URL and headers (Cursor: `~/.cursor/mcp.json`):
-
-    ```json mcp.json
-    {
-      "mcpServers": {
-        "pav": {
-          "url": "https://api.pav.bio/mcp",
-          "headers": { "Authorization": "Bearer <api_key>" }
-        }
-      }
-    }
-    ```
-  </Tab>
-  <Tab title="Python">
-    ```python
-    import asyncio
-    import os
-
-    from fastmcp import Client
-    from fastmcp.client.transports import StreamableHttpTransport
-
-    transport = StreamableHttpTransport(
-        "https://api.pav.bio/mcp",
-        headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
-    )
-
-
-    async def main():
-        async with Client(transport) as client:
-            programs = await client.call_tool(
-                "list_programs",
-                {"phase": ["preclinical"], "modality": ["adc"], "company_type": "private", "view": "slim", "limit": 3},
-            )
-            for p in programs.structured_content["data"]:
-                print(p["company"], "|", p["indication"], "|", p["phase"])
-
-
-    asyncio.run(main())
-    ```
-
-    ```text Example output
-    Earendil Labs | Colorectal cancer | preclinical
-    Earendil Labs | Colorectal cancer | preclinical
-    Earendil Labs | Other solid tumors | preclinical
-    ```
-  </Tab>
-</Tabs>
 
 ## Tools
 
@@ -88,3 +56,62 @@ response.
 | `get_stats` | `/v1/stats` |
 
 Each tool call counts toward the [rate limit](/rate-limits).
+
+<Accordion title="Connect with an API key instead">
+  For scripts and CI, send a Pav [API key](/authentication) as a bearer token instead of signing in.
+
+  <Tabs>
+    <Tab title="Claude Code">
+      ```bash
+      claude mcp add --transport http pav https://api.pav.bio/mcp --header "Authorization: Bearer <api_key>"
+      ```
+    </Tab>
+    <Tab title="Cursor and others">
+      For clients that take a URL and headers (Cursor: `~/.cursor/mcp.json`):
+
+      ```json mcp.json
+      {
+        "mcpServers": {
+          "pav": {
+            "url": "https://api.pav.bio/mcp",
+            "headers": { "Authorization": "Bearer <api_key>" }
+          }
+        }
+      }
+      ```
+    </Tab>
+    <Tab title="Python">
+      ```python
+      import asyncio
+      import os
+
+      from fastmcp import Client
+      from fastmcp.client.transports import StreamableHttpTransport
+
+      transport = StreamableHttpTransport(
+          "https://api.pav.bio/mcp",
+          headers={"Authorization": f"Bearer {os.environ['PAV_API_KEY']}"},
+      )
+
+
+      async def main():
+          async with Client(transport) as client:
+              programs = await client.call_tool(
+                  "list_programs",
+                  {"phase": ["preclinical"], "modality": ["adc"], "company_type": "private", "view": "slim", "limit": 3},
+              )
+              for p in programs.structured_content["data"]:
+                  print(p["company"], "|", p["indication"], "|", p["phase"])
+
+
+      asyncio.run(main())
+      ```
+
+      ```text Example output
+      Earendil Labs | Colorectal cancer | preclinical
+      Earendil Labs | Colorectal cancer | preclinical
+      Earendil Labs | Other solid tumors | preclinical
+      ```
+    </Tab>
+  </Tabs>
+</Accordion>
