@@ -9,8 +9,8 @@ sit in each phase.
 
 ## 1. List programs against the target
 
-`target` matches the target under any of its names. Lists page with
-`next_cursor`; the Python SDK and the CLI's `--page-all` follow it for you.
+`target` matches the target under any of its names. Each call returns up to
+200 rows; `total` counts every match.
 
 <CodeGroup>
 
