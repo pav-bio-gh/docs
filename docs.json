@@ -58,6 +58,7 @@
             "pages": [
               "introduction",
               "quickstart",
+              "mcp-server",
               "data-overview"
             ]
           },
@@ -108,7 +109,6 @@
           {
             "group": "AI agents",
             "pages": [
-              "mcp-server",
               "openapi-and-agents"
             ]
           },
