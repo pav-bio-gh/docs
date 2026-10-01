@@ -13,7 +13,7 @@ Largest stated value first.
 
 <CodeGroup>
 
-```bash cURL
+```bash cURL icon="braces"
 curl -G https://api.pav.bio/v1/deals \
   -H "Authorization: Bearer $PAV_API_KEY" \
   -d target=GLP-1R \
@@ -22,7 +22,7 @@ curl -G https://api.pav.bio/v1/deals \
   -d limit=3
 ```
 
-```python Python SDK
+```python Python SDK icon="python"
 from pav_bio import Pav
 
 client = Pav()  # reads PAV_API_KEY
@@ -37,7 +37,7 @@ for deal in deals.items:
     print(deal.deal_id, deal.deal_name)
 ```
 
-```bash CLI
+```bash CLI icon="terminal"
 pav deals list \
   --target GLP-1R \
   --deal-type licensing,collaboration \
@@ -80,12 +80,12 @@ pav deals list \
 
 <CodeGroup>
 
-```bash cURL
+```bash cURL icon="braces"
 curl https://api.pav.bio/v1/deals/c7870330-f6b0-43cb-842c-b215c4e522dc \
   -H "Authorization: Bearer $PAV_API_KEY"
 ```
 
-```python Python SDK
+```python Python SDK icon="python"
 from pav_bio import Pav
 
 client = Pav()  # reads PAV_API_KEY
@@ -95,7 +95,7 @@ print(deal.upfront.raw_text)
 print(deal.total_potential_value.raw_text)
 ```
 
-```bash CLI
+```bash CLI icon="terminal"
 pav deals get --deal-id c7870330-f6b0-43cb-842c-b215c4e522dc
 ```
 

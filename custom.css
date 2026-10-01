@@ -18,37 +18,95 @@ html.dark a.nav-tabs-item[href="/webhooks/introduction"]::after {
   color: rgb(156, 163, 175);
 }
 
-/* Code-group tabs as pills: cURL | Python SDK | CLI. Mintlify keeps every code
-   group on a page on the same tab label, so one click switches every snippet;
-   the first tab (cURL) is the default. */
+/* Code-group tabs as a segmented control: cURL | Python SDK | CLI, each with an
+   icon (set by icon="..." on the code block). Mintlify keeps every code group on
+   a page on the same tab label, so one click switches every snippet; the first
+   tab (cURL) is the default. */
 [data-component-part="code-group-tab-bar"] [role="tablist"] {
-  gap: 0.375rem;
+  display: inline-flex !important;
+  width: max-content;
+  gap: 0;
+  margin: 0.5rem 0 0.5rem 0.625rem;
+  padding: 0.1875rem;
+  border-radius: 0.75rem;
+  background: #f0f1f3;
+}
+
+[data-component-part="code-group-tab-bar"] button[role="tab"] {
+  margin: 0 !important;
+  color: #6b6f78;
 }
 
 [data-component-part="code-group-tab-bar"] button[role="tab"] > div:first-child {
-  border-radius: 9999px;
-  padding: 0.0625rem 0.75rem;
-  border: 1px solid rgba(17, 24, 39, 0.12);
+  gap: 0.4375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.5625rem;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  background: transparent !important;
+  color: inherit !important;
+  transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+
+[data-component-part="code-group-tab-bar"] button[role="tab"] svg.code-block-icon {
+  width: 0.9375rem;
+  height: 0.9375rem;
+  background-color: currentColor !important;
+}
+
+[data-component-part="code-group-tab-bar"] button[role="tab"]:hover {
+  color: #15171c;
+}
+
+[data-component-part="code-group-tab-bar"] button[role="tab"][aria-selected="true"] {
+  color: #15171c;
 }
 
 [data-component-part="code-group-tab-bar"] button[role="tab"][aria-selected="true"] > div:first-child {
-  background: #15171c;
-  border-color: #15171c;
-  color: #ffffff;
-  font-weight: 500;
+  background: #ffffff !important;
+  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.1), 0 0 0 0.5px rgba(17, 24, 39, 0.06);
 }
 
-/* The pill replaces the underline marker. */
+/* Thin divider between two unselected tabs; none next to the selected one. */
+[data-component-part="code-group-tab-bar"] button[role="tab"] + button[role="tab"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 25%;
+  height: 50%;
+  width: 1px;
+  background: rgba(17, 24, 39, 0.12);
+}
+
+[data-component-part="code-group-tab-bar"] button[role="tab"][aria-selected="true"]::before,
+[data-component-part="code-group-tab-bar"] button[role="tab"][aria-selected="true"] + button[role="tab"]::before {
+  display: none;
+}
+
+/* The raised segment replaces the underline marker. */
 [data-component-part="code-group-tab-bar"] button[role="tab"] > div.absolute {
   display: none;
 }
 
-html.dark [data-component-part="code-group-tab-bar"] button[role="tab"] > div:first-child {
-  border-color: rgba(255, 255, 255, 0.14);
+html.dark [data-component-part="code-group-tab-bar"] [role="tablist"] {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+html.dark [data-component-part="code-group-tab-bar"] button[role="tab"] {
+  color: #9a9ea8;
+}
+
+html.dark [data-component-part="code-group-tab-bar"] button[role="tab"]:hover,
+html.dark [data-component-part="code-group-tab-bar"] button[role="tab"][aria-selected="true"] {
+  color: #f3f4f6;
 }
 
 html.dark [data-component-part="code-group-tab-bar"] button[role="tab"][aria-selected="true"] > div:first-child {
-  background: #e8eaee;
-  border-color: #e8eaee;
-  color: #15171c;
+  background: #383c45 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), inset 0 0.5px 0 rgba(255, 255, 255, 0.1);
+}
+
+html.dark [data-component-part="code-group-tab-bar"] button[role="tab"] + button[role="tab"]::before {
+  background: rgba(255, 255, 255, 0.12);
 }

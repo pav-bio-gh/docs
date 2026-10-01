@@ -43,7 +43,7 @@ Oncology licensing deals announced in 2025 over $100M:
 
 <CodeGroup>
 
-```bash cURL
+```bash cURL icon="braces"
 curl -G https://api.pav.bio/v1/deals \
   -H "Authorization: Bearer $PAV_API_KEY" \
   -d deal_type=licensing \
@@ -55,7 +55,7 @@ curl -G https://api.pav.bio/v1/deals \
   -d limit=2
 ```
 
-```python Python SDK
+```python Python SDK icon="python"
 import datetime as dt
 
 from pav_bio import Pav
@@ -75,7 +75,7 @@ for deal in deals.items:
     print(deal.announced_at.date(), deal.deal_name)
 ```
 
-```bash CLI
+```bash CLI icon="terminal"
 pav deals list \
   --deal-type licensing \
   --therapeutic-area oncology \

@@ -19,7 +19,7 @@ Preclinical antibody-drug conjugates at private companies:
 
 <CodeGroup>
 
-```bash cURL
+```bash cURL icon="braces"
 curl -G https://api.pav.bio/v1/programs \
   -H "Authorization: Bearer $PAV_API_KEY" \
   -d phase=preclinical \
@@ -27,7 +27,7 @@ curl -G https://api.pav.bio/v1/programs \
   -d company_type=private
 ```
 
-```python Python SDK
+```python Python SDK icon="python"
 from pav_bio import Pav
 
 client = Pav()  # reads PAV_API_KEY
@@ -42,7 +42,7 @@ for program in programs.items[:3]:
 print("total:", programs.response.total)
 ```
 
-```bash CLI
+```bash CLI icon="terminal"
 pav programs list \
   --phase preclinical \
   --modality adc \

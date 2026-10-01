@@ -12,7 +12,7 @@ product key (Mounjaro 2.5 mg, `N:215866:001`). Find product keys with
 
 <CodeGroup>
 
-```bash cURL
+```bash cURL icon="braces"
 curl -G https://api.pav.bio/v1/orange-book-patents \
   -H "Authorization: Bearer $PAV_API_KEY" \
   -d product_key=N:215866:001 \
@@ -20,7 +20,7 @@ curl -G https://api.pav.bio/v1/orange-book-patents \
   -d limit=3
 ```
 
-```python Python SDK
+```python Python SDK icon="python"
 from pav_bio import Pav
 
 client = Pav()  # reads PAV_API_KEY
@@ -34,7 +34,7 @@ for patent in patents.items:
     print(patent.patent_number, patent.event_date)
 ```
 
-```bash CLI
+```bash CLI icon="terminal"
 pav orange-book-patents list \
   --product-key N:215866:001 \
   --sort=-event_date \
@@ -78,14 +78,14 @@ A patent appears once per use code it is listed with.
 
 <CodeGroup>
 
-```bash cURL
+```bash cURL icon="braces"
 curl -G https://api.pav.bio/v1/orange-book-exclusivities \
   -H "Authorization: Bearer $PAV_API_KEY" \
   -d product_key=N:215866:001 \
   -d sort=-event_date
 ```
 
-```python Python SDK
+```python Python SDK icon="python"
 from pav_bio import Pav
 
 client = Pav()  # reads PAV_API_KEY
@@ -98,7 +98,7 @@ for exclusivity in exclusivities.items:
     print(exclusivity.status, exclusivity.event_date)
 ```
 
-```bash CLI
+```bash CLI icon="terminal"
 pav orange-book-exclusivities list \
   --product-key N:215866:001 \
   --sort=-event_date

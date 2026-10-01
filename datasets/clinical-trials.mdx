@@ -42,7 +42,7 @@ Recruiting Phase 2 obesity trials, newest first:
 
 <CodeGroup>
 
-```bash cURL
+```bash cURL icon="braces"
 curl -G https://api.pav.bio/v1/trials \
   -H "Authorization: Bearer $PAV_API_KEY" \
   -d indication=obesity \
@@ -52,7 +52,7 @@ curl -G https://api.pav.bio/v1/trials \
   -d limit=2
 ```
 
-```python Python SDK
+```python Python SDK icon="python"
 from pav_bio import Pav
 
 client = Pav()  # reads PAV_API_KEY
@@ -68,7 +68,7 @@ for trial in trials.items:
     print(trial.nct_id, trial.start_date, trial.title)
 ```
 
-```bash CLI
+```bash CLI icon="terminal"
 pav trials list \
   --indication obesity \
   --phase 2 \

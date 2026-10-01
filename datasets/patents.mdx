@@ -42,7 +42,7 @@ claim, with their owners and the FDA-approved drugs that list them.
 
 <CodeGroup>
 
-```bash cURL
+```bash cURL icon="braces"
 curl -G https://api.pav.bio/v1/patents \
   -H "Authorization: Bearer $PAV_API_KEY" \
   -d company=lilly \
@@ -51,7 +51,7 @@ curl -G https://api.pav.bio/v1/patents \
   -d limit=2
 ```
 
-```python Python SDK
+```python Python SDK icon="python"
 from pav_bio import Pav
 
 client = Pav()  # reads PAV_API_KEY
@@ -66,7 +66,7 @@ for family in families.items:
     print(family.family_id, family.representative_title)
 ```
 
-```bash CLI
+```bash CLI icon="terminal"
 pav patents list \
   --company lilly \
   --status live \

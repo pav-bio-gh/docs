@@ -14,7 +14,7 @@ sit in each phase.
 
 <CodeGroup>
 
-```bash cURL
+```bash cURL icon="braces"
 curl -G https://api.pav.bio/v1/programs \
   -H "Authorization: Bearer $PAV_API_KEY" \
   -d target=TL1A \
@@ -23,7 +23,7 @@ curl -G https://api.pav.bio/v1/programs \
   -d limit=3
 ```
 
-```python Python SDK
+```python Python SDK icon="python"
 from pav_bio import Pav
 
 client = Pav()  # reads PAV_API_KEY
@@ -38,7 +38,7 @@ for program in programs.items:
     print(program.phase, program.company, program.drug, program.indication)
 ```
 
-```bash CLI
+```bash CLI icon="terminal"
 pav programs list \
   --target TL1A \
   --sort=-phase \
@@ -82,7 +82,7 @@ Every list returns `total`, the number of matches across all pages. Add
 
 <CodeGroup>
 
-```bash cURL
+```bash cURL icon="braces"
 curl -G https://api.pav.bio/v1/programs \
   -H "Authorization: Bearer $PAV_API_KEY" \
   -d target=TL1A \
@@ -90,7 +90,7 @@ curl -G https://api.pav.bio/v1/programs \
   -d limit=1
 ```
 
-```python Python SDK
+```python Python SDK icon="python"
 from pav_bio import Pav
 
 client = Pav()  # reads PAV_API_KEY
@@ -99,7 +99,7 @@ programs = client.programs.list(target=["TL1A"], phase=["phase_3"], limit=1)
 print(programs.response.total)
 ```
 
-```bash CLI
+```bash CLI icon="terminal"
 pav programs list \
   --target TL1A \
   --phase phase_3 \
