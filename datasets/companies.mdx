@@ -46,15 +46,17 @@ than one tracked company is a `400` naming the candidates.
 ```bash cURL
 curl -G https://api.pav.bio/v1/companies \
   -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "company=MSD"
+  -d company=MSD
 ```
 
 ```python Python SDK
 from pav_bio import Pav
 
 client = Pav()  # reads PAV_API_KEY
-for c in client.companies.list(company=["MSD"]).items:
-    print(c.company_id, c.name, c.company_type, c.asset_count)
+
+companies = client.companies.list(company=["MSD"])
+for company in companies.items:
+    print(company.company_id, company.name, company.asset_count)
 ```
 
 ```bash CLI

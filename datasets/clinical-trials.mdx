@@ -45,25 +45,36 @@ Recruiting Phase 2 obesity trials, newest first:
 ```bash cURL
 curl -G https://api.pav.bio/v1/trials \
   -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "indication=obesity" \
-  --data-urlencode "phase=2" \
-  --data-urlencode "status=recruiting" \
-  --data-urlencode "sort=-start_date" \
-  --data-urlencode "limit=2"
+  -d indication=obesity \
+  -d phase=2 \
+  -d status=recruiting \
+  -d sort=-start_date \
+  -d limit=2
 ```
 
 ```python Python SDK
 from pav_bio import Pav
 
 client = Pav()  # reads PAV_API_KEY
-page = client.trials.list(indication=["obesity"], phase=["2"], status=["recruiting"],
-                          sort="-start_date", limit=2)
-for t in page.items:
-    print(t.nct_id, t.start_date, t.sponsor, "|", t.title[:60])
+
+trials = client.trials.list(
+    indication=["obesity"],
+    phase=["2"],
+    status=["recruiting"],
+    sort="-start_date",
+    limit=2,
+)
+for trial in trials.items:
+    print(trial.nct_id, trial.start_date, trial.title)
 ```
 
 ```bash CLI
-pav trials list --indication obesity --phase 2 --status recruiting --sort=-start_date --limit 2
+pav trials list \
+  --indication obesity \
+  --phase 2 \
+  --status recruiting \
+  --sort=-start_date \
+  --limit 2
 ```
 
 </CodeGroup>

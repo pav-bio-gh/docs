@@ -45,24 +45,33 @@ claim, with their owners and the FDA-approved drugs that list them.
 ```bash cURL
 curl -G https://api.pav.bio/v1/patents \
   -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "company=lilly" \
-  --data-urlencode "status=live" \
-  --data-urlencode "view=slim" \
-  --data-urlencode "limit=2"
+  -d company=lilly \
+  -d status=live \
+  -d view=slim \
+  -d limit=2
 ```
 
 ```python Python SDK
 from pav_bio import Pav
 
 client = Pav()  # reads PAV_API_KEY
-page = client.patents.list(company=["lilly"], status=["live"], view="slim", limit=2)
-for f in page.items:
-    print(f.family_id, f.latest_status_date, f.representative_title)
-print("total:", page.response.total)
+
+families = client.patents.list(
+    company=["lilly"],
+    status=["live"],
+    view="slim",
+    limit=2,
+)
+for family in families.items:
+    print(family.family_id, family.representative_title)
 ```
 
 ```bash CLI
-pav patents list --company lilly --status live --view slim --limit 2
+pav patents list \
+  --company lilly \
+  --status live \
+  --view slim \
+  --limit 2
 ```
 
 </CodeGroup>
