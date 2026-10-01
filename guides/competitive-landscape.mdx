@@ -1,74 +1,116 @@
 ---
 title: "Build a competitive landscape"
-description: "Every program against a target, counted by phase."
+description: "Every program against a target, most advanced first."
 icon: "chart-column"
 ---
 
-List every program against a target and count by phase. Requires
-`PAV_API_KEY`; the cURL and CLI versions also use `jq`.
+List the programs against a target, most advanced first, then count how many
+sit in each phase.
 
-1. `GET /v1/programs?target=<name>` lists programs under any name for the
-   target; follow `next_cursor` to the end.
-2. Count by `phase` and print the most advanced.
+## 1. List programs against the target
+
+`target` matches the target under any of its names. Each call returns up to
+200 rows; `total` counts every match.
 
 <CodeGroup>
 
-```bash cURL
-target=TL1A
-programs="" cursor=""
-while :; do
-  page=$(curl -sfG https://api.pav.bio/v1/programs -H "Authorization: Bearer $PAV_API_KEY" \
-    --data-urlencode "target=$target" --data-urlencode "view=slim" \
-    --data-urlencode "sort=-phase" --data-urlencode "limit=200" \
-    ${cursor:+--data-urlencode "cursor=$cursor"})
-  programs+=$(jq -c '.data[]' <<< "$page")$'\n'
-  cursor=$(jq -r '.next_cursor // empty' <<< "$page")
-  [ -z "$cursor" ] && break
-done
-programs=$(grep . <<< "$programs")
-echo "$target: $(wc -l <<< "$programs" | tr -d ' ') programs"
-jq -r '.phase' <<< "$programs" | sort | uniq -c | sort -rn
-jq -r '"\(.phase) | \(.company) | \(.drug) | \(.indication)"' <<< "$programs" | head -4
+```bash cURL icon="braces"
+curl -G https://api.pav.bio/v1/programs \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  -d target=TL1A \
+  -d sort=-phase \
+  -d view=slim \
+  -d limit=3
 ```
 
-```python Python SDK
-import collections
-
+```python Python SDK icon="python"
 from pav_bio import Pav
 
 client = Pav()  # reads PAV_API_KEY
-target = "TL1A"
-# Iterating a list follows next_cursor across every page.
-programs = list(client.programs.list(target=[target], view="slim", sort="-phase", limit=200))
 
-print(f"{target}: {len(programs)} programs")
-for phase, n in collections.Counter(p.phase for p in programs).most_common():
-    print(f"  {phase:<12} {n}")
-for p in programs[:4]:
-    print(f"{p.phase:<10} | {p.company} | {p.drug} | {p.indication}")
+programs = client.programs.list(
+    target=["TL1A"],
+    sort="-phase",
+    view="slim",
+    limit=3,
+)
+for program in programs.items:
+    print(program.phase, program.company, program.drug, program.indication)
 ```
 
-```bash CLI
-target=TL1A
-programs=$(pav programs list --target "$target" --view slim --sort=-phase --limit 200 \
-  --page-all --page-limit 100 --format jsonl | jq -c '.data[]? // .')
-echo "$target: $(wc -l <<< "$programs" | tr -d ' ') programs"
-jq -r '.phase' <<< "$programs" | sort | uniq -c | sort -rn
-jq -r '"\(.phase) | \(.company) | \(.drug) | \(.indication)"' <<< "$programs" | head -4
+```bash CLI icon="terminal"
+pav programs list \
+  --target TL1A \
+  --sort=-phase \
+  --view slim \
+  --limit 3
+```
+
+</CodeGroup>
+
+```json Example response (trimmed)
+{
+  "data": [
+    {
+      "phase": "phase_3",
+      "company": "Chugai Pharmaceutical",
+      "drug": "afimkibart",
+      "indication": "Crohn’s disease"
+    },
+    {
+      "phase": "phase_3",
+      "company": "Chugai Pharmaceutical",
+      "drug": "afimkibart",
+      "indication": "Ulcerative Colitis"
+    },
+    {
+      "phase": "phase_3",
+      "company": "Merck",
+      "drug": "tulisokibart",
+      "indication": "Crohn’s disease"
+    }
+  ],
+  "next_cursor": "eyJyIjoicHJvZ3JhbXMiLCJz...",
+  "total": 43
+}
+```
+
+## 2. Count programs in a phase
+
+Every list returns `total`, the number of matches across all pages. Add
+`phase` and read it.
+
+<CodeGroup>
+
+```bash cURL icon="braces"
+curl -G https://api.pav.bio/v1/programs \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  -d target=TL1A \
+  -d phase=phase_3 \
+  -d limit=1
+```
+
+```python Python SDK icon="python"
+from pav_bio import Pav
+
+client = Pav()  # reads PAV_API_KEY
+
+programs = client.programs.list(target=["TL1A"], phase=["phase_3"], limit=1)
+print(programs.response.total)
+```
+
+```bash CLI icon="terminal"
+pav programs list \
+  --target TL1A \
+  --phase phase_3 \
+  --limit 1 \
+  --query total
 ```
 
 </CodeGroup>
 
 ```text Example output
-TL1A: 43 programs
-  phase_2      18
-  phase_3      9
-  phase_1      8
-  preclinical  8
-phase_3    | Chugai Pharmaceutical | afimkibart | Crohn’s disease
-phase_3    | Chugai Pharmaceutical | afimkibart | Ulcerative Colitis
-phase_3    | Merck | tulisokibart | Crohn’s disease
-phase_3    | Merck | tulisokibart | Ulcerative colitis
+9
 ```
 
 For a company's own pipeline instead of a target, filter with

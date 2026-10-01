@@ -43,35 +43,47 @@ Oncology licensing deals announced in 2025 over $100M:
 
 <CodeGroup>
 
-```bash cURL
+```bash cURL icon="braces"
 curl -G https://api.pav.bio/v1/deals \
   -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "deal_type=licensing" \
-  --data-urlencode "therapeutic_area=oncology" \
-  --data-urlencode "from=2025-01-01" \
-  --data-urlencode "to=2025-12-31" \
-  --data-urlencode "min_value_usd=100000000" \
-  --data-urlencode "sort=-total_potential_value" \
-  --data-urlencode "limit=2"
+  -d deal_type=licensing \
+  -d therapeutic_area=oncology \
+  -d from=2025-01-01 \
+  -d to=2025-12-31 \
+  -d min_value_usd=100000000 \
+  -d sort=-total_potential_value \
+  -d limit=2
 ```
 
-```python Python SDK
+```python Python SDK icon="python"
 import datetime as dt
 
 from pav_bio import Pav
 
 client = Pav()  # reads PAV_API_KEY
-page = client.deals.list(deal_type=["licensing"], therapeutic_area=["oncology"],
-                         from_=dt.date(2025, 1, 1), to=dt.date(2025, 12, 31),
-                         min_value_usd=100_000_000, sort="-total_potential_value", limit=2)
-for d in page.items:
-    print(d.announced_at.date(), d.deal_name, "|", d.total_potential_value.amount)
+
+deals = client.deals.list(
+    deal_type=["licensing"],
+    therapeutic_area=["oncology"],
+    from_=dt.date(2025, 1, 1),
+    to=dt.date(2025, 12, 31),
+    min_value_usd=100_000_000,
+    sort="-total_potential_value",
+    limit=2,
+)
+for deal in deals.items:
+    print(deal.announced_at.date(), deal.deal_name)
 ```
 
-```bash CLI
-pav deals list --deal-type licensing --therapeutic-area oncology \
-  --from 2025-01-01 --to 2025-12-31 --min-value-usd 100000000 \
-  --sort=-total_potential_value --limit 2
+```bash CLI icon="terminal"
+pav deals list \
+  --deal-type licensing \
+  --therapeutic-area oncology \
+  --from 2025-01-01 \
+  --to 2025-12-31 \
+  --min-value-usd 100000000 \
+  --sort=-total_potential_value \
+  --limit 2
 ```
 
 </CodeGroup>

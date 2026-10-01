@@ -64,25 +64,33 @@ Orange Book patents held by Eli Lilly, latest expiry first:
 
 <CodeGroup>
 
-```bash cURL
+```bash cURL icon="braces"
 curl -G https://api.pav.bio/v1/orange-book-patents \
   -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "company=lilly" \
-  --data-urlencode "sort=-event_date" \
-  --data-urlencode "limit=2"
+  -d company=lilly \
+  -d sort=-event_date \
+  -d limit=2
 ```
 
-```python Python SDK
+```python Python SDK icon="python"
 from pav_bio import Pav
 
 client = Pav()  # reads PAV_API_KEY
-page = client.orange_book_patents.list(company=["lilly"], sort="-event_date", limit=2)
-for r in page.items:
-    print(r.patent_number, r.event_date, r.title)
+
+patents = client.orange_book_patents.list(
+    company=["lilly"],
+    sort="-event_date",
+    limit=2,
+)
+for patent in patents.items:
+    print(patent.patent_number, patent.event_date, patent.title)
 ```
 
-```bash CLI
-pav orange-book-patents list --company lilly --sort=-event_date --limit 2
+```bash CLI icon="terminal"
+pav orange-book-patents list \
+  --company lilly \
+  --sort=-event_date \
+  --limit 2
 ```
 
 </CodeGroup>

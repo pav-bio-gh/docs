@@ -37,21 +37,23 @@ research codes and brands.
 
 <CodeGroup>
 
-```bash cURL
+```bash cURL icon="braces"
 curl -G https://api.pav.bio/v1/drugs \
   -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "drug=Leqvio"
+  -d drug=Leqvio
 ```
 
-```python Python SDK
+```python Python SDK icon="python"
 from pav_bio import Pav
 
 client = Pav()  # reads PAV_API_KEY
-for d in client.drugs.list(drug=["Leqvio"]).items:
-    print(d.drug_id, d.name, [c.name for c in d.companies])
+
+drugs = client.drugs.list(drug=["Leqvio"])
+for drug in drugs.items:
+    print(drug.drug_id, drug.name, [company.name for company in drug.companies])
 ```
 
-```bash CLI
+```bash CLI icon="terminal"
 pav drugs list --drug Leqvio
 ```
 

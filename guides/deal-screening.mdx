@@ -4,57 +4,113 @@ description: "Comparable deals for a target, ranked by stated value."
 icon: "scale"
 ---
 
-List deals against a target by potential value, and open the top deal.
-Requires `PAV_API_KEY`; the cURL and CLI versions also use `jq`.
+Find the biggest licensing and collaboration deals against a target, then open
+the top one for its terms.
 
-1. `GET /v1/deals?target=<name>&sort=-total_potential_value` lists deals
-   covering drugs against it; follow `next_cursor` for more.
-2. `GET /v1/deals/{deal_id}` returns full terms, events and sources.
+## 1. List deals against the target
+
+Largest stated value first.
 
 <CodeGroup>
 
-```bash cURL
-page=$(curl -sfG https://api.pav.bio/v1/deals -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "target=GLP-1R" --data-urlencode "deal_type=licensing,collaboration" \
-  --data-urlencode "sort=-total_potential_value" --data-urlencode "limit=3")
-jq -r '"GLP-1R: \(.total) licensing and collaboration deals"' <<< "$page"
-jq -r '.data[] | "\(.announced_at[:10]) | $\((.total_potential_value.amount // 0) / 1e7 | round / 100)B | \(.deal_name)"' <<< "$page"
-top=$(jq -r '.data[0].deal_id' <<< "$page")
-curl -sf "https://api.pav.bio/v1/deals/$top" -H "Authorization: Bearer $PAV_API_KEY" | jq -r '"Upfront: \(.upfront.raw_text)"'
+```bash cURL icon="braces"
+curl -G https://api.pav.bio/v1/deals \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  -d target=GLP-1R \
+  -d deal_type=licensing,collaboration \
+  -d sort=-total_potential_value \
+  -d limit=3
 ```
 
-```python Python SDK
+```python Python SDK icon="python"
 from pav_bio import Pav
 
 client = Pav()  # reads PAV_API_KEY
-target = "GLP-1R"
-page = client.deals.list(target=[target], deal_type=["licensing", "collaboration"],
-                         sort="-total_potential_value", limit=3)
-print(f"{target}: {page.response.total} licensing and collaboration deals")
-for d in page.items:
-    value = d.total_potential_value.amount if d.total_potential_value else None
-    print(f"{d.announced_at.date()} | ${value / 1e9:.2f}B | {d.deal_name}" if value else d.deal_name)
 
-top = client.deals.get(page.items[0].deal_id)
-print("Upfront:", top.upfront.raw_text if top.upfront else None)
+deals = client.deals.list(
+    target=["GLP-1R"],
+    deal_type=["licensing", "collaboration"],
+    sort="-total_potential_value",
+    limit=3,
+)
+for deal in deals.items:
+    print(deal.deal_id, deal.deal_name)
 ```
 
-```bash CLI
-page=$(pav deals list --target GLP-1R --deal-type licensing,collaboration \
-  --sort=-total_potential_value --limit 3 --format json)
-jq -r '"GLP-1R: \(.total) licensing and collaboration deals"' <<< "$page"
-jq -r '.data[] | "\(.announced_at[:10]) | $\((.total_potential_value.amount // 0) / 1e7 | round / 100)B | \(.deal_name)"' <<< "$page"
-pav deals get --deal-id "$(jq -r '.data[0].deal_id' <<< "$page")" --format json --query upfront.raw_text
+```bash CLI icon="terminal"
+pav deals list \
+  --target GLP-1R \
+  --deal-type licensing,collaboration \
+  --sort=-total_potential_value \
+  --limit 3
 ```
 
 </CodeGroup>
 
-```text Example output
-GLP-1R: 8 licensing and collaboration deals
-2025-07-30 | $2.12B | Exclusive global license agreement for SYH2086
-2023-11-09 | $2.01B | AstraZeneca exclusive license agreement for ECC5004
-2025-03-24 | $2.00B | Novo Nordisk enters exclusive license agreement for UBT251 with United Biotechnology
-Upfront: an upfront payment of $120 million
+```json Example response (trimmed)
+{
+  "data": [
+    {
+      "deal_id": "c7870330-f6b0-43cb-842c-b215c4e522dc",
+      "deal_name": "Exclusive global license agreement for SYH2086",
+      "total_potential_value": {
+        "amount": 2120000000.0
+      }
+    },
+    {
+      "deal_id": "323be4bc-4e6a-4ffd-8c40-a7c5a90e775d",
+      "deal_name": "AstraZeneca exclusive license agreement for ECC5004",
+      "total_potential_value": {
+        "amount": 2010000000.0
+      }
+    },
+    {
+      "deal_id": "8fde0f5d-940d-44b0-b1f6-2e951fbc307f",
+      "deal_name": "Novo Nordisk enters exclusive license agreement for UBT251 with United Biotechnology",
+      "total_potential_value": {
+        "amount": 2000000000.0
+      }
+    }
+  ],
+  "total": 8
+}
+```
+
+## 2. Open the top deal
+
+<CodeGroup>
+
+```bash cURL icon="braces"
+curl https://api.pav.bio/v1/deals/c7870330-f6b0-43cb-842c-b215c4e522dc \
+  -H "Authorization: Bearer $PAV_API_KEY"
+```
+
+```python Python SDK icon="python"
+from pav_bio import Pav
+
+client = Pav()  # reads PAV_API_KEY
+
+deal = client.deals.get("c7870330-f6b0-43cb-842c-b215c4e522dc")
+print(deal.upfront.raw_text)
+print(deal.total_potential_value.raw_text)
+```
+
+```bash CLI icon="terminal"
+pav deals get --deal-id c7870330-f6b0-43cb-842c-b215c4e522dc
+```
+
+</CodeGroup>
+
+```json Example response (trimmed)
+{
+  "deal_name": "Exclusive global license agreement for SYH2086",
+  "upfront": {
+    "raw_text": "an upfront payment of $120 million"
+  },
+  "total_potential_value": {
+    "raw_text": "an upfront payment of $120 million + up to $2 billion in milestone payments"
+  }
+}
 ```
 
 Read `raw_text` and `evidence` for qualifiers such as "up to". `min_value_usd`

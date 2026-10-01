@@ -38,14 +38,18 @@ picks one; `--query` takes a JMESPath expression:
 pav programs list --company MRNA --format json --query "data[].{drug: drug, phase: phase}"
 ```
 
-## Every page
+## More rows
 
-`--page-all` follows `next_cursor` (up to `--page-limit` pages, default 10):
+A list returns up to 200 rows per call (`--limit 200`). If there are more, the
+response includes `next_cursor`; pass it back with `--cursor` for the next page:
 
 ```bash
-pav programs list --company PFE --page-all --page-limit 100 \
-  --format jsonl | jq -c '.data[]? // .' > pfizer_programs.jsonl
+pav programs list --modality adc --limit 200
+pav programs list --modality adc --limit 200 --cursor <next_cursor>
 ```
+
+To pull every row in one go, use the [Python SDK](/clients/python-sdk), which
+follows the pages for you.
 
 ## For agents
 

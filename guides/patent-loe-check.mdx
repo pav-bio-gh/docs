@@ -1,95 +1,129 @@
 ---
 title: "Check patents and loss of exclusivity"
-description: "Orange Book patents, exclusivities and US patent families around a company's drug."
+description: "Orange Book patents and exclusivities on a drug, latest expiry first."
 icon: "calendar-clock"
 ---
 
-List a company's Orange Book patent and exclusivity expiries and its live US
-patent families, then narrow to one product. Requires `PAV_API_KEY`; the cURL
-and CLI versions also use `jq`.
+See when a drug's Orange Book patents and exclusivities run out, using its FDA
+product key (Mounjaro 2.5 mg, `N:215866:001`). Find product keys with
+`GET /v1/orange-book-products?company=<ticker or name>`.
 
-1. `GET /v1/orange-book-patents` and `/v1/orange-book-exclusivities` with
-   `company=<ticker or name>` list every listing for the company; follow
-   `next_cursor` and keep the rows for the product you want.
-2. `GET /v1/patents?company=<ticker or name>&status=live` lists its live
-   families.
+## 1. Patents, latest expiry first
 
 <CodeGroup>
 
-```bash cURL
-company=lilly product=tirzepatide
-every() {  # every row of a list endpoint, one JSON object per line
-  local path=$1 cursor=""; shift
-  while :; do
-    page=$(curl -sfG "https://api.pav.bio/v1$path" -H "Authorization: Bearer $PAV_API_KEY" --data-urlencode "limit=200" \
-      "$@" ${cursor:+--data-urlencode "cursor=$cursor"})
-    jq -c '.data[]' <<< "$page"
-    cursor=$(jq -r '.next_cursor // empty' <<< "$page")
-    [ -z "$cursor" ] && return
-  done
-}
-patents=$(every /orange-book-patents --data-urlencode "company=$company" --data-urlencode "sort=event_date" \
-  | jq -c --arg p "$product" 'select((.description // "") | ascii_downcase | contains($p))')
-echo "$product: $(jq -r '.patent_number' <<< "$patents" | sort -u | wc -l | tr -d ' ') Orange Book patents, last expires $(jq -r '.event_date' <<< "$patents" | sort | tail -1)"
-every /orange-book-exclusivities --data-urlencode "company=$company" --data-urlencode "sort=-event_date" \
-  | jq -r --arg p "$product" 'select((.description // "") | ascii_downcase | contains($p)) | "  exclusivity \(.status) until \(.event_date)"' | head -1
-families=$(curl -sfG https://api.pav.bio/v1/patents -H "Authorization: Bearer $PAV_API_KEY" --data-urlencode "company=$company" \
-  --data-urlencode "status=live" --data-urlencode "view=slim" --data-urlencode "limit=200")
-jq -r --arg p "$product" '[.data[] | select((.representative_title // "") | ascii_downcase | contains($p))] as $m
-  | "\($m | length) of \(.total) live US patent families mention \($p), e.g.:",
-    ($m[:3][] | "  \(.family_id) | priority \(.earliest_priority_date) | \(.representative_title)")' <<< "$families"
+```bash cURL icon="braces"
+curl -G https://api.pav.bio/v1/orange-book-patents \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  -d product_key=N:215866:001 \
+  -d sort=-event_date \
+  -d limit=3
 ```
 
-```python Python SDK
+```python Python SDK icon="python"
 from pav_bio import Pav
 
 client = Pav()  # reads PAV_API_KEY
-company, product = "lilly", "tirzepatide"
 
-# Iterating a list follows next_cursor across every page.
-expiry = {
-    r.patent_number: r.event_date
-    for r in client.orange_book_patents.list(company=[company], sort="event_date", limit=200)
-    if product in (r.description or "").lower()
-}
-print(f"{product}: {len(expiry)} Orange Book patents, last expires {max(expiry.values())}")
-for r in client.orange_book_exclusivities.list(company=[company], sort="-event_date", limit=200):
-    if product in (r.description or "").lower():
-        print(f"  exclusivity {r.status} until {r.event_date}")
-        break
-families = client.patents.list(company=[company], status=["live"], view="slim", limit=200)
-matches = [f for f in families.items if product in (f.representative_title or "").lower()]
-print(f"{len(matches)} of {families.response.total} live US patent families mention {product}, e.g.:")
-for f in matches[:3]:
-    print(f"  {f.family_id} | priority {f.earliest_priority_date} | {f.representative_title}")
+patents = client.orange_book_patents.list(
+    product_key="N:215866:001",
+    sort="-event_date",
+    limit=3,
+)
+for patent in patents.items:
+    print(patent.patent_number, patent.event_date)
 ```
 
-```bash CLI
-company=lilly product=tirzepatide
-patents=$(pav orange-book-patents list --company "$company" --sort=event_date --limit 200 \
-    --page-all --page-limit 100 --format jsonl | jq -c '.data[]? // .' \
-  | jq -c --arg p "$product" 'select((.description // "") | ascii_downcase | contains($p))')
-echo "$product: $(jq -r '.patent_number' <<< "$patents" | sort -u | wc -l | tr -d ' ') Orange Book patents, last expires $(jq -r '.event_date' <<< "$patents" | sort | tail -1)"
-pav orange-book-exclusivities list --company "$company" --sort=-event_date --limit 200 \
-    --page-all --page-limit 100 --format jsonl | jq -c '.data[]? // .' \
-  | jq -r --arg p "$product" 'select((.description // "") | ascii_downcase | contains($p)) | "  exclusivity \(.status) until \(.event_date)"' | head -1
-pav patents list --company "$company" --status live --view slim --limit 200 --format json \
-  | jq -r --arg p "$product" '[.data[] | select((.representative_title // "") | ascii_downcase | contains($p))] as $m
-    | "\($m | length) of \(.total) live US patent families mention \($p), e.g.:",
-      ($m[:3][] | "  \(.family_id) | priority \(.earliest_priority_date) | \(.representative_title)")'
+```bash CLI icon="terminal"
+pav orange-book-patents list \
+  --product-key N:215866:001 \
+  --sort=-event_date \
+  --limit 3
 ```
 
 </CodeGroup>
 
-```text Example output
-tirzepatide: 10 Orange Book patents, last expires 2041-12-30
-  exclusivity NPP until 2028-12-19
-3 of 334 live US patent families mention tirzepatide, e.g.:
-  63477734 | priority 2022-12-29 | PROCESSES AND INTERMEDIATES FOR PREPARING TIRZEPATIDE
-  63150187 | priority 2021-02-17 | TIRZEPATIDE THERAPEUTIC METHODS
-  63357285 | priority 2022-06-30 | TIRZEPATIDE COMPOSITIONS AND USE
+```json Example response (trimmed)
+{
+  "data": [
+    {
+      "patent_number": "12295987",
+      "event_date": "2041-12-30",
+      "details": {
+        "patent_use_code": "U-4192"
+      }
+    },
+    {
+      "patent_number": "12295987",
+      "event_date": "2041-12-30",
+      "details": {
+        "patent_use_code": "U-4193"
+      }
+    },
+    {
+      "patent_number": "12343382",
+      "event_date": "2039-07-22",
+      "details": {
+        "patent_use_code": "U-4229"
+      }
+    }
+  ],
+  "total": 28
+}
 ```
 
-`statutory_term_end` on `GET /v1/patents/{family_id}` is the earliest
-nonprovisional filing plus 20 years, without extensions. Look up one patent
-directly with `GET /v1/patents/{patent_number}`.
+A patent appears once per use code it is listed with.
+
+## 2. Exclusivities
+
+<CodeGroup>
+
+```bash cURL icon="braces"
+curl -G https://api.pav.bio/v1/orange-book-exclusivities \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  -d product_key=N:215866:001 \
+  -d sort=-event_date
+```
+
+```python Python SDK icon="python"
+from pav_bio import Pav
+
+client = Pav()  # reads PAV_API_KEY
+
+exclusivities = client.orange_book_exclusivities.list(
+    product_key="N:215866:001",
+    sort="-event_date",
+)
+for exclusivity in exclusivities.items:
+    print(exclusivity.status, exclusivity.event_date)
+```
+
+```bash CLI icon="terminal"
+pav orange-book-exclusivities list \
+  --product-key N:215866:001 \
+  --sort=-event_date
+```
+
+</CodeGroup>
+
+```json Example response (trimmed)
+{
+  "data": [
+    {
+      "status": "NPP",
+      "event_date": "2028-12-19"
+    },
+    {
+      "status": "NCE",
+      "event_date": "2027-05-13"
+    }
+  ],
+  "total": 2
+}
+```
+
+`status` is the exclusivity code (`NCE`, new chemical entity; `NPP`, new patient
+population). For the company's US patent families, list `GET /v1/patents` with
+`company=<ticker or name>&status=live`; `statutory_term_end` on
+`GET /v1/patents/{family_id}` is the earliest nonprovisional filing plus 20
+years, without extensions.
