@@ -15,11 +15,8 @@ All examples on this page use programs. The same rules apply to every dataset.
 Call the list endpoint with the filters you need.
 
 ```bash
-curl -G https://api.pav.bio/v1/programs \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  -d phase=preclinical \
-  -d modality=adc \
-  -d company_type=private
+curl "https://api.pav.bio/v1/programs?phase=preclinical&modality=adc&company_type=private" \
+  -H "Authorization: Bearer $PAV_API_KEY"
 ```
 
 Every list returns the same shape:
@@ -44,10 +41,8 @@ record must match all of them.
 To match any of several values, separate them with commas:
 
 ```bash
-curl -G https://api.pav.bio/v1/programs \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  -d target=TL1A \
-  -d phase=phase_2,phase_3
+curl "https://api.pav.bio/v1/programs?target=TL1A&phase=phase_2,phase_3" \
+  -H "Authorization: Bearer $PAV_API_KEY"
 ```
 
 Filters take the values you would write yourself:
@@ -82,11 +77,8 @@ earlier response, you can filter by it instead: `company_id`, `drug_id` and
 | FDA records | Depends on the record type; see [FDA records](/datasets/fda) |
 
 ```bash
-curl -G https://api.pav.bio/v1/deals \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  -d deal_type=licensing \
-  -d from=2025-01-01 \
-  -d to=2025-12-31
+curl "https://api.pav.bio/v1/deals?deal_type=licensing&from=2025-01-01&to=2025-12-31" \
+  -H "Authorization: Bearer $PAV_API_KEY"
 ```
 
 ## Sort
@@ -94,10 +86,8 @@ curl -G https://api.pav.bio/v1/deals \
 `sort` takes a field name. Add a leading `-` to sort in descending order.
 
 ```bash
-curl -G https://api.pav.bio/v1/programs \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  -d target=TL1A \
-  -d sort=-phase
+curl "https://api.pav.bio/v1/programs?target=TL1A&sort=-phase" \
+  -H "Authorization: Bearer $PAV_API_KEY"
 ```
 
 Each dataset page lists the fields you can sort by and the default order.
@@ -113,11 +103,8 @@ until `next_cursor` is null.
 <CodeGroup>
 
 ```bash cURL icon="braces"
-curl -G https://api.pav.bio/v1/programs \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  -d modality=adc \
-  -d limit=200 \
-  -d cursor=<next_cursor>
+curl "https://api.pav.bio/v1/programs?modality=adc&limit=200&cursor=<next_cursor>" \
+  -H "Authorization: Bearer $PAV_API_KEY"
 ```
 
 ```python Python SDK icon="python"
@@ -170,10 +157,8 @@ program has a `trial_count` instead of its trials and ontology terms. A slim
 patent family leaves out its member list.
 
 ```bash
-curl -G https://api.pav.bio/v1/programs \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  -d target=TL1A \
-  -d view=slim
+curl "https://api.pav.bio/v1/programs?target=TL1A&view=slim" \
+  -H "Authorization: Bearer $PAV_API_KEY"
 ```
 
 ## Missing values

@@ -23,11 +23,8 @@ them by id.
     <CodeGroup>
 
     ```bash cURL icon="braces"
-    curl -G https://api.pav.bio/v1/programs \
-      -H "Authorization: Bearer $PAV_API_KEY" \
-      -d phase=preclinical \
-      -d modality=adc \
-      -d company_type=private
+    curl "https://api.pav.bio/v1/programs?phase=preclinical&modality=adc&company_type=private" \
+      -H "Authorization: Bearer $PAV_API_KEY"
     ```
 
     ```python Python SDK icon="python"
@@ -92,41 +89,29 @@ them by id.
 Phase 3 ADCs targeting HER2:
 
 ```bash
-curl -G https://api.pav.bio/v1/programs \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "phase=phase_3" \
-  --data-urlencode "modality=adc" \
-  --data-urlencode "target=HER2"
+curl "https://api.pav.bio/v1/programs?phase=phase_3&modality=adc&target=HER2" \
+  -H "Authorization: Bearer $PAV_API_KEY"
 ```
 
 Pfizer's active programs, by ticker:
 
 ```bash
-curl -G https://api.pav.bio/v1/programs \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "company=PFE"
+curl "https://api.pav.bio/v1/programs?company=PFE" \
+  -H "Authorization: Bearer $PAV_API_KEY"
 ```
 
 Oncology licensing deals announced in 2025 over $100M:
 
 ```bash
-curl -G https://api.pav.bio/v1/deals \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "deal_type=licensing" \
-  --data-urlencode "therapeutic_area=oncology" \
-  --data-urlencode "from=2025-01-01" \
-  --data-urlencode "to=2025-12-31" \
-  --data-urlencode "min_value_usd=100000000"
+curl "https://api.pav.bio/v1/deals?deal_type=licensing&therapeutic_area=oncology&from=2025-01-01&to=2025-12-31&min_value_usd=100000000" \
+  -H "Authorization: Bearer $PAV_API_KEY"
 ```
 
 Recruiting Phase 2 trials in obesity:
 
 ```bash
-curl -G https://api.pav.bio/v1/trials \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  --data-urlencode "indication=obesity" \
-  --data-urlencode "phase=2" \
-  --data-urlencode "status=recruiting"
+curl "https://api.pav.bio/v1/trials?indication=obesity&phase=2&status=recruiting" \
+  -H "Authorization: Bearer $PAV_API_KEY"
 ```
 
 ## Next steps

@@ -136,13 +136,8 @@ Recruiting Phase 2 obesity trials, newest first:
 <CodeGroup>
 
 ```bash cURL icon="braces"
-curl -G https://api.pav.bio/v1/trials \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  -d indication=obesity \
-  -d phase=2 \
-  -d status=recruiting \
-  -d sort=-start_date \
-  -d limit=2
+curl "https://api.pav.bio/v1/trials?indication=obesity&phase=2&status=recruiting&sort=-start_date&limit=2" \
+  -H "Authorization: Bearer $PAV_API_KEY"
 ```
 
 ```python Python SDK icon="python"

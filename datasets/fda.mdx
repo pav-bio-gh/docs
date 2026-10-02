@@ -161,11 +161,8 @@ Orange Book patents held by Eli Lilly, latest expiry first:
 <CodeGroup>
 
 ```bash cURL icon="braces"
-curl -G https://api.pav.bio/v1/orange-book-patents \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  -d company=lilly \
-  -d sort=-event_date \
-  -d limit=2
+curl "https://api.pav.bio/v1/orange-book-patents?company=lilly&sort=-event_date&limit=2" \
+  -H "Authorization: Bearer $PAV_API_KEY"
 ```
 
 ```python Python SDK icon="python"

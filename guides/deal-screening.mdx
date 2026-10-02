@@ -14,12 +14,8 @@ Largest stated value first.
 <CodeGroup>
 
 ```bash cURL icon="braces"
-curl -G https://api.pav.bio/v1/deals \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  -d target=GLP-1R \
-  -d deal_type=licensing,collaboration \
-  -d sort=-total_potential_value \
-  -d limit=3
+curl "https://api.pav.bio/v1/deals?target=GLP-1R&deal_type=licensing,collaboration&sort=-total_potential_value&limit=3" \
+  -H "Authorization: Bearer $PAV_API_KEY"
 ```
 
 ```python Python SDK icon="python"

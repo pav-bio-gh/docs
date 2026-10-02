@@ -45,6 +45,9 @@ Source for the public Pav API and MCP server documentation, built with
   `openapi.json`.
 - A dataset page lists the main fields, not all of them; it links to the API
   Reference for the rest.
+- cURL samples put the query string in the quoted URL
+  (`curl "https://api.pav.bio/v1/programs?phase=phase_3&target=HER2"`), never
+  `curl -G -d`. URL-encode a value only when it needs it (spaces, `&`, `#`).
 
 ## Design conventions
 
