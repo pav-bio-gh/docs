@@ -164,8 +164,9 @@ curl "https://api.pav.bio/v1/programs?target=TL1A&view=slim" \
 ## Missing values
 
 A field is null, or a list is empty, when the source does not disclose the
-value. A filter on such a field returns only the records where it is set. See
-[Coverage and sources](/concepts/coverage-and-sources).
+value. A filter on such a field returns only the records where it is set. For
+example, many companies have no country on file, so a `country` filter leaves
+them out.
 
 ## Errors
 

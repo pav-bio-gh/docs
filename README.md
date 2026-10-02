@@ -9,8 +9,7 @@ Source for the public Pav API and MCP server documentation, built with
 
 - `docs.json`: site config and navigation. Sidebar groups of the
   **Documentation** tab:
-  - Get started: `introduction.mdx`, `quickstart.mdx`, `fetching-data.mdx`,
-    `mcp-server.mdx`. The MCP page lives at `/mcp-server` because Mintlify
+  - Get started: `introduction.mdx`, `quickstart.mdx`, `mcp-server.mdx`. The MCP page lives at `/mcp-server` because Mintlify
     serves its own `/mcp`.
   - Datasets: `data-overview.mdx`, then `datasets/`, one page per dataset in
     collapsible sub-groups (Pipeline, Clinical and regulatory, Deals and
@@ -21,7 +20,7 @@ Source for the public Pav API and MCP server documentation, built with
   - SDK and CLI: `clients/`.
   - AI agents: `openapi-and-agents.mdx`.
   - Guides: `guides/`, task walkthroughs with example output.
-  - Resources: `concepts/coverage-and-sources.mdx`.
+  - Resources: `fetching-data.mdx`.
 - `fetching-data.mdx` explains what every list and get endpoint shares:
   filters, dates, sorting, paging, get by id, `view=slim`, missing values.
   Dataset pages link to it instead of repeating it.
