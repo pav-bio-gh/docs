@@ -35,26 +35,33 @@ ChatGPT asks.
 | URL | `https://api.pav.bio/mcp` |
 | Transport | Streamable HTTP |
 | Auth | Sign in with your Pav account (OAuth) |
-| Tools | 26, one per endpoint, all read-only |
+| Tools | 35, one per endpoint, all read-only |
 
 ## Tools
 
-Each tool takes the endpoint's parameters and returns its JSON. Filter by a
-plain value you already have (a ticker, a phase, a modality) — `company_id`,
-`drug_id` and `program_id` are also accepted for ids from a previous
-response.
+Each endpoint is one tool. A tool takes the endpoint's parameters and returns
+the same JSON. See [Fetching data](/fetching-data) for how the parameters work.
 
-| Tool | Endpoint |
-| --- | --- |
-| `list_programs`, `get_program` | `/v1/programs`, `/{program_id}` |
-| `list_drugs`, `get_drug` | `/v1/drugs`, `/{drug_id}` |
-| `list_companies`, `get_company` | `/v1/companies`, `/{company_id}` |
-| `list_trials`, `get_trial` | `/v1/trials`, `/{nct_id}` |
-| `list_deals`, `get_deal` | `/v1/deals`, `/{deal_id}` |
-| `list_patents`, `get_patent_family` | `/v1/patents`, `/{id}` |
-| `list_orange_book_products`, `list_orange_book_patents`, `list_orange_book_exclusivities`, `list_purple_book_products`, `list_orphan_designations`, `list_warning_letters`, `list_recalls`, `list_drug_applications`, `list_complete_response_letters`, `list_accelerated_approvals`, `list_advisory_committee_meetings` | One list per [FDA record type](/datasets/fda): `/v1/recalls`, `/v1/orange-book-patents`, … |
-| `get_orange_book_product`, `get_orange_book_patent`, `get_orange_book_exclusivity`, `get_purple_book_product`, `get_orphan_designation`, `get_warning_letter`, `get_recall`, `get_drug_application`, `get_complete_response_letter`, `get_accelerated_approval`, `get_advisory_committee_meeting` | `/v1/<resource>/{record_key}`; a drug application by `/v1/drug-applications/{application_key}` |
-| `get_stats` | `/v1/stats` |
+| Endpoint | List tool | Get tool |
+| --- | --- | --- |
+| `/v1/programs` | `list_programs` | `get_program` |
+| `/v1/drugs` | `list_drugs` | `get_drug` |
+| `/v1/companies` | `list_companies` | `get_company` |
+| `/v1/trials` | `list_trials` | `get_trial` |
+| `/v1/deals` | `list_deals` | `get_deal` |
+| `/v1/patents` | `list_patents` | `get_patent_family` |
+| `/v1/orange-book-products` | `list_orange_book_products` | `get_orange_book_product` |
+| `/v1/orange-book-patents` | `list_orange_book_patents` | `get_orange_book_patent` |
+| `/v1/orange-book-exclusivities` | `list_orange_book_exclusivities` | `get_orange_book_exclusivity` |
+| `/v1/purple-book-products` | `list_purple_book_products` | `get_purple_book_product` |
+| `/v1/orphan-designations` | `list_orphan_designations` | `get_orphan_designation` |
+| `/v1/drug-applications` | `list_drug_applications` | `get_drug_application` |
+| `/v1/complete-response-letters` | `list_complete_response_letters` | `get_complete_response_letter` |
+| `/v1/accelerated-approvals` | `list_accelerated_approvals` | `get_accelerated_approval` |
+| `/v1/advisory-committee-meetings` | `list_advisory_committee_meetings` | `get_advisory_committee_meeting` |
+| `/v1/warning-letters` | `list_warning_letters` | `get_warning_letter` |
+| `/v1/recalls` | `list_recalls` | `get_recall` |
+| `/v1/stats` | | `get_stats` |
 
 Each tool call counts toward the [rate limit](/rate-limits).
 

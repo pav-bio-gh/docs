@@ -5,13 +5,14 @@ description: "Every /v1 endpoint, parameter and response schema."
 icon: "book-open"
 ---
 
-Every endpoint is a read-only `GET` under `https://api.pav.bio/v1`, generated
-from the [OpenAPI spec](/openapi-and-agents). Send
-`Authorization: Bearer <api_key>` ([Authentication](/authentication)). Each
-resource has one list endpoint, filtered by plain values (a ticker, a phase,
-a modality) or by an id from an earlier response, and one get endpoint.
-Lists return `{ "data": [...], "next_cursor": "...", "total": N }`; pass
-`next_cursor` back as `cursor` for the next page.
+Every endpoint is a read-only `GET` under `https://api.pav.bio/v1`. These
+pages are built from the [OpenAPI spec](/openapi-and-agents).
+
+Send your API key in the `Authorization` header as `Bearer <api_key>`. See
+[Authentication](/authentication).
+
+Each resource has a list endpoint and a get endpoint. See
+[Fetching data](/fetching-data) for filters, sorting and paging.
 
 <CardGroup cols={2}>
   <Card title="Programs" icon="flask-conical" href="/api-reference/programs/list-programs">Drug development programs.</Card>

@@ -4,26 +4,28 @@ description: "Biopharma pipeline, trial, deal, patent and FDA data over REST and
 icon: "book-open"
 ---
 
-The Pav API serves drug programs and the evidence around them (trials, deals,
-patents and FDA records) as JSON over a read-only REST API and an MCP server.
-Both use one API key and one rate limit. Every resource is one list endpoint,
-filtered by plain values you already know (a ticker, a phase, a modality),
-and one get endpoint by id.
+The Pav API serves biopharma pipeline data. It covers drug programs, the drugs
+and companies behind them, and the clinical trials, deals, patents and FDA
+records around them.
 
-## Start
+You can call it as a read-only REST API, use the Python SDK or the CLI, or
+connect an AI assistant to the MCP server. All of them use the same data and
+the same rate limit.
+
+## Get started
 
 <CardGroup cols={2}>
   <Card title="Quickstart" icon="rocket" href="/quickstart">
-    Create a key and list something specific — no ids needed.
+    Create an API key and make your first request.
   </Card>
-  <Card title="Data overview" icon="network" href="/data-overview">
-    What each dataset holds and how they join.
+  <Card title="Fetching data" icon="list-filter" href="/fetching-data">
+    Filter, sort and page through lists, and fetch one record.
   </Card>
   <Card title="MCP server" icon="bot" href="/mcp-server">
-    Connect Claude, Cursor or any MCP client.
+    Connect Claude, ChatGPT, Cursor or any MCP client.
   </Card>
   <Card title="API reference" icon="code" href="/api-reference/overview">
-    Every endpoint and schema.
+    Every endpoint, parameter and field.
   </Card>
 </CardGroup>
 
@@ -49,6 +51,6 @@ and one get endpoint by id.
     Comparable deals ranked by value.
   </Card>
   <Card title="Patents and exclusivity" icon="calendar-clock" href="/guides/patent-loe-check">
-    Patent families and Orange Book listings for a company.
+    Patent and exclusivity expiry for a drug.
   </Card>
 </CardGroup>

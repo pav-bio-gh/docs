@@ -4,38 +4,140 @@ description: "M&A, licensing, collaborations, options and joint ventures, with t
 icon: "handshake"
 ---
 
-A deal is one transaction between companies, with its stated terms, lifecycle
-events, drugs covered and source documents.
+A deal is one transaction between companies. It carries the stated terms, the
+drugs covered, lifecycle events and source documents.
 
 | Endpoint | Returns |
 | --- | --- |
-| `GET /v1/deals` | Deals, filtered. |
+| `GET /v1/deals` | Deals that match your filters. |
 | `GET /v1/deals/{deal_id}` | One deal with full terms, events and sources. |
 
-## Key fields
+## Fields
 
-| Field | Description |
-| --- | --- |
-| `deal_id`, `deal_name`, `summary` | Pav deal id, name and summary. |
-| `deal_type` | `acquisition`, `licensing`, `collaboration`, `option`, … |
-| `latest_event_type` | Lifecycle state, filtered by `status`. |
-| `announced_at`, `completed_at`, `activity_date` | Key dates. |
-| `companies[]` | Parties with `company_id` and `roles` (`licensor`, `acquirer`, …). |
-| `total_value`, `total_potential_value`, `upfront` | Each with `amount`, `currency`, `raw_text` and the `evidence` sentence. |
-| `assets[]`, `targets[]`, `therapeutic_areas[]` | Drugs covered and their tags. |
+The main fields on a deal. The [API reference](/api-reference/deals/list-deals)
+lists every field.
 
-## Parameters
+<ResponseField name="deal_id" type="string">
+  Pav deal id.
+</ResponseField>
 
-| Name | Values | Example |
-| --- | --- | --- |
-| `company` | Ticker, company slug or exact name; any party | `abbvie` |
-| `deal_type` | See key fields | `licensing` |
-| `status` | `proposed`, `announced`, `completed`, `amended`, `terminated`, `update` | `completed` |
-| `target`, `modality`, `therapeutic_area` | As on [Programs](/datasets/programs); areas such as `oncology` | `oncology` |
-| `min_value_usd` | Minimum `total_potential_value` | `100000000` |
-| `company_id`, `drug_id` | Ids, for values from an earlier response | `203` |
-| `from`, `to` | `announced_at` range | `2025-01-01` |
-| `sort` | `activity_date` (default descending), `announced_at`, `completed_at`, `total_value`, `total_potential_value` | `-total_potential_value` |
+<ResponseField name="deal_name" type="string">
+  Deal headline.
+</ResponseField>
+
+<ResponseField name="summary" type="string">
+  One-paragraph summary.
+</ResponseField>
+
+<ResponseField name="deal_type" type="string">
+  `acquisition`, `merger`, `asset_purchase`, `licensing`, `collaboration`,
+  `option`, `joint_venture`, `distribution` or `other`.
+</ResponseField>
+
+<ResponseField name="latest_event_type" type="string">
+  Current state: `proposed`, `announced`, `completed`, `amended`,
+  `terminated` or `update`. The `status` filter matches this field.
+</ResponseField>
+
+<ResponseField name="announced_at" type="string | null">
+  When the deal was announced.
+</ResponseField>
+
+<ResponseField name="completed_at" type="string | null">
+  When the deal closed.
+</ResponseField>
+
+<ResponseField name="activity_date" type="string | null">
+  The deal's most recent activity.
+</ResponseField>
+
+<ResponseField name="companies" type="object[]">
+  The parties. Each has a `company_id` and `roles`, such as `licensor` or
+  `acquirer`.
+</ResponseField>
+
+<ResponseField name="total_value" type="object | null">
+  Headline value as announced.
+</ResponseField>
+
+<ResponseField name="total_potential_value" type="object | null">
+  `total_value` when stated, otherwise upfront plus milestones.
+</ResponseField>
+
+<ResponseField name="upfront" type="object | null">
+  Upfront payment.
+</ResponseField>
+
+<ResponseField name="assets" type="object[]">
+  Drugs the deal covers.
+</ResponseField>
+
+<ResponseField name="targets" type="object[]">
+  Molecular targets of those drugs.
+</ResponseField>
+
+<ResponseField name="therapeutic_areas" type="string[]">
+  Therapeutic areas, such as `oncology`.
+</ResponseField>
+
+Each value object has `amount`, `currency`, the source wording in `raw_text`
+and the supporting sentence in `evidence`.
+
+## Filters
+
+See [Fetching data](/fetching-data) for how filters, dates, sorting and paging
+work.
+
+<ParamField query="company" type="string">
+  Ticker, company slug or exact company name. Matches any party. Example:
+  `abbvie`.
+</ParamField>
+
+<ParamField query="deal_type" type="string">
+  One or more values from `deal_type` above. Example: `licensing`.
+</ParamField>
+
+<ParamField query="status" type="string">
+  One or more values from `latest_event_type` above. Example: `completed`.
+</ParamField>
+
+<ParamField query="target" type="string">
+  Target name, gene symbol or term id. Example: `GLP-1R`.
+</ParamField>
+
+<ParamField query="modality" type="string">
+  Modality, subclass or format, as on [Programs](/datasets/programs).
+</ParamField>
+
+<ParamField query="therapeutic_area" type="string">
+  Therapeutic area. Example: `oncology`.
+</ParamField>
+
+<ParamField query="min_value_usd" type="number">
+  Minimum `total_potential_value` in US dollars. Deals with no stated value
+  are left out. Example: `100000000`.
+</ParamField>
+
+<ParamField query="company_id" type="string">
+  One or more Pav company ids.
+</ParamField>
+
+<ParamField query="drug_id" type="string">
+  One or more Pav drug ids.
+</ParamField>
+
+<ParamField query="from" type="date">
+  Deals with `announced_at` on or after this date.
+</ParamField>
+
+<ParamField query="to" type="date">
+  Deals with `announced_at` on or before this date.
+</ParamField>
+
+<ParamField query="sort" type="string" default="-activity_date">
+  `activity_date`, `announced_at`, `completed_at`, `total_value` or
+  `total_potential_value`. Prefix `-` for descending.
+</ParamField>
 
 ## Example
 

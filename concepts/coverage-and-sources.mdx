@@ -14,10 +14,21 @@ icon: "database"
 | FDA records | Orange Book and Purple Book (current monthly editions), orphan designations, Drugs@FDA, letters, approvals, meetings, recalls |
 | Ontology terms | MONDO, NCIT, HGNC |
 
-Every record links to its source (`source_url`, `nct_url`, deal source
-documents, patent and FDA numbers). A filter on a partly populated field
-returns only rows where the field is set — `company_type` is maintained
-directly and reliable, but only around a fifth of tracked companies with an
-active program have a `country` on file, so a `country` filter under-counts.
-Report a data issue with the record id and the response `request_id` at
+Every record links to its source: `source_url`, `nct_url`, deal source
+documents, or patent and FDA numbers.
+
+## Fields that are not always set
+
+A filter on a field returns only records where that field is set. Some fields
+are set on only part of the data:
+
+- `country`: about a fifth of companies with an active program have one, so a
+  `country` filter misses many companies. `company_type` is set on every
+  company.
+- FDA company links: most Orange Book, Purple Book and orphan records are
+  linked to a company. Many warning letters and recalls are not.
+
+## Report a data issue
+
+Send the record id and the response's `request_id` through
 [pav.bio](https://pav.bio).

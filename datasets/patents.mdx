@@ -4,39 +4,119 @@ description: "US patent families with owners, members, FDA-listed drugs and stat
 icon: "scroll-text"
 ---
 
-A patent family groups US applications and patents that share a priority
-claim, with their owners and the FDA-approved drugs that list them.
+A patent family groups the US applications and patents that share a priority
+claim. It carries the owners and the FDA-approved drugs that list its patents.
 
 | Endpoint | Returns |
 | --- | --- |
-| `GET /v1/patents` | Families, filtered. |
+| `GET /v1/patents` | Families that match your filters. |
 | `GET /v1/patents/{id}` | One family, by Pav `family_id` or by a member's patent, publication or application number. |
 
-## Key fields
+## Fields
 
-| Field | Description |
-| --- | --- |
-| `family_id`, `representative_title` | Pav family id and title. |
-| `member_count`, `granted_count`, `pending_count` | Members by status. |
-| `has_live_member` | A member is pending or in force. |
-| `earliest_priority_date`, `latest_grant_date` | Key dates. |
-| `owner_names[]`, `companies[]` | Owners as recorded, and linked Pav companies. |
-| `drugs[]` | Orange Book products that list a member. |
-| `members[]` | Up to 30 members with numbers and status (`view=full`). |
+The main fields on a patent family. The [API reference](/api-reference/patents/list-patent-families)
+lists every field.
 
-## Parameters
+<ResponseField name="family_id" type="string">
+  Pav patent family id.
+</ResponseField>
 
-| Name | Values | Example |
-| --- | --- | --- |
-| `company` | Ticker, company slug or exact name; owner of a live member | `lilly` |
-| `patent_number` | A member's patent, publication or application number | `12295987` |
-| `cpc` | CPC prefix on any member | `A61K38/26` |
-| `status` | `live`, `lapsed` | `live` |
-| `granted` | `true`, `false` | `true` |
-| `company_id` | Ids, for values from an earlier response | `218` |
-| `from`, `to` | `earliest_priority_date` range | `2020-01-01` |
-| `sort` | `latest_status_date` (default descending), `earliest_priority_date`, `member_count` | `-member_count` |
-| `view` | `full`, `slim` | `slim` |
+<ResponseField name="representative_title" type="string | null">
+  Family title.
+</ResponseField>
+
+<ResponseField name="member_count" type="integer">
+  Applications in the family.
+</ResponseField>
+
+<ResponseField name="granted_count" type="integer">
+  Granted members.
+</ResponseField>
+
+<ResponseField name="pending_count" type="integer">
+  Pending members.
+</ResponseField>
+
+<ResponseField name="has_live_member" type="boolean">
+  `true` when a member is pending or in force.
+</ResponseField>
+
+<ResponseField name="earliest_priority_date" type="string | null">
+  Earliest priority date.
+</ResponseField>
+
+<ResponseField name="latest_grant_date" type="string | null">
+  Most recent grant.
+</ResponseField>
+
+<ResponseField name="owner_names" type="string[]">
+  Owners as recorded.
+</ResponseField>
+
+<ResponseField name="companies" type="object[]">
+  Owners linked to Pav companies.
+</ResponseField>
+
+<ResponseField name="drugs" type="object[]">
+  FDA-approved drugs whose Orange Book listing names one of the family's
+  patents.
+</ResponseField>
+
+<ResponseField name="members" type="object[]">
+  Up to 30 members with their numbers and status. Left out with `view=slim`.
+</ResponseField>
+
+<ResponseField name="statutory_term_end" type="string | null">
+  Earliest nonprovisional filing plus 20 years, without term adjustments or
+  extensions. On the get endpoint only.
+</ResponseField>
+
+## Filters
+
+See [Fetching data](/fetching-data) for how filters, dates, sorting and paging
+work.
+
+<ParamField query="company" type="string">
+  Ticker, company slug or exact company name. Matches owners of a live member.
+  Example: `lilly`.
+</ParamField>
+
+<ParamField query="patent_number" type="string">
+  A member's patent, publication or application number. Example: `12295987`.
+</ParamField>
+
+<ParamField query="cpc" type="string">
+  CPC code prefix on any member. Example: `A61K38/26`.
+</ParamField>
+
+<ParamField query="status" type="string">
+  `live` (a member is pending or in force) or `lapsed`.
+</ParamField>
+
+<ParamField query="granted" type="boolean">
+  `true` for families with at least one granted member.
+</ParamField>
+
+<ParamField query="company_id" type="string">
+  One or more Pav company ids.
+</ParamField>
+
+<ParamField query="from" type="date">
+  Families with `earliest_priority_date` on or after this date.
+</ParamField>
+
+<ParamField query="to" type="date">
+  Families with `earliest_priority_date` on or before this date.
+</ParamField>
+
+<ParamField query="sort" type="string" default="-latest_status_date">
+  `latest_status_date`, `earliest_priority_date` or `member_count`. Prefix
+  `-` for descending.
+</ParamField>
+
+<ParamField query="view" type="string" default="full">
+  `full` or `slim`.
+</ParamField>
 
 ## Example
 

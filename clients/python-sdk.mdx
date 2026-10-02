@@ -1,12 +1,13 @@
 ---
 title: "Python SDK"
-description: "Typed Python client for every endpoint: list and get on each resource, pages followed for you."
+description: "A typed Python client for the Pav API."
 icon: "code"
 ---
 
-The `pav-bio` package wraps the REST API one to one: every resource has a
-`list` and a `get`, named after the endpoint (`GET /v1/recalls` is
-`client.recalls.list()`). Responses are typed models; lists page for you.
+The `pav-bio` package mirrors the REST API. Each resource has a `list` and a
+`get` method named after its endpoint: `GET /v1/recalls` is
+`client.recalls.list()`. Responses are typed models, and lists follow pages
+for you.
 
 ## Install
 

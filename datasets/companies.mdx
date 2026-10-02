@@ -4,40 +4,91 @@ description: "Biopharma companies with owners, tickers and identifiers."
 icon: "building-2"
 ---
 
-A company is one biopharma organization. Its `company_id` filters every
-other dataset and includes the companies it owns.
+A company is one biopharma organization. Filtering any other dataset by a
+company also includes the companies it owns.
 
 | Endpoint | Returns |
 | --- | --- |
-| `GET /v1/companies` | Companies by name, ticker or filter. |
-| `GET /v1/companies/{company_id}` | One company with tickers, owner and website. |
+| `GET /v1/companies` | Companies that match your filters. |
+| `GET /v1/companies/{company_id}` | One company with its tickers, owner and website. |
 
-## Key fields
+## Fields
 
-| Field | Description |
-| --- | --- |
-| `company_id`, `name` | Pav company id and name. |
-| `company_type` | `public` or `private`, maintained directly. |
-| `parent_company_id` | Owning company, when owned. |
-| `country`, `website` | Headquarters country and website. |
-| `tickers[]`, `cik` | Stock tickers and SEC CIK. |
-| `asset_count` | Programs tracked. |
-| `last_checked_at` | When the company's pipeline was last read. |
+The main fields on a company. The [API reference](/api-reference/companies/list-companies)
+lists every field.
 
-## Parameters
+<ResponseField name="company_id" type="integer">
+  Pav company id.
+</ResponseField>
 
-| Name | Values | Example |
-| --- | --- | --- |
-| `company` | Slug or exact registered name/synonym | `MSD` |
-| `ticker` | Current stock ticker | `PFE` |
-| `company_type` | `public`, `private` | `public` |
-| `country` | Headquarters, exact name | `United States` |
-| `company_id` | Ids, for values from an earlier response | `313` |
-| `has_pipeline` | `true` or `false` | `true` |
-| `sort` | `asset_count` (default descending), `name` | `name` |
+<ResponseField name="name" type="string">
+  Company name.
+</ResponseField>
 
-`company` and `ticker` are exact, not full-text: a value that matches more
-than one tracked company is a `400` naming the candidates.
+<ResponseField name="company_type" type="string">
+  `public` or `private`.
+</ResponseField>
+
+<ResponseField name="parent_company_id" type="integer | null">
+  Pav id of the company that owns this one.
+</ResponseField>
+
+<ResponseField name="country" type="string | null">
+  Headquarters country.
+</ResponseField>
+
+<ResponseField name="website" type="string | null">
+  Company website.
+</ResponseField>
+
+<ResponseField name="tickers" type="object[]">
+  Current stock tickers. Empty for a private company.
+</ResponseField>
+
+<ResponseField name="cik" type="string | null">
+  SEC Central Index Key, for companies that file with the SEC.
+</ResponseField>
+
+<ResponseField name="asset_count" type="integer">
+  Number of programs Pav tracks for the company.
+</ResponseField>
+
+<ResponseField name="last_checked_at" type="string | null">
+  When Pav last read the company's pipeline.
+</ResponseField>
+
+## Filters
+
+See [Fetching data](/fetching-data) for how filters, sorting and paging work.
+
+<ParamField query="company" type="string">
+  Company slug or exact registered name or synonym. A value that matches more
+  than one company returns a `400` that lists the candidates. Example: `MSD`.
+</ParamField>
+
+<ParamField query="ticker" type="string">
+  Current stock ticker. Example: `PFE`.
+</ParamField>
+
+<ParamField query="company_type" type="string">
+  `public` or `private`.
+</ParamField>
+
+<ParamField query="country" type="string">
+  Headquarters country, exact name. Example: `United States`.
+</ParamField>
+
+<ParamField query="has_pipeline" type="boolean">
+  `true` for companies with a tracked pipeline, `false` for those without.
+</ParamField>
+
+<ParamField query="company_id" type="string">
+  One or more Pav company ids.
+</ParamField>
+
+<ParamField query="sort" type="string" default="-asset_count">
+  `asset_count` or `name`. Prefix `-` for descending.
+</ParamField>
 
 ## Example
 

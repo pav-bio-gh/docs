@@ -4,22 +4,17 @@ description: "The OpenAPI spec for client generation and agent tool wiring."
 icon: "file-code"
 ---
 
-The OpenAPI 3.1 spec needs no key:
+The OpenAPI 3.1 spec is public and needs no key:
 [`https://api.pav.bio/v1/openapi.json`](https://api.pav.bio/v1/openapi.json).
 Use it to generate a typed client, import the API into Postman or Bruno, or
 give an agent every endpoint. The API Reference tab is built from it.
 
-```bash
-curl -s https://api.pav.bio/v1/openapi.json | python3 -c "import json,sys; print(len(json.load(sys.stdin)['paths']))"
-```
+For assistants that support MCP, use the [MCP server](/mcp-server) instead.
 
-For assistants with MCP support, use the [MCP server](/mcp-server) instead.
+## Tips for agents
 
-Tips for agents:
-
-- Filter lists by a plain value you already have (a ticker, a company name,
-  a phase, a modality); use `company_id`/`drug_id`/`program_id` once you have
-  one from a previous response.
-- Use `view=slim` and a small `limit` (5–25) to scan; fetch details by id.
-- Cite `source_url`, `nct_url` and FDA or patent numbers.
-- A missing field means not disclosed.
+- Start with a list call and a small `limit`, such as 5 to 25. Add
+  `view=slim` on programs and patents. Fetch full records by id.
+- Read `total` to count matches instead of paging through them.
+- Cite `source_url`, `nct_url`, and FDA or patent numbers.
+- A null field means the source does not disclose the value.

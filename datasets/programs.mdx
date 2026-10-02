@@ -4,53 +4,163 @@ description: "Drug development programs: one drug in one indication at one compa
 icon: "flask-conical"
 ---
 
-A program is one drug in one indication at one company, with its phase,
-modality, target, status and linked trials.
+A program is one drug in one indication at one company. It carries the phase,
+modality, target, status and linked clinical trials.
 
 | Endpoint | Returns |
 | --- | --- |
-| `GET /v1/programs` | Programs, filtered. |
-| `GET /v1/programs/{program_id}` | One program with trials and ontology terms. |
+| `GET /v1/programs` | Programs that match your filters. |
+| `GET /v1/programs/{program_id}` | One program with its trials and ontology terms. |
 
-## Key fields
+## Fields
 
-| Field | Description |
-| --- | --- |
-| `program_id` | Pav program id. |
-| `status` | `active`, `inactive` (known only from trials, all closed) or `discontinued`. |
-| `company_id`, `company` | Developing company. |
-| `drug`, `drug_id` | Drug as published, and the Pav drug shared across companies. |
-| `indication`, `indication_terms[]` | Indication as published, and its MONDO terms. |
-| `phase` | Normalized: `preclinical`, `phase_1`, `phase_1_2`, `phase_2`, `phase_2_3`, `phase_3`, `filed`, `registration`, `approved`. |
-| `modality`, `target`, `target_terms[]` | Normalized modality, target as published, and its NCIT or HGNC terms. |
-| `clinical_trials[]`, `source_url`, `last_updated` | Linked trials, source page, last change. |
-| `source_checked_at` | When Pav last read `source_url`. Set only when Pav reads the company's own page directly; null when the program has no such page (e.g. a trial- or approval-only program), even if `basis` still reads `company_pipeline`. |
+The main fields on a program. The [API reference](/api-reference/programs/list-programs)
+lists every field.
 
-`view=slim` returns light rows with `trial_count` instead of nested trials
-and terms.
+<ResponseField name="program_id" type="integer">
+  Pav program id.
+</ResponseField>
 
-## Parameters
+<ResponseField name="status" type="string">
+  `active`, `inactive` or `discontinued`. `inactive` means Pav knows the
+  program only from trials, and all of them are closed.
+</ResponseField>
 
-| Name | Values | Example |
-| --- | --- | --- |
-| `company` | Ticker, company slug or exact name; rolls up subsidiaries | `PFE` |
-| `company_type` | `public`, `private` | `private` |
-| `country` | Company headquarters, exact name | `United States` |
-| `drug` | Exact drug name, code or brand | `sotorasib` |
-| `phase` | See key fields above (also takes `1`, `2`, `3`) | `preclinical,phase_1` |
-| `indication` | Name, synonym or MONDO id; includes narrower diseases | `NSCLC` |
-| `target` | Name, gene symbol or term id | `TL1A` |
-| `modality` | Modality, subclass or format | `adc`, `bispecific` |
-| `status` | `active` (default), `inactive`, `discontinued` | `discontinued` |
-| `company_id`, `drug_id`, `program_id` | Ids, for values from an earlier response | `412` |
-| `from`, `to` | `last_updated` range | `2026-09-01` |
-| `sort` | `company`, `drug`, `indication`, `target`, `modality`, `phase`, `last_updated` | `-phase` |
-| `view` | `full`, `slim` | `slim` |
+<ResponseField name="company_id" type="integer">
+  Pav id of the developing company.
+</ResponseField>
 
-`company_type` and `country` are company attributes: `company_type` is
-maintained directly and reliable; only around a fifth of tracked companies
-with an active program have a `country` on file, so a `country` filter
-under-counts.
+<ResponseField name="company" type="string">
+  Name of the developing company.
+</ResponseField>
+
+<ResponseField name="drug" type="string">
+  Drug name as the company publishes it.
+</ResponseField>
+
+<ResponseField name="drug_id" type="integer | null">
+  Pav drug id, shared by every company's programs of the same product.
+</ResponseField>
+
+<ResponseField name="indication" type="string | null">
+  Indication as the company publishes it.
+</ResponseField>
+
+<ResponseField name="indication_terms" type="object[]">
+  MONDO terms for the indication.
+</ResponseField>
+
+<ResponseField name="phase" type="string | null">
+  Normalized phase: `preclinical`, `phase_1`, `phase_1_2`, `phase_2`,
+  `phase_2_3`, `phase_3`, `filed`, `registration` or `approved`.
+</ResponseField>
+
+<ResponseField name="modality" type="string | null">
+  Normalized modality, such as `antibody` or `adc`.
+</ResponseField>
+
+<ResponseField name="target" type="string | null">
+  Molecular target as the company publishes it.
+</ResponseField>
+
+<ResponseField name="target_terms" type="object[]">
+  NCIT or HGNC terms for the target.
+</ResponseField>
+
+<ResponseField name="clinical_trials" type="object[]">
+  Linked clinical trials.
+</ResponseField>
+
+<ResponseField name="source_url" type="string | null">
+  The company page the program comes from.
+</ResponseField>
+
+<ResponseField name="source_checked_at" type="string | null">
+  When Pav last read `source_url`. Null when the program has no company page,
+  such as a program known only from trials or an approval.
+</ResponseField>
+
+<ResponseField name="last_updated" type="string | null">
+  When the program's latest event happened, such as a phase change, readout,
+  filing or approval.
+</ResponseField>
+
+With `view=slim`, rows have a `trial_count` instead of `clinical_trials`,
+`indication_terms` and `target_terms`.
+
+## Filters
+
+See [Fetching data](/fetching-data) for how filters, dates, sorting and paging
+work.
+
+<ParamField query="company" type="string">
+  Ticker, company slug or exact company name. Includes the companies it owns.
+  Example: `PFE`.
+</ParamField>
+
+<ParamField query="company_type" type="string">
+  `public` or `private`.
+</ParamField>
+
+<ParamField query="country" type="string">
+  Headquarters country, exact name. Example: `United States`. Many companies
+  have no country on file, so this filter misses some programs.
+</ParamField>
+
+<ParamField query="drug" type="string">
+  Exact drug name, code or brand. Example: `sotorasib`.
+</ParamField>
+
+<ParamField query="phase" type="string">
+  One or more phases from the list under `phase` above. Also takes `1`, `2`
+  and `3`. Example: `preclinical,phase_1`.
+</ParamField>
+
+<ParamField query="indication" type="string">
+  Disease name, synonym or MONDO id. Includes narrower diseases. Example:
+  `NSCLC`.
+</ParamField>
+
+<ParamField query="target" type="string">
+  Target name, gene symbol or term id. Example: `TL1A`.
+</ParamField>
+
+<ParamField query="modality" type="string">
+  Modality, subclass or format. Examples: `adc`, `sirna`, `bispecific`.
+</ParamField>
+
+<ParamField query="status" type="string" default="active">
+  `active`, `inactive` or `discontinued`.
+</ParamField>
+
+<ParamField query="company_id" type="string">
+  One or more Pav company ids.
+</ParamField>
+
+<ParamField query="drug_id" type="string">
+  One or more Pav drug ids.
+</ParamField>
+
+<ParamField query="program_id" type="string">
+  One or more Pav program ids.
+</ParamField>
+
+<ParamField query="from" type="date">
+  Programs with `last_updated` on or after this date.
+</ParamField>
+
+<ParamField query="to" type="date">
+  Programs with `last_updated` on or before this date.
+</ParamField>
+
+<ParamField query="sort" type="string" default="company">
+  `company`, `drug`, `indication`, `target`, `modality`, `phase` or
+  `last_updated`. Prefix `-` for descending.
+</ParamField>
+
+<ParamField query="view" type="string" default="full">
+  `full` or `slim`.
+</ParamField>
 
 ## Example
 

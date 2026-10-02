@@ -4,34 +4,90 @@ description: "One drug product across every company that develops it, under all 
 icon: "pill"
 ---
 
-A drug groups every company's programs of one product under its INN,
-research codes and brands.
+A drug groups every company's programs of one product. It holds the product's
+INN, research codes and brand names.
 
 | Endpoint | Returns |
 | --- | --- |
-| `GET /v1/drugs` | Drugs by exact name or filter. |
-| `GET /v1/drugs/{drug_id}` | One drug with its holders and programs. |
+| `GET /v1/drugs` | Drugs that match your filters. |
+| `GET /v1/drugs/{drug_id}` | One drug with its companies and programs. |
 
-## Key fields
+## Fields
 
-| Field | Description |
-| --- | --- |
-| `drug_id`, `name`, `inn` | Pav drug id, display name, INN. |
-| `aliases[]` | Other names, each with `kind`: `inn`, `code` or `brand`. |
-| `modality`, `modality_subclass` | Normalized modality, and nucleic-acid class (`sirna`, `mrna`, …). |
-| `highest_phase` | Most advanced phase across all holders, normalized. |
-| `companies[]` | Each holder with `company_id`, `program_count`, `highest_phase`. |
+The main fields on a drug. The [API reference](/api-reference/drugs/list-drugs)
+lists every field.
 
-## Parameters
+<ResponseField name="drug_id" type="integer">
+  Pav drug id.
+</ResponseField>
 
-| Name | Values | Example |
-| --- | --- | --- |
-| `drug` | Exact name, code or brand; case and punctuation ignored | `Leqvio` |
-| `company` | Ticker, company slug or exact name; rolls up subsidiaries | `sanofi` |
-| `drug_id`, `company_id` | Ids, for values from an earlier response | `869` |
-| `multi_company` | `true`: held by more than one company | `true` |
-| `status` | Which programs count: `active` (default), `inactive`, `discontinued` | `active` |
-| `sort` | `highest_phase` (default descending), `name`, `program_count` | `-program_count` |
+<ResponseField name="name" type="string">
+  Display name. The INN when there is one.
+</ResponseField>
+
+<ResponseField name="inn" type="string | null">
+  International nonproprietary name.
+</ResponseField>
+
+<ResponseField name="aliases" type="object[]">
+  Other names. Each has a `kind`: `inn`, `code` or `brand`.
+</ResponseField>
+
+<ResponseField name="modality" type="string | null">
+  Normalized modality.
+</ResponseField>
+
+<ResponseField name="modality_subclass" type="string | null">
+  Nucleic-acid class, such as `sirna` or `mrna`.
+</ResponseField>
+
+<ResponseField name="highest_phase" type="string | null">
+  Most advanced phase across all companies, normalized.
+</ResponseField>
+
+<ResponseField name="program_count" type="integer">
+  Programs of this drug across companies.
+</ResponseField>
+
+<ResponseField name="companies" type="object[]">
+  Each company with programs of this drug, with its `company_id`,
+  `program_count` and `highest_phase`.
+</ResponseField>
+
+## Filters
+
+See [Fetching data](/fetching-data) for how filters, sorting and paging work.
+
+<ParamField query="drug" type="string">
+  Exact name, code or brand. Case and punctuation are ignored. Example:
+  `Leqvio`.
+</ParamField>
+
+<ParamField query="company" type="string">
+  Ticker, company slug or exact company name. Includes the companies it owns.
+  Example: `sanofi`.
+</ParamField>
+
+<ParamField query="multi_company" type="boolean">
+  `true` returns only drugs held by more than one company.
+</ParamField>
+
+<ParamField query="status" type="string" default="active">
+  Which programs count toward the drug: `active`, `inactive` or
+  `discontinued`.
+</ParamField>
+
+<ParamField query="drug_id" type="string">
+  One or more Pav drug ids.
+</ParamField>
+
+<ParamField query="company_id" type="string">
+  One or more Pav company ids.
+</ParamField>
+
+<ParamField query="sort" type="string" default="-highest_phase">
+  `highest_phase`, `name` or `program_count`. Prefix `-` for descending.
+</ParamField>
 
 ## Example
 
