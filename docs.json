@@ -58,7 +58,6 @@
             "pages": [
               "introduction",
               "quickstart",
-              "fetching-data",
               "mcp-server"
             ]
           },
@@ -124,7 +123,7 @@
           {
             "group": "Resources",
             "pages": [
-              "concepts/coverage-and-sources"
+              "fetching-data"
             ]
           }
         ]
@@ -156,7 +155,7 @@
     },
     {
       "source": "/concepts/data-quality-and-coverage",
-      "destination": "/concepts/coverage-and-sources"
+      "destination": "/data-overview"
     },
     {
       "source": "/concepts/pagination",
@@ -237,6 +236,10 @@
     {
       "source": "/api-reference/fda/get-an-fda-record",
       "destination": "/datasets/fda"
+    },
+    {
+      "source": "/concepts/coverage-and-sources",
+      "destination": "/data-overview"
     }
   ],
   "navbar": {
