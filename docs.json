@@ -4,15 +4,15 @@
   "name": "Pav API",
   "description": "The Pav API and MCP server: biopharma programs, drugs, companies, clinical trials, deals, patents and FDA records.",
   "colors": {
-    "primary": "#15171C",
-    "light": "#E8EAEE",
-    "dark": "#15171C"
+    "primary": "#002FA7",
+    "light": "#8FA6E8",
+    "dark": "#002FA7"
   },
   "appearance": {
-    "default": "dark"
+    "default": "light"
   },
   "fonts": {
-    "family": "Inter"
+    "family": "IBM Plex Sans"
   },
   "icons": {
     "library": "lucide"
@@ -54,17 +54,18 @@
         "tab": "Documentation",
         "groups": [
           {
-            "group": "Overview",
+            "group": "Get started",
             "pages": [
               "introduction",
               "quickstart",
-              "mcp-server",
-              "data-overview"
+              "fetching-data",
+              "mcp-server"
             ]
           },
           {
             "group": "Datasets",
             "pages": [
+              "data-overview",
               {
                 "group": "Pipeline",
                 "icon": "layers",
@@ -159,11 +160,11 @@
     },
     {
       "source": "/concepts/pagination",
-      "destination": "/api-reference/overview"
+      "destination": "/fetching-data"
     },
     {
       "source": "/concepts/search-and-filters",
-      "destination": "/api-reference/overview"
+      "destination": "/fetching-data"
     },
     {
       "source": "/datasets/fda-applications",
@@ -171,7 +172,7 @@
     },
     {
       "source": "/conventions",
-      "destination": "/api-reference/overview"
+      "destination": "/fetching-data"
     },
     {
       "source": "/search",
@@ -256,6 +257,10 @@
           {
             "label": "Quickstart",
             "href": "/quickstart"
+          },
+          {
+            "label": "Fetching data",
+            "href": "/fetching-data"
           },
           {
             "label": "Data overview",

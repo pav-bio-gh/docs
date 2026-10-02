@@ -1,0 +1,189 @@
+---
+title: "Fetching data"
+description: "Filter, sort and page through a list, then fetch one record by id."
+icon: "list-filter"
+---
+
+Each dataset has two endpoints. A list endpoint returns the records that match
+your filters. A get endpoint returns one record by its id. For programs these
+are `GET /v1/programs` and `GET /v1/programs/{program_id}`.
+
+All examples on this page use programs. The same rules apply to every dataset.
+
+## List records
+
+Call the list endpoint with the filters you need.
+
+```bash
+curl -G https://api.pav.bio/v1/programs \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  -d phase=preclinical \
+  -d modality=adc \
+  -d company_type=private
+```
+
+Every list returns the same shape:
+
+<ResponseField name="data" type="object[]">
+  One page of matching records.
+</ResponseField>
+
+<ResponseField name="next_cursor" type="string | null">
+  Pass this back as `cursor` to get the next page. Null on the last page.
+</ResponseField>
+
+<ResponseField name="total" type="integer">
+  The number of records that match, across all pages.
+</ResponseField>
+
+## Filter
+
+Each query parameter narrows the list. When you pass several parameters, a
+record must match all of them.
+
+To match any of several values, separate them with commas:
+
+```bash
+curl -G https://api.pav.bio/v1/programs \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  -d target=TL1A \
+  -d phase=phase_2,phase_3
+```
+
+Filters take the values you would write yourself:
+
+- `company` takes a ticker (`PFE`), a company slug or the company's exact
+  registered name. It includes the companies that company owns. A name that
+  matches more than one company returns a `400` that lists the candidates.
+- `phase` and `modality` take Pav's normalized values, such as `phase_3` and
+  `adc`. An unknown value returns a `400` that lists the allowed values.
+- `indication` and `target` take a name, a synonym or an ontology id.
+
+Each dataset page lists its filters. When you already have an id from an
+earlier response, you can filter by it instead: `company_id`, `drug_id` and
+`program_id` each take one id or a comma-separated list.
+
+<Note>
+  Programs and drugs count only active programs unless you pass `status`. Add
+  `status=discontinued` to see discontinued programs.
+</Note>
+
+## Filter by date
+
+`from` and `to` limit a list to a date range. Both are inclusive and take
+`YYYY-MM-DD`. The date they apply to depends on the dataset:
+
+| Dataset | `from` and `to` apply to |
+| --- | --- |
+| Programs | `last_updated` |
+| Clinical trials | `start_date` |
+| Deals | `announced_at` |
+| Patents | `earliest_priority_date` |
+| FDA records | Depends on the record type; see [FDA records](/datasets/fda) |
+
+```bash
+curl -G https://api.pav.bio/v1/deals \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  -d deal_type=licensing \
+  -d from=2025-01-01 \
+  -d to=2025-12-31
+```
+
+## Sort
+
+`sort` takes a field name. Add a leading `-` to sort in descending order.
+
+```bash
+curl -G https://api.pav.bio/v1/programs \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  -d target=TL1A \
+  -d sort=-phase
+```
+
+Each dataset page lists the fields you can sort by and the default order.
+
+## Page through results
+
+A list returns 50 records by default. Set `limit` to get between 1 and 200.
+
+When there are more records, the response includes `next_cursor`. Pass it
+back as `cursor`, with the same filters, to get the next page. Keep going
+until `next_cursor` is null.
+
+<CodeGroup>
+
+```bash cURL icon="braces"
+curl -G https://api.pav.bio/v1/programs \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  -d modality=adc \
+  -d limit=200 \
+  -d cursor=<next_cursor>
+```
+
+```python Python SDK icon="python"
+from pav_bio import Pav
+
+client = Pav()  # reads PAV_API_KEY
+
+pager = client.programs.list(company=["PFE"], view="slim", limit=200)
+rows = list(pager)  # follows next_cursor until the last page
+```
+
+```bash CLI icon="terminal"
+pav programs list --modality adc --limit 200
+pav programs list --modality adc --limit 200 --cursor <next_cursor>
+```
+
+</CodeGroup>
+
+To count matches without reading them all, request `limit=1` and read
+`total`.
+
+## Fetch one record
+
+Pass an id from a list response to the get endpoint. An unknown id returns a
+`404`.
+
+```bash
+curl https://api.pav.bio/v1/programs/6544 \
+  -H "Authorization: Bearer $PAV_API_KEY"
+```
+
+| Dataset | Get endpoint |
+| --- | --- |
+| Programs | `GET /v1/programs/{program_id}` |
+| Drugs | `GET /v1/drugs/{drug_id}` |
+| Companies | `GET /v1/companies/{company_id}` |
+| Clinical trials | `GET /v1/trials/{nct_id}` |
+| Deals | `GET /v1/deals/{deal_id}` |
+| Patents | `GET /v1/patents/{id}`, by family id or a member's patent number |
+| FDA records | `GET /v1/<resource>/{record_key}` |
+| FDA drug applications | `GET /v1/drug-applications/{application_key}` |
+
+A get response often carries more than a list row. A program, for example,
+includes its linked trials and ontology terms.
+
+## Get lighter rows
+
+Programs and patents take `view=slim`, which returns smaller rows. A slim
+program has a `trial_count` instead of its trials and ontology terms. A slim
+patent family leaves out its member list.
+
+```bash
+curl -G https://api.pav.bio/v1/programs \
+  -H "Authorization: Bearer $PAV_API_KEY" \
+  -d target=TL1A \
+  -d view=slim
+```
+
+## Missing values
+
+A field is null, or a list is empty, when the source does not disclose the
+value. A filter on such a field returns only the records where it is set. See
+[Coverage and sources](/concepts/coverage-and-sources).
+
+## Errors
+
+Errors return a status code and a JSON body with a `code`, a `message` and a
+`request_id`. See [Rate limits and errors](/rate-limits) for every status and
+when to retry.

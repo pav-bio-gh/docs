@@ -9,21 +9,24 @@ Source for the public Pav API and MCP server documentation, built with
 
 - `docs.json`: site config and navigation. Sidebar groups of the
   **Documentation** tab:
-  - Overview: `introduction.mdx`, `quickstart.mdx`, `data-overview.mdx`.
-  - Datasets: `datasets/`, one page per dataset in collapsible sub-groups
-    (Pipeline, Clinical and regulatory, Deals and patents). Each page has one
-    sentence, a key-fields table, a parameters table and one example (cURL
-    and Python) with a real trimmed response. There is no shared
-    "Conventions" page; each parameter's own description states its rule
-    (ids, comma-separated values, dates, sorting, paging).
+  - Get started: `introduction.mdx`, `quickstart.mdx`, `fetching-data.mdx`,
+    `mcp-server.mdx`. The MCP page lives at `/mcp-server` because Mintlify
+    serves its own `/mcp`.
+  - Datasets: `data-overview.mdx`, then `datasets/`, one page per dataset in
+    collapsible sub-groups (Pipeline, Clinical and regulatory, Deals and
+    patents). Each page has a short intro, an endpoint table, a **Fields**
+    section, a **Filters** section and one example with a real trimmed
+    response.
   - REST API: `authentication.mdx`, `rate-limits.mdx` (errors, retries).
-  - AI agents: `mcp-server.mdx`, `openapi-and-agents.mdx`. The MCP page lives
-    at `/mcp-server` because Mintlify serves its own `/mcp`.
-  - Guides: `guides/`, task walkthroughs with runnable scripts and example
-    output.
+  - SDK and CLI: `clients/`.
+  - AI agents: `openapi-and-agents.mdx`.
+  - Guides: `guides/`, task walkthroughs with example output.
   - Resources: `concepts/coverage-and-sources.mdx`.
-- `introduction.mdx` routes and does not explain. It holds a lead paragraph
-  and card groups (start, datasets, guides). Put tables and detail on the page a card links to.
+- `fetching-data.mdx` explains what every list and get endpoint shares:
+  filters, dates, sorting, paging, get by id, `view=slim`, missing values.
+  Dataset pages link to it instead of repeating it.
+- `introduction.mdx` routes and does not explain. It holds a short lead and
+  card groups. Put tables and detail on the page a card links to.
 - `api-reference/overview.mdx`: the first page of the **API Reference** tab,
   with one card per resource. The endpoint pages after it are generated.
 - `webhooks/`: placeholder for planned push delivery.
@@ -32,20 +35,36 @@ Source for the public Pav API and MCP server documentation, built with
   sidebar group names ("Programs", "FDA") come from each tag's `x-group` in
   the spec. The page URLs come from the lowercase tag name.
 
+## Writing conventions
+
+- Plain, short sentences. Say what a thing is or does. No slogans or framing
+  lines.
+- Show fields and parameters one per block: `<ResponseField name type>` under
+  **Fields** and `<ParamField query type default>` under **Filters**. Never
+  group several names in one row or cell. Take names, types and defaults from
+  `openapi.json`.
+- A dataset page lists the main fields, not all of them; it links to the API
+  Reference for the rest.
+
 ## Design conventions
 
-- Theme `almond`, dark by default with the light/dark toggle kept. The chrome
-  is monochrome (`colors` near-black / near-white). The only brand color is
-  the blue iso-cube mark in `logo/` and `favicon.svg`.
+- Theme `almond`, light by default, with the light/dark toggle kept. It
+  follows the Pav app: black text, Yves Klein Blue `#002FA7` as the one accent
+  (links, active items, the main button), IBM Plex Sans. Dark mode uses the
+  lighter blue `#8FA6E8` for text accents.
+- The logo and `favicon.svg` use the blue iso-cube mark in `#002FA7` (a
+  lighter `#5A7FE0` in the dark logo).
 - Every page sets a [Lucide](https://lucide.dev) `icon:` in its frontmatter,
   and so does every card. `icons.library` is `lucide`, so Font Awesome names
   (`robot`, `magnifying-glass`) render blank. Check an icon name at
   lucide.dev and look at it in `mint dev`; `mint validate` does not catch a
   bad name.
-- The API Reference shows generated code samples in cURL, Python, JavaScript
-  and Go (`api.examples.languages`). Adding a language means running its
-  generated sample against the live API first.
-- `custom.css` holds only the "Soon" badge on the Webhook Reference tab.
+- Code samples come in cURL, Python SDK and CLI tabs (`<CodeGroup>` with
+  `icon=`). The API Reference shows generated samples in the languages under
+  `api.examples.languages`.
+- `custom.css` holds the "Soon" badge on the Webhook Reference tab, the
+  segmented code-tab control, and the MCP install picker
+  (`snippets/mcp-client-selector.jsx`). Its colors follow the same palette.
 
 ## Local preview
 

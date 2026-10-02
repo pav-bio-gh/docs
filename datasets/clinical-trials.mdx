@@ -4,37 +4,130 @@ description: "ClinicalTrials.gov studies linked to Pav programs and companies."
 icon: "stethoscope"
 ---
 
-A trial is one ClinicalTrials.gov study, with its sponsors and the Pav
+A trial is one ClinicalTrials.gov study. It carries its sponsors and the Pav
 programs and companies linked to it.
 
 | Endpoint | Returns |
 | --- | --- |
-| `GET /v1/trials` | Trials, filtered. |
+| `GET /v1/trials` | Trials that match your filters. |
 | `GET /v1/trials/{nct_id}` | One trial. |
 
-## Key fields
+## Fields
 
-| Field | Description |
-| --- | --- |
-| `nct_id`, `nct_url`, `title` | Registry id, link and title. |
-| `phase`, `status`, `study_type` | As registered (`PHASE3`, `RECRUITING`, `INTERVENTIONAL`). |
-| `conditions[]`, `enrollment_count` | Conditions and enrollment. |
-| `lead_sponsor`, `collaborators[]` | Sponsors, with `company_id` when linked. |
-| `company_ids[]`, `programs[]` | Linked Pav companies and programs. |
-| `start_date`, `primary_completion_date`, `last_update_post_date` | Registry dates. |
+The main fields on a trial. The [API reference](/api-reference/trials/list-trials)
+lists every field.
 
-## Parameters
+<ResponseField name="nct_id" type="string">
+  ClinicalTrials.gov registry id.
+</ResponseField>
 
-| Name | Values | Example |
-| --- | --- | --- |
-| `company` | Ticker, company slug or exact name; matches sponsors, collaborators and linked programs | `pfizer` |
-| `indication` | Condition name, synonym, MeSH or MONDO id | `obesity` |
-| `phase` | `1`–`4` | `2` |
-| `status` | Recruitment statuses | `recruiting` |
-| `study_type` | Study types | `interventional` |
-| `nct_id`, `company_id` | Ids, for values from an earlier response | `NCT07668414` |
-| `from`, `to` | `start_date` range | `2026-01-01` |
-| `sort` | `start_date`, `last_update_post_date`, `enrollment_count`, `nct_id` (default) | `-start_date` |
+<ResponseField name="nct_url" type="string | null">
+  Link to the ClinicalTrials.gov record.
+</ResponseField>
+
+<ResponseField name="title" type="string | null">
+  Trial title.
+</ResponseField>
+
+<ResponseField name="phase" type="string | null">
+  Phase as registered, such as `PHASE3`.
+</ResponseField>
+
+<ResponseField name="status" type="string | null">
+  Recruitment status as registered, such as `RECRUITING`.
+</ResponseField>
+
+<ResponseField name="study_type" type="string | null">
+  Study type as registered, such as `INTERVENTIONAL`.
+</ResponseField>
+
+<ResponseField name="conditions" type="string[]">
+  Conditions studied.
+</ResponseField>
+
+<ResponseField name="enrollment_count" type="integer | null">
+  Planned or actual enrollment.
+</ResponseField>
+
+<ResponseField name="sponsor" type="string | null">
+  Lead sponsor name.
+</ResponseField>
+
+<ResponseField name="lead_sponsor" type="object | null">
+  Lead sponsor, with its `company_id` when it is linked to a Pav company.
+</ResponseField>
+
+<ResponseField name="collaborators" type="object[]">
+  Collaborating sponsors, each with a `company_id` when linked.
+</ResponseField>
+
+<ResponseField name="company_ids" type="integer[]">
+  Pav companies linked as sponsor, collaborator or through a program.
+</ResponseField>
+
+<ResponseField name="programs" type="object[]">
+  Pav programs linked to the trial.
+</ResponseField>
+
+<ResponseField name="start_date" type="string | null">
+  Start date as registered.
+</ResponseField>
+
+<ResponseField name="primary_completion_date" type="string | null">
+  Primary completion date, actual or expected.
+</ResponseField>
+
+<ResponseField name="last_update_post_date" type="string | null">
+  When the registry record was last updated.
+</ResponseField>
+
+## Filters
+
+See [Fetching data](/fetching-data) for how filters, dates, sorting and paging
+work.
+
+<ParamField query="company" type="string">
+  Ticker, company slug or exact company name. Matches sponsors, collaborators
+  and linked programs. Example: `pfizer`.
+</ParamField>
+
+<ParamField query="indication" type="string">
+  Condition name, synonym, MeSH id or MONDO id. Includes narrower conditions.
+  Example: `obesity`.
+</ParamField>
+
+<ParamField query="phase" type="string">
+  `1`, `2`, `3` or `4`.
+</ParamField>
+
+<ParamField query="status" type="string">
+  Recruitment status. Example: `recruiting`.
+</ParamField>
+
+<ParamField query="study_type" type="string">
+  Study type. Example: `interventional`.
+</ParamField>
+
+<ParamField query="nct_id" type="string">
+  One or more NCT ids.
+</ParamField>
+
+<ParamField query="company_id" type="string">
+  One or more Pav company ids.
+</ParamField>
+
+<ParamField query="from" type="date">
+  Trials with `start_date` on or after this date.
+</ParamField>
+
+<ParamField query="to" type="date">
+  Trials with `start_date` on or before this date.
+</ParamField>
+
+<ParamField query="sort" type="string" default="nct_id">
+  `start_date`, `last_update_post_date`, `enrollment_count` or `nct_id`.
+  Prefix `-` for descending.
+</ParamField>
 
 ## Example
 

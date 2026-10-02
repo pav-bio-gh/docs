@@ -1,83 +1,93 @@
 ---
 title: "Quickstart"
-description: "Create an API key and list, then look up, biopharma programs by plain filters."
+description: "Create an API key, list programs, then fetch one by id."
 icon: "rocket"
 ---
 
-## 1. Create an API key
+This page takes you from a new API key to your first results. You will list
+preclinical antibody-drug conjugates at private companies, then fetch one of
+them by id.
 
-Sign in at [app.pav.bio](https://app.pav.bio), open **Settings → Developer**,
-and create a key. The secret is shown once.
+<Steps>
+  <Step title="Create an API key">
+    Sign in at [app.pav.bio](https://app.pav.bio), open **Settings → Developer**,
+    and create a key. The secret is shown once, so copy it now.
 
-```bash
-export PAV_API_KEY="<your_api_key>"
-```
+    ```bash
+    export PAV_API_KEY="<your_api_key>"
+    ```
+  </Step>
+  <Step title="List programs">
+    Ask for programs that match a phase, a modality and a company type.
 
-## 2. List something specific — no ids needed
+    <CodeGroup>
 
-Preclinical antibody-drug conjugates at private companies:
+    ```bash cURL icon="braces"
+    curl -G https://api.pav.bio/v1/programs \
+      -H "Authorization: Bearer $PAV_API_KEY" \
+      -d phase=preclinical \
+      -d modality=adc \
+      -d company_type=private
+    ```
 
-<CodeGroup>
+    ```python Python SDK icon="python"
+    from pav_bio import Pav
 
-```bash cURL icon="braces"
-curl -G https://api.pav.bio/v1/programs \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  -d phase=preclinical \
-  -d modality=adc \
-  -d company_type=private
-```
+    client = Pav()  # reads PAV_API_KEY
 
-```python Python SDK icon="python"
-from pav_bio import Pav
+    programs = client.programs.list(
+        phase=["preclinical"],
+        modality=["adc"],
+        company_type="private",
+    )
+    for program in programs.items[:3]:
+        print(program.company, program.drug, program.indication)
+    print("total:", programs.response.total)
+    ```
 
-client = Pav()  # reads PAV_API_KEY
+    ```bash CLI icon="terminal"
+    pav programs list \
+      --phase preclinical \
+      --modality adc \
+      --company-type private
+    ```
 
-programs = client.programs.list(
-    phase=["preclinical"],
-    modality=["adc"],
-    company_type="private",
-)
-for program in programs.items[:3]:
-    print(program.company, program.drug, program.indication)
-print("total:", programs.response.total)
-```
+    </CodeGroup>
 
-```bash CLI icon="terminal"
-pav programs list \
-  --phase preclinical \
-  --modality adc \
-  --company-type private
-```
+    The response holds one page of matches in `data`, the number of matches in
+    `total`, and a `next_cursor` for the next page.
 
-</CodeGroup>
-
-```json Example response (trimmed)
-{
-  "data": [
+    ```json Example response (trimmed)
     {
-      "program_id": 6544,
-      "company_id": 714,
-      "company": "Earendil Labs",
-      "drug": "HXN-2001",
-      "indication": "Colorectal cancer",
-      "phase": "preclinical",
-      "modality": "adc",
-      "target": "CDH17"
+      "data": [
+        {
+          "program_id": 6544,
+          "company_id": 714,
+          "company": "Earendil Labs",
+          "drug": "HXN-2001",
+          "indication": "Colorectal cancer",
+          "phase": "preclinical",
+          "modality": "adc",
+          "target": "CDH17"
+        }
+      ],
+      "next_cursor": "eyJyIjoicHJvZ3JhbXMiLCJzIjoiY29tcGFueSIsInYiOiJFYXJlbmRpbCBMYWJzIiwiayI6IjY1NDQifQ",
+      "total": 16
     }
-  ],
-  "next_cursor": "eyJyIjoicHJvZ3JhbXMiLCJzIjoiY29tcGFueSIsInYiOiJFYXJlbmRpbCBMYWJzIiwiayI6IjY1NDQifQ",
-  "total": 16
-}
-```
+    ```
+  </Step>
+  <Step title="Fetch one program">
+    Use a `program_id` from the list to get the full record, with its trials
+    and ontology terms.
 
-## 3. Fetch one by id
+    ```bash
+    curl https://api.pav.bio/v1/programs/6544 \
+      -H "Authorization: Bearer $PAV_API_KEY"
+    ```
+  </Step>
+</Steps>
 
-```bash
-curl https://api.pav.bio/v1/programs/6544 \
-  -H "Authorization: Bearer $PAV_API_KEY"
-```
-
-## 4. More list examples
+## More examples
 
 Phase 3 ADCs targeting HER2:
 
@@ -119,23 +129,17 @@ curl -G https://api.pav.bio/v1/trials \
   --data-urlencode "status=recruiting"
 ```
 
-Every list returns `{ "data": [...], "next_cursor": "...", "total": N }`.
-Pass `next_cursor` back as `cursor` for the next page. `company=` accepts a
-ticker, a company slug or an exact registered name, and rolls up
-subsidiaries; a name that matches more than one company is a `400` naming
-the candidates.
-
-## Next
+## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Datasets" icon="database" href="/datasets/programs">
-    Fields and filters for each dataset.
+  <Card title="Fetching data" icon="list-filter" href="/fetching-data">
+    Filters, dates, sorting and paging.
   </Card>
-  <Card title="API Reference" icon="code" href="/api-reference/overview">
-    Every list and get endpoint.
+  <Card title="Datasets" icon="database" href="/data-overview">
+    What each dataset holds.
   </Card>
   <Card title="MCP server" icon="bot" href="/mcp-server">
-    The same data as agent tools.
+    The same data as tools for AI assistants.
   </Card>
   <Card title="Guides" icon="book-open" href="/guides/competitive-landscape">
     Landscapes, deals and patents.

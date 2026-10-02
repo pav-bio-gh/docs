@@ -4,9 +4,9 @@ description: "Orange Book, Purple Book, orphan designations, applications, lette
 icon: "landmark"
 ---
 
-FDA regulatory records. Each record type is its own resource with one list
-and one get endpoint, each record linked to a Pav company where possible and
-keyed by FDA identifiers.
+FDA regulatory records. Each record type is its own resource with a list and
+a get endpoint. Records are keyed by FDA identifiers and linked to a Pav
+company where possible.
 
 | Record type | Resource (`/v1/…`) | `from`/`to` date | `status` |
 | --- | --- | --- | --- |
@@ -22,41 +22,137 @@ keyed by FDA identifiers.
 | Warning letters | `warning-letters` | Letter | `issued`, … |
 | Recalls | `recalls` | Recall | `active`, … |
 
-`GET /v1/<resource>/{record_key}` returns one record of that type, e.g.
-`GET /v1/recalls/{record_key}`; URL-encode the key. `GET /v1/drug-applications/{application_key}`
-returns an application with every FDA record on it and its submissions
-(`records_total`, `submissions_total`).
+`GET /v1/<resource>/{record_key}` returns one record of that type, for example
+`GET /v1/recalls/{record_key}`. URL-encode the key.
 
-## Key fields
+`GET /v1/drug-applications/{application_key}` returns one application with
+every FDA record on it and its submissions.
 
-| Field | Description |
-| --- | --- |
-| `record_key`, `record_type` | Durable key built from FDA identifiers, and the type. |
-| `company`, `fda_organization_name` | Linked Pav company, and the name as FDA spells it. |
-| `application_key`, `product_key`, `patent_number` | FDA identifiers (`N:215866`, `N:215866:001`). |
-| `title`, `description` | Product or subject, and ingredient, indication or reason. |
-| `document_date` | Date FDA issued the record. |
-| `event_date`, `event_date_type` | A dated event such as `patent_expiry` or `latest_action`. |
-| `source`, `source_version`, `source_url` | FDA publication, edition and page. |
-| `details` | Type-specific fields. |
+## Fields
 
-## Parameters
+Every FDA record has these fields. The [API reference](/api-reference/recalls/list-recalls)
+lists every field for each type.
 
-Every FDA list takes these. Orange and Purple Book lists also take `product_key`; Orange
-Book patents `patent_number`; orphan designations `designation_id`.
+<ResponseField name="record_key" type="string">
+  Durable key built from FDA identifiers.
+</ResponseField>
 
-| Name | Values | Example |
-| --- | --- | --- |
-| `company` | Ticker, company slug or exact name | `lilly` |
-| `company_id` | Ids, for values from an earlier response | `218` |
-| `application_key` | FDA application | `N:215866` |
-| `status` | Statuses, case-insensitive | `listed` |
-| `from`, `to` | The date in the table above | `2027-01-01` |
-| `sort` | `document_date`, `event_date` | `-event_date` |
+<ResponseField name="record_type" type="string">
+  Record type, such as `orange_book_patent` or `recall`.
+</ResponseField>
 
-Company coverage varies by type: most Orange Book, Purple Book and orphan
-records carry a linked Pav company; many warning-letter and recall recipients
-do not, so a `company`/`company_id` filter under-counts those two types.
+<ResponseField name="company" type="object | null">
+  The linked Pav company.
+</ResponseField>
+
+<ResponseField name="fda_organization_name" type="string | null">
+  The applicant, sponsor or recipient name as FDA spells it.
+</ResponseField>
+
+<ResponseField name="application_key" type="string | null">
+  FDA application, such as `N:215866`.
+</ResponseField>
+
+<ResponseField name="product_key" type="string | null">
+  Application plus FDA product number, such as `N:215866:001`.
+</ResponseField>
+
+<ResponseField name="patent_number" type="string | null">
+  Orange Book listed patent number.
+</ResponseField>
+
+<ResponseField name="title" type="string">
+  Trade name, patent label, letter subject or recalled product.
+</ResponseField>
+
+<ResponseField name="description" type="string | null">
+  Ingredient, indication, or the subject or reason of a letter or recall.
+</ResponseField>
+
+<ResponseField name="document_date" type="string | null">
+  When FDA issued the record.
+</ResponseField>
+
+<ResponseField name="event_date" type="string | null">
+  A dated event, such as a patent expiry.
+</ResponseField>
+
+<ResponseField name="event_date_type" type="string | null">
+  What `event_date` is, such as `patent_expiry` or `approval`.
+</ResponseField>
+
+<ResponseField name="status" type="string | null">
+  Status as FDA publishes it. See the table above.
+</ResponseField>
+
+<ResponseField name="source" type="string">
+  FDA publication the record comes from.
+</ResponseField>
+
+<ResponseField name="source_version" type="string | null">
+  Edition, such as `2026-08` for the Orange and Purple Books.
+</ResponseField>
+
+<ResponseField name="source_url" type="string | null">
+  Official FDA page for the record.
+</ResponseField>
+
+<ResponseField name="details" type="object">
+  Fields specific to the record type.
+</ResponseField>
+
+## Filters
+
+Every FDA list takes these filters. See [Fetching data](/fetching-data) for
+how filters, dates, sorting and paging work.
+
+<ParamField query="company" type="string">
+  Ticker, company slug or exact company name. Example: `lilly`.
+</ParamField>
+
+<ParamField query="application_key" type="string">
+  FDA application. Example: `N:215866`.
+</ParamField>
+
+<ParamField query="status" type="string">
+  One or more statuses from the table above. Case is ignored.
+</ParamField>
+
+<ParamField query="company_id" type="string">
+  One or more Pav company ids.
+</ParamField>
+
+<ParamField query="from" type="date">
+  Records on or after this date. The date depends on the type; see the table
+  above.
+</ParamField>
+
+<ParamField query="to" type="date">
+  Records on or before this date.
+</ParamField>
+
+<ParamField query="sort" type="string">
+  `document_date` or `event_date`. Prefix `-` for descending.
+</ParamField>
+
+Some types take one more filter:
+
+<ParamField query="product_key" type="string">
+  Orange Book products, patents and exclusivities, and Purple Book products.
+  Example: `N:215866:001`.
+</ParamField>
+
+<ParamField query="patent_number" type="string">
+  Orange Book patents.
+</ParamField>
+
+<ParamField query="designation_id" type="string">
+  Orphan designations.
+</ParamField>
+
+Most Orange Book, Purple Book and orphan records are linked to a Pav company.
+Many warning letter and recall recipients are not, so a company filter misses
+some of those.
 
 ## Example
 
