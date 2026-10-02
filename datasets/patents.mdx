@@ -123,12 +123,8 @@ work.
 <CodeGroup>
 
 ```bash cURL icon="braces"
-curl -G https://api.pav.bio/v1/patents \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  -d company=lilly \
-  -d status=live \
-  -d view=slim \
-  -d limit=2
+curl "https://api.pav.bio/v1/patents?company=lilly&status=live&view=slim&limit=2" \
+  -H "Authorization: Bearer $PAV_API_KEY"
 ```
 
 ```python Python SDK icon="python"

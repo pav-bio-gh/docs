@@ -94,9 +94,8 @@ See [Fetching data](/fetching-data) for how filters, sorting and paging work.
 <CodeGroup>
 
 ```bash cURL icon="braces"
-curl -G https://api.pav.bio/v1/drugs \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  -d drug=Leqvio
+curl "https://api.pav.bio/v1/drugs?drug=Leqvio" \
+  -H "Authorization: Bearer $PAV_API_KEY"
 ```
 
 ```python Python SDK icon="python"

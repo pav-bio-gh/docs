@@ -169,12 +169,8 @@ Phase 2 and 3 programs against TL1A, latest phase first:
 <CodeGroup>
 
 ```bash cURL icon="braces"
-curl -G https://api.pav.bio/v1/programs \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  -d target=TL1A \
-  -d phase=phase_2,phase_3 \
-  -d sort=-phase \
-  -d limit=3
+curl "https://api.pav.bio/v1/programs?target=TL1A&phase=phase_2,phase_3&sort=-phase&limit=3" \
+  -H "Authorization: Bearer $PAV_API_KEY"
 ```
 
 ```python Python SDK icon="python"

@@ -15,12 +15,8 @@ sit in each phase.
 <CodeGroup>
 
 ```bash cURL icon="braces"
-curl -G https://api.pav.bio/v1/programs \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  -d target=TL1A \
-  -d sort=-phase \
-  -d view=slim \
-  -d limit=3
+curl "https://api.pav.bio/v1/programs?target=TL1A&sort=-phase&view=slim&limit=3" \
+  -H "Authorization: Bearer $PAV_API_KEY"
 ```
 
 ```python Python SDK icon="python"
@@ -83,11 +79,8 @@ Every list returns `total`, the number of matches across all pages. Add
 <CodeGroup>
 
 ```bash cURL icon="braces"
-curl -G https://api.pav.bio/v1/programs \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  -d target=TL1A \
-  -d phase=phase_3 \
-  -d limit=1
+curl "https://api.pav.bio/v1/programs?target=TL1A&phase=phase_3&limit=1" \
+  -H "Authorization: Bearer $PAV_API_KEY"
 ```
 
 ```python Python SDK icon="python"

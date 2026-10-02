@@ -146,15 +146,8 @@ Oncology licensing deals announced in 2025 over $100M:
 <CodeGroup>
 
 ```bash cURL icon="braces"
-curl -G https://api.pav.bio/v1/deals \
-  -H "Authorization: Bearer $PAV_API_KEY" \
-  -d deal_type=licensing \
-  -d therapeutic_area=oncology \
-  -d from=2025-01-01 \
-  -d to=2025-12-31 \
-  -d min_value_usd=100000000 \
-  -d sort=-total_potential_value \
-  -d limit=2
+curl "https://api.pav.bio/v1/deals?deal_type=licensing&therapeutic_area=oncology&from=2025-01-01&to=2025-12-31&min_value_usd=100000000&sort=-total_potential_value&limit=2" \
+  -H "Authorization: Bearer $PAV_API_KEY"
 ```
 
 ```python Python SDK icon="python"
