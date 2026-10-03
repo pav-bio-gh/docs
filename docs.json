@@ -293,5 +293,12 @@
         ]
       }
     ]
+  },
+  "integrations": {
+    "posthog": {
+      "apiKey": "phc_pyBsYzfVuYrKf8HDEbCAcgfALgfvXvKM6gVGuEfbpVq8",
+      "apiHost": "https://us.i.posthog.com",
+      "sessionRecording": true
+    }
   }
 }
