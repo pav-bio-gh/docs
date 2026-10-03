@@ -68,6 +68,15 @@ Source for the public Pav API and MCP server documentation, built with
   segmented code-tab control, and the MCP install picker
   (`snippets/mcp-client-selector.jsx`). Its colors follow the same palette.
 
+## Analytics
+
+`integrations.posthog` in `docs.json` sends page views and session recordings
+to the same PostHog project as pav.bio and app.pav.bio. The key is the public
+`phc_` project key those sites already ship. Keep the one shared project:
+it is what links a docs reader to the same person when they sign up. Filter by
+`$host = docs.pav.bio` to see only the docs. Mintlify's dashboard also has its
+own page-view and search analytics.
+
 ## Local preview
 
 Requires Node LTS (20.17–24; the `mint` CLI refuses Node 25+).
