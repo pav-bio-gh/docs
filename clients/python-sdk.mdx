@@ -90,10 +90,9 @@ from pav_bio import AsyncPav
 
 async def main() -> None:
     client = AsyncPav()
-    stats = await client.stats.get()
     pager = await client.companies.list(ticker=["PFE"], limit=1)
     async for company in pager:
-        print(company.name, stats.companies)
+        print(company.name)
 
 asyncio.run(main())
 ```

@@ -30,7 +30,7 @@ every response carries the same id in `X-Request-ID`. Quote it to support.
 
 ```bash cURL icon="braces"
 # --retry retries 429 and 5xx responses and waits for Retry-After.
-curl --retry 5 https://api.pav.bio/v1/stats \
+curl --retry 5 "https://api.pav.bio/v1/companies?ticker=PFE" \
   -H "Authorization: Bearer $PAV_API_KEY"
 ```
 
@@ -39,12 +39,12 @@ from pav_bio import Pav
 
 # Retries 429 and 5xx responses, waiting for Retry-After (2 retries by default).
 client = Pav(max_retries=5)
-print(client.stats.get().assets)
+print(client.companies.list(ticker=["PFE"]).items[0].name)
 ```
 
 ```bash CLI icon="terminal"
 # Retries 429 and 5xx responses, waiting for Retry-After.
-pav stats get --retries 5
+pav companies list --ticker PFE --retries 5
 ```
 
 </CodeGroup>
