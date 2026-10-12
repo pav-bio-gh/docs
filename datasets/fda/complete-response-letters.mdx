@@ -1,0 +1,72 @@
+---
+title: "Complete Response Letters"
+openapi: "GET /v1/complete-response-letters"
+description: "Published FDA complete response letters."
+---
+
+## Overview
+
+Records are keyed by FDA identifiers and linked to a Pav company where
+possible. `from` and `to` filter on the letter date. `status` is `Approved` or `Unapproved`.
+
+To get one record, call `GET /v1/complete-response-letters/{record_key}` with a `record_key`
+from this list. URL-encode the key. See [Fetching Data](/fetching-data) for filters, dates, sorting and paging.
+
+<RequestExample>
+
+```bash cURL icon="braces"
+curl "https://api.pav.bio/v1/complete-response-letters?limit=2" \
+  -H "Authorization: Bearer $PAV_API_KEY"
+```
+
+```python Python SDK icon="python"
+from pav_bio import Pav
+
+client = Pav()  # reads PAV_API_KEY
+
+page = client.complete_response_letters.list(limit=2)
+for record in page.items:
+    print(record.record_key, record.event_date, record.title)
+```
+
+```bash CLI icon="terminal"
+pav complete-response-letters list --limit 2
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json Example response (trimmed)
+{
+  "data": [
+    {
+      "record_key": "complete_response_letter:CRL_NDA218705_20260807.pdf",
+      "record_type": "complete_response_letter",
+      "source": "complete_response_letters",
+      "fda_organization_name": "ITM Solucin GmbH",
+      "company": {
+        "company_id": 2877,
+        "short_name": "itm_solucin",
+        "name": "ITM Solucin GmbH"
+      },
+      "application_key": "N:218705",
+      "title": "ITM Solucin GmbH — Complete response letter",
+      "description": "COMPLETE RESPONSE",
+      "document_date": "2026-08-07",
+      "event_date": "2026-08-07",
+      "event_date_type": "letter",
+      "status": "Unapproved",
+      "source_url": "https://download.open.fda.gov/crl/CRL_NDA218705_20260807.pdf",
+      "details": {
+        "letter_type": "COMPLETE RESPONSE",
+        "application_numbers": ["NDA 218705"]
+      }
+    }
+  ],
+  "next_cursor": "eyJyIjoiZmRhL2NvbXBsZXRlX3Jlc3BvbnNlX2xldHRlciIsInMiOiItZG9jdW1lbnRfZGF0ZSIsInYiOiIyMDI2LTA3LTIxIiwiayI6ImNvbXBsZXRlX3Jlc3BvbnNlX2xldHRlcjpDUkxfTkRBMjE5MTA3XzIwMjYwNzIxLnBkZiJ9",
+  "total": 365
+}
+```
+
+</ResponseExample>

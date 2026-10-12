@@ -1,0 +1,88 @@
+---
+title: "Trial"
+openapi: "GET /v1/trials/{nct_id}"
+description: "One ClinicalTrials.gov study."
+---
+
+## Overview
+
+One trial, by its ClinicalTrials.gov `nct_id`. An unknown id returns a
+`404`.
+
+<RequestExample>
+
+```bash cURL icon="braces"
+curl https://api.pav.bio/v1/trials/NCT06651281 \
+  -H "Authorization: Bearer $PAV_API_KEY"
+```
+
+```python Python SDK icon="python"
+from pav_bio import Pav
+
+client = Pav()  # reads PAV_API_KEY
+
+trial = client.trials.get("NCT06651281")
+print(trial.title, trial.status)
+```
+
+```bash CLI icon="terminal"
+pav trials get --nct-id NCT06651281
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json Example response (trimmed)
+{
+  "nct_id": "NCT06651281",
+  "nct_url": "https://clinicaltrials.gov/study/NCT06651281",
+  "title": "Extension Study of Long-term Safety and Efficacy of Tulisokibart in Participants With Crohn's Disease or Ulcerative Colitis (MK-7240-011)",
+  "phase": "PHASE3",
+  "status": "RECRUITING",
+  "sponsor": "Merck Sharp & Dohme LLC",
+  "study_type": "INTERVENTIONAL",
+  "conditions": ["Crohn Disease", "Colitis, Ulcerative"],
+  "enrollment_count": 1380,
+  "program_count": 2,
+  "company_short_names": ["merck"],
+  "lead_sponsor": {
+    "name": "Merck Sharp & Dohme LLC",
+    "role": "lead_sponsor",
+    "company_id": 313,
+    "short_name": "merck"
+  },
+  "collaborators": [],
+  "sponsors": [
+    {
+      "name": "Merck Sharp & Dohme LLC",
+      "role": "lead_sponsor",
+      "company_id": 313,
+      "short_name": "merck"
+    }
+  ],
+  "company_ids": [313],
+  "programs": [
+    {
+      "program_id": 3498,
+      "short_name": "merck",
+      "company_id": 313,
+      "drug": "tulisokibart",
+      "indication": "Crohn’s disease"
+    }
+  ],
+  "start_date": "2024-11-25",
+  "last_update_post_date": "2026-10-02",
+  "primary_completion_date": "2037-12-17",
+  "completion_date": "2037-12-17",
+  "primary_outcomes": [
+    {
+      "measure": "Number of Participants Who Experience an Adverse Event (AE)",
+      "time_frame": "Up to approximately 378 weeks",
+      "description": "An AE is any untoward medical occurrence in a participant, temporally associated with the use of study treatment, whether or not considered related to the study treatment. The number of participants who experience an AE will be reported."
+    }
+  ]
+}
+```
+
+</ResponseExample>

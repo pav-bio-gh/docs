@@ -1,0 +1,89 @@
+---
+title: "Program"
+openapi: "GET /v1/programs/{program_id}"
+description: "One program, with its trials and ontology terms."
+---
+
+## Overview
+
+One program, by the `program_id` from a list. It also carries the linked
+clinical trials and the ontology terms for its indication and target. An
+unknown id returns a `404`.
+
+<RequestExample>
+
+```bash cURL icon="braces"
+curl https://api.pav.bio/v1/programs/3498 \
+  -H "Authorization: Bearer $PAV_API_KEY"
+```
+
+```python Python SDK icon="python"
+from pav_bio import Pav
+
+client = Pav()  # reads PAV_API_KEY
+
+program = client.programs.get(3498)
+print(program.drug, program.indication, program.phase)
+```
+
+```bash CLI icon="terminal"
+pav programs get --program-id 3498
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json Example response (trimmed)
+{
+  "program_id": 3498,
+  "status": "active",
+  "basis": "company_pipeline",
+  "company_id": 313,
+  "short_name": "merck",
+  "company": "Merck",
+  "drug": "tulisokibart",
+  "drug_id": 8880,
+  "aliases": ["tulisokibart"],
+  "indication": "Crohn’s disease",
+  "phase": "phase_3",
+  "modality": "antibody",
+  "modality_formats": [],
+  "target": "tumor necrosis factor (TNF)-like ligand 1A (TL1A)",
+  "mechanism_of_action": "Tulisokibart is an investigational humanized monoclonal antibody directed to tumor necrosis factor (TNF)-like ligand 1A (TL1A). Tulisokibart was acquired as part of the acquisition of Prometheus Biosciences, Inc.",
+  "description": "Tulisokibart is an investigational humanized monoclonal antibody directed to tumor necrosis factor (TNF)-like ligand 1A (TL1A). Tulisokibart was acquired as part of the acquisition of Prometheus Biosciences, Inc.",
+  "notes": "(NCT06430801; NCT06651281)",
+  "partners": [],
+  "clinical_trials": [
+    {
+      "nct_id": "NCT05013905",
+      "nct_url": "https://clinicaltrials.gov/study/NCT05013905",
+      "nct_phase": "PHASE2",
+      "nct_sponsor": "Prometheus Biosciences, Inc., a subsidiary of Merck & Co., Inc. (Rahway, New Jersey USA)",
+      "nct_conditions": "Crohn Disease",
+      "nct_status": "COMPLETED"
+    }
+  ],
+  "indication_terms": [
+    {
+      "ontology": "MONDO",
+      "term_id": "MONDO:0005011",
+      "term_label": "Crohn disease",
+      "source_text": "Crohn’s disease"
+    }
+  ],
+  "target_terms": [
+    {
+      "ontology": "NCIT",
+      "term_id": "NCIT:C18289",
+      "term_label": "Tumor Necrosis Factor Ligand Superfamily Member 15",
+      "source_text": "tumor necrosis factor (TNF)-like ligand 1A (TL1A)",
+      "gene_symbol": "TNFSF15"
+    }
+  ],
+  "source_url": "https://www.merck.com/research/product-pipeline/",
+  "source_checked_at": "2026-10-12T06:02:53.825690Z"
+}
+```
+
+</ResponseExample>

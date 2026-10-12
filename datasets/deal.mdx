@@ -1,0 +1,162 @@
+---
+title: "Deal"
+openapi: "GET /v1/deals/{deal_id}"
+description: "One deal, with full terms, events and sources."
+---
+
+## Overview
+
+One deal, by the `deal_id` from a list, with its full terms, events and source
+documents. Each value object has `amount`, `currency`, the source wording in
+`raw_text` and the supporting sentence in `evidence`. Read `raw_text` and
+`evidence` for qualifiers such as "up to".
+
+<RequestExample>
+
+```bash cURL icon="braces"
+curl https://api.pav.bio/v1/deals/c7870330-f6b0-43cb-842c-b215c4e522dc \
+  -H "Authorization: Bearer $PAV_API_KEY"
+```
+
+```python Python SDK icon="python"
+from pav_bio import Pav
+
+client = Pav()  # reads PAV_API_KEY
+
+deal = client.deals.get("c7870330-f6b0-43cb-842c-b215c4e522dc")
+print(deal.upfront.raw_text)
+print(deal.total_potential_value.raw_text)
+```
+
+```bash CLI icon="terminal"
+pav deals get --deal-id c7870330-f6b0-43cb-842c-b215c4e522dc
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json Example response (trimmed)
+{
+  "deal_id": "c7870330-f6b0-43cb-842c-b215c4e522dc",
+  "deal_name": "Exclusive global license agreement for SYH2086",
+  "deal_type": "licensing",
+  "latest_event_type": "completed",
+  "latest_event_name": "Closing of global MGL-2086 licensing agreement",
+  "activity_date": "2025-07-30T10:30:43Z",
+  "announced_at": "2025-07-30T00:00:00Z",
+  "summary": "Madrigal Pharmaceuticals, Inc. entered into an exclusive global license agreement with CSPC Pharmaceutical Group Limited to develop, manufacture, and commercialize SYH2086. CSPC will receive a $120 million upfront payment, may receive up to $2 billion in development, regulatory, and commercial milestone payments, and is eligible for royalties on net sales.",
+  "companies": [
+    {
+      "company_id": 470,
+      "short_name": "cspc_pharmaceutical",
+      "name": "Cspc Pharmaceutical",
+      "roles": ["licensor"]
+    },
+    {
+      "company_id": 35,
+      "short_name": "madrigal_pharmaceuticals",
+      "name": "Madrigal Pharmaceuticals",
+      "roles": ["licensee"]
+    }
+  ],
+  "total_potential_value": {
+    "raw_text": "an upfront payment of $120 million + up to $2 billion in milestone payments",
+    "amount": 2120000000.0,
+    "currency": "USD",
+    "not_disclosed": false,
+    "evidence": "CSPC will receive an upfront payment of $120 million | is eligible to receive up to $2 billion in milestone payments if certain development, regulatory and commercial milestones are achieved"
+  },
+  "upfront": {
+    "raw_text": "an upfront payment of $120 million",
+    "amount": 120000000.0,
+    "currency": "USD",
+    "not_disclosed": false,
+    "evidence": "CSPC will receive an upfront payment of $120 million"
+  },
+  "development_milestones": {
+    "raw_text": "development milestones",
+    "not_disclosed": false,
+    "evidence": "up to $2 billion in milestone payments if certain development, regulatory and commercial milestones are achieved"
+  },
+  "regulatory_milestones": {
+    "raw_text": "regulatory milestones",
+    "not_disclosed": false,
+    "evidence": "up to $2 billion in milestone payments if certain development, regulatory and commercial milestones are achieved"
+  },
+  "commercial_milestones": {
+    "raw_text": "commercial milestones",
+    "not_disclosed": false,
+    "evidence": "up to $2 billion in milestone payments if certain development, regulatory and commercial milestones are achieved"
+  },
+  "source_document_count": 3,
+  "event_count": 1,
+  "assets": [
+    {
+      "drug_id": 8583,
+      "name": "MGL-2086",
+      "modality": "small_molecule",
+      "program_ids": [3351]
+    }
+  ],
+  "targets": [
+    {
+      "term_id": "NCIT:C17736",
+      "term_label": "Thyroid Hormone Receptor Beta",
+      "gene_symbol": "THRB"
+    }
+  ],
+  "modalities": ["small_molecule"],
+  "therapeutic_areas": ["endocrine_metabolic", "hepatology"],
+  "terms": {
+    "total_potential_value": {
+      "raw_text": "an upfront payment of $120 million + up to $2 billion in milestone payments",
+      "amount": 2120000000.0,
+      "currency": "USD",
+      "not_disclosed": false,
+      "evidence": "CSPC will receive an upfront payment of $120 million | is eligible to receive up to $2 billion in milestone payments if certain development, regulatory and commercial milestones are achieved"
+    },
+    "upfront": {
+      "raw_text": "an upfront payment of $120 million",
+      "amount": 120000000.0,
+      "currency": "USD",
+      "not_disclosed": false,
+      "evidence": "CSPC will receive an upfront payment of $120 million"
+    },
+    "milestones": {
+      "raw_text": "up to $2 billion in milestone payments",
+      "amount": 2000000000.0,
+      "currency": "USD",
+      "not_disclosed": false,
+      "evidence": "is eligible to receive up to $2 billion in milestone payments if certain development, regulatory and commercial milestones are achieved"
+    },
+    "royalties": {
+      "raw_text": "royalties on net sales",
+      "not_disclosed": false,
+      "evidence": "as well as royalties on net sales"
+    },
+    "territories": ["global"],
+    "rights_summary": "Global rights to MGL-2086 for development in combination treatments for MASH, including combination with Rezdiffra."
+  },
+  "events": [
+    {
+      "event_type": "announced",
+      "event_name": "Exclusive global license agreement for SYH2086",
+      "effective_at": "2025-07-30T00:00:00Z",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1157601/000110465925071928/tm2522007d1_ex99-1.htm"
+    }
+  ],
+  "source_documents": [
+    {
+      "source_vendor": "sec",
+      "source_kind": "sec_filing",
+      "source_id": "0001104659-25-071928/tm2522007d1_ex99-1.htm",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1157601/000110465925071928/tm2522007d1_ex99-1.htm",
+      "published_at": "2025-07-30T10:30:43Z",
+      "observed_at": "2026-07-15T20:51:13Z"
+    }
+  ]
+}
+```
+
+</ResponseExample>

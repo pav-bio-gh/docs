@@ -1,0 +1,76 @@
+---
+title: "Drug Applications"
+openapi: "GET /v1/drug-applications"
+description: "NDAs, ANDAs and BLAs."
+---
+
+## Overview
+
+Records are keyed by FDA identifiers and linked to a Pav company where
+possible. `from` and `to` filter on the first approval date. `status` takes values such as `approved`.
+
+To get one record, call `GET /v1/drug-applications/{record_key}` with a `record_key`
+from this list. URL-encode the key. See [Fetching Data](/fetching-data) for filters, dates, sorting and paging.
+
+To get one application with every FDA record on it and its submissions, use
+[Drug Application](/datasets/fda/drug-application).
+
+<RequestExample>
+
+```bash cURL icon="braces"
+curl "https://api.pav.bio/v1/drug-applications?limit=2" \
+  -H "Authorization: Bearer $PAV_API_KEY"
+```
+
+```python Python SDK icon="python"
+from pav_bio import Pav
+
+client = Pav()  # reads PAV_API_KEY
+
+page = client.drug_applications.list(limit=2)
+for record in page.items:
+    print(record.record_key, record.event_date, record.title)
+```
+
+```bash CLI icon="terminal"
+pav drug-applications list --limit 2
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json Example response (trimmed)
+{
+  "data": [
+    {
+      "record_key": "drug_application:A:215701",
+      "record_type": "drug_application",
+      "source": "drugs_at_fda",
+      "fda_organization_name": "SHANDONG",
+      "application_key": "A:215701",
+      "title": "SUGAMMADEX SODIUM",
+      "document_date": "2026-10-06",
+      "event_date": "2026-10-06",
+      "event_date_type": "latest_action",
+      "status": "approved",
+      "source_url": "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=215701",
+      "details": {
+        "application_type": "ANDA",
+        "products": "SUGAMMADEX SODIUM",
+        "submission_count": 1,
+        "latest_submission": {
+          "submission_type": "ORIG",
+          "submission_number": "1",
+          "status": "AP",
+          "status_date": "2026-10-06"
+        }
+      }
+    }
+  ],
+  "next_cursor": "eyJyIjoiZmRhL2RydWdfYXBwbGljYXRpb24iLCJzIjoiLWRvY3VtZW50X2RhdGUiLCJ2IjoiMjAyNi0xMC0wNSIsImsiOiJkcnVnX2FwcGxpY2F0aW9uOkE6MDkwMzYzIn0",
+  "total": 29385
+}
+```
+
+</ResponseExample>

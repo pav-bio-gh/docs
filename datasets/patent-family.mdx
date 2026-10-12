@@ -1,0 +1,97 @@
+---
+title: "Patent Family"
+openapi: "GET /v1/patents/{family_id}"
+description: "One patent family, by family id or a member's patent number."
+---
+
+## Overview
+
+One family, by Pav `family_id` or by a member's patent, publication or
+application number. `statutory_term_end` is the earliest nonprovisional
+filing plus 20 years, without extensions.
+
+<RequestExample>
+
+```bash cURL icon="braces"
+curl https://api.pav.bio/v1/patents/63129878 \
+  -H "Authorization: Bearer $PAV_API_KEY"
+```
+
+```python Python SDK icon="python"
+from pav_bio import Pav
+
+client = Pav()  # reads PAV_API_KEY
+
+family = client.patents.get(63129878)
+print(family.representative_title, family.statutory_term_end)
+```
+
+```bash CLI icon="terminal"
+pav patents get --family-id 63129878
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json Example response (trimmed)
+{
+  "family_id": "63129878",
+  "representative_title": "RNA THERAPEUTICS AND METHODS OF USE THEREOF",
+  "member_count": 1,
+  "granted_count": 0,
+  "pending_count": 1,
+  "earliest_priority_date": "2020-12-23",
+  "earliest_filing_date": "2023-06-21",
+  "latest_status_date": "2026-09-29",
+  "has_live_member": true,
+  "owner_names": ["ELI LILLY AND COMPANY"],
+  "owner_source": "live_members",
+  "owner_is_split": false,
+  "companies": [{"company_id": 218, "short_name": "eli_lilly", "name": "Eli Lilly"}],
+  "has_open_security_interest": false,
+  "statutory_term_start": "2021-12-20",
+  "statutory_term_end": "2041-12-20",
+  "cpc_codes": ["C12N  15/1137", "C12N2310/11", "C12N2310/315"],
+  "drugs": [],
+  "members": [
+    {
+      "application_number": "18258698",
+      "publication_number": "20240392297",
+      "role": "standalone",
+      "title": "RNA THERAPEUTICS AND METHODS OF USE THEREOF",
+      "application_type": "Utility",
+      "filing_date": "2023-06-21",
+      "status_description": "Final Rejection Mailed",
+      "status_date": "2026-09-29",
+      "is_dead": false,
+      "cpc_codes": ["C12N  15/1137", "C12N   9/78", "C12N2310/11"],
+      "status_code": "61",
+      "depth": 2,
+      "owner_names": ["ELI LILLY AND COMPANY"],
+      "has_open_security_interest": false
+    }
+  ],
+  "ownership": [
+    {
+      "recorded_date": "2023-06-27",
+      "conveyance_kind": "assignment",
+      "conveyance_text": "ASSIGNMENT OF ASSIGNOR'S INTEREST",
+      "assignors": ["CARMONA, ELLESE", "LI, ZHEFENG", "RHODES, CHRISTALYN SIMS"],
+      "assignees": ["ELI LILLY AND COMPANY"],
+      "application_numbers": ["18258698"]
+    }
+  ],
+  "events": [
+    {
+      "event_date": "2026-09-29",
+      "application_number": "18258698",
+      "event_code": "MCTFR",
+      "description": "Mail Final Rejection (PTOL - 326)"
+    }
+  ],
+  "events_total": 53
+}
+```
+
+</ResponseExample>

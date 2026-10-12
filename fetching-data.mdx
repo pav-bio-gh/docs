@@ -1,5 +1,5 @@
 ---
-title: "Fetching data"
+title: "Fetching Data"
 description: "Filter, sort and page through a list, then fetch one record by id."
 icon: "list-filter"
 ---
@@ -25,8 +25,8 @@ Every list returns the same shape:
   One page of matching records.
 </ResponseField>
 
-<ResponseField name="next_cursor" type="string | null">
-  Pass this back as `cursor` to get the next page. Null on the last page.
+<ResponseField name="next_cursor" type="string">
+  Pass this back as `cursor` to get the next page. Left out on the last page.
 </ResponseField>
 
 <ResponseField name="total" type="integer">
@@ -71,10 +71,10 @@ earlier response, you can filter by it instead: `company_id`, `drug_id` and
 | Dataset | `from` and `to` apply to |
 | --- | --- |
 | Programs | `last_updated` |
-| Clinical trials | `start_date` |
+| Global Trials | `start_date` |
 | Deals | `announced_at` |
 | Patents | `earliest_priority_date` |
-| FDA records | Depends on the record type; see [FDA records](/datasets/fda) |
+| FDA records | Depends on the record type; see [FDA records](/data-overview#fda-records) |
 
 ```bash
 curl "https://api.pav.bio/v1/deals?deal_type=licensing&from=2025-01-01&to=2025-12-31" \
@@ -98,7 +98,7 @@ A list returns 50 records by default. Set `limit` to get between 1 and 200.
 
 When there are more records, the response includes `next_cursor`. Pass it
 back as `cursor`, with the same filters, to get the next page. Keep going
-until `next_cursor` is null.
+until a response has no `next_cursor`.
 
 <CodeGroup>
 
@@ -138,14 +138,14 @@ curl https://api.pav.bio/v1/programs/6544 \
 
 | Dataset | Get endpoint |
 | --- | --- |
-| Programs | `GET /v1/programs/{program_id}` |
-| Drugs | `GET /v1/drugs/{drug_id}` |
-| Companies | `GET /v1/companies/{company_id}` |
-| Clinical trials | `GET /v1/trials/{nct_id}` |
-| Deals | `GET /v1/deals/{deal_id}` |
-| Patents | `GET /v1/patents/{id}`, by family id or a member's patent number |
-| FDA records | `GET /v1/<resource>/{record_key}` |
-| FDA drug applications | `GET /v1/drug-applications/{application_key}` |
+| [Program](/datasets/program) | `GET /v1/programs/{program_id}` |
+| [Drug](/datasets/drug) | `GET /v1/drugs/{drug_id}` |
+| [Company](/datasets/company) | `GET /v1/companies/{company_id}` |
+| [Trial](/datasets/trial) | `GET /v1/trials/{nct_id}` |
+| [Deal](/datasets/deal) | `GET /v1/deals/{deal_id}` |
+| [Patent Family](/datasets/patent-family) | `GET /v1/patents/{family_id}`, by family id or a member's patent number |
+| [FDA records](/data-overview#fda-records) | `GET /v1/<resource>/{record_key}` |
+| [Drug Application](/datasets/fda/drug-application) | `GET /v1/drug-applications/{application_key}` |
 
 A get response often carries more than a list row. A program, for example,
 includes its linked trials and ontology terms.
@@ -163,13 +163,13 @@ curl "https://api.pav.bio/v1/programs?target=TL1A&view=slim" \
 
 ## Missing values
 
-A field is null, or a list is empty, when the source does not disclose the
-value. A filter on such a field returns only the records where it is set. For
-example, many companies have no country on file, so a `country` filter leaves
-them out.
+A field is left out of the response, or a list is empty, when the source does
+not disclose the value. A filter on such a field returns only the records where
+it is set. For example, many companies have no country on file, so a `country`
+filter leaves them out.
 
 ## Errors
 
 Errors return a status code and a JSON body with a `code`, a `message` and a
-`request_id`. See [Rate limits and errors](/rate-limits) for every status and
+`request_id`. See [Rate Limits and Errors](/rate-limits) for every status and
 when to retry.

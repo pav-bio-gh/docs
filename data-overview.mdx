@@ -1,5 +1,5 @@
 ---
-title: "Data overview"
+title: "Data Overview"
 description: "What each dataset holds and how the datasets join through Pav ids."
 icon: "network"
 ---
@@ -8,11 +8,34 @@ icon: "network"
 | --- | --- | --- |
 | [Programs](/datasets/programs) | One drug in one indication at one company | `program_id`, `company_id`, `drug_id`, `nct_id` |
 | [Drugs](/datasets/drugs) | One product across every company | `drug_id`, `company_id` |
-| [Companies](/datasets/companies) | One company; owners via `parent_company_id` | `company_id` |
-| [Clinical trials](/datasets/clinical-trials) | One ClinicalTrials.gov study | `nct_id`, `company_id`, `program_id` |
 | [Deals](/datasets/deals) | One transaction | `deal_id`, `company_id`, `drug_id` |
 | [Patents](/datasets/patents) | One US patent family | `family_id`, `company_id` |
-| [FDA records](/datasets/fda) | One FDA record | `record_key`, `application_key`, `company_id` |
+| [Companies](/datasets/companies) | One company; owners via `parent_company_id` | `company_id` |
+| [Global Trials](/datasets/clinical-trials) | One ClinicalTrials.gov study | `nct_id`, `company_id`, `program_id` |
+| [FDA records](#fda-records) | One FDA record | `record_key`, `application_key`, `company_id` |
 
 The ids in the last column appear in responses. Use them to move from one
 dataset to another, for example from a program to its trials by `nct_id`.
+
+## FDA records
+
+Each FDA record type has its own endpoint. Records are keyed by FDA
+identifiers and linked to a Pav company where possible. `from` and `to` filter
+on the date in the second column.
+
+| Record type | `from`/`to` date | `status` |
+| --- | --- | --- |
+| [Accelerated Approvals](/datasets/fda/accelerated-approvals) | Approval | `ongoing`, `verified`, `withdrawn` |
+| [Advisory Committee Meetings](/datasets/fda/advisory-committee-meetings) | Meeting | `held`, `scheduled` |
+| [Complete Response Letters](/datasets/fda/complete-response-letters) | Letter | `Approved`, `Unapproved` |
+| [Drug Applications](/datasets/fda/drug-applications) (NDA, ANDA, BLA) | First approval | `approved`, … |
+| [Orange Book Exclusivities](/datasets/fda/orange-book-exclusivities) | Exclusivity expiry | Exclusivity code |
+| [Orange Book Patents](/datasets/fda/orange-book-patents) | Patent expiry | `listed` |
+| [Orange Book Products](/datasets/fda/orange-book-products) | Approval | `RX`, `OTC`, `DISCN` |
+| [Orphan Designations](/datasets/fda/orphan-designations) | Designation | `Designated`, … |
+| [Purple Book Products](/datasets/fda/purple-book-products) | License | Marketing status (`Rx`, …) |
+| [Recalls](/datasets/fda/recalls) | Recall | `active`, … |
+| [Warning Letters](/datasets/fda/warning-letters) | Letter | `issued`, … |
+
+[Drug Application](/datasets/fda/drug-application) returns one application
+with every FDA record on it and its submissions.
