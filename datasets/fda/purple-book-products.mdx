@@ -1,0 +1,78 @@
+---
+title: "Purple Book Products"
+openapi: "GET /v1/purple-book-products"
+description: "Licensed biologics in FDA's Purple Book."
+---
+
+## Overview
+
+Records are keyed by FDA identifiers and linked to a Pav company where
+possible. `from` and `to` filter on the license date. `status` is the marketing status, such as `Rx`.
+
+To get one record, call `GET /v1/purple-book-products/{record_key}` with a `record_key`
+from this list. URL-encode the key. See [Fetching Data](/fetching-data) for filters, dates, sorting and paging.
+
+<RequestExample>
+
+```bash cURL icon="braces"
+curl "https://api.pav.bio/v1/purple-book-products?limit=2" \
+  -H "Authorization: Bearer $PAV_API_KEY"
+```
+
+```python Python SDK icon="python"
+from pav_bio import Pav
+
+client = Pav()  # reads PAV_API_KEY
+
+page = client.purple_book_products.list(limit=2)
+for record in page.items:
+    print(record.record_key, record.event_date, record.title)
+```
+
+```bash CLI icon="terminal"
+pav purple-book-products list --limit 2
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json Example response (trimmed)
+{
+  "data": [
+    {
+      "record_key": "purple_book_product:125858:001",
+      "record_type": "purple_book_product",
+      "source": "purple_book",
+      "source_version": "2026-08",
+      "fda_organization_name": "Ultragenyx Pharmaceutical, Inc.",
+      "company": {
+        "company_id": 169,
+        "short_name": "ultragenyx_pharmaceutical",
+        "name": "Ultragenyx Pharmaceutical"
+      },
+      "application_key": "BLA:125858",
+      "product_key": "BLA:125858:001",
+      "title": "GENGLYCOS",
+      "description": "pariglasgene brecaparvovec-opnr",
+      "document_date": "2026-08-19",
+      "event_date": "2026-08-19",
+      "event_date_type": "approval",
+      "status": "Rx",
+      "source_url": "https://purplebooksearch.fda.gov/index.cfm?event=productdetails&blaNo=125858",
+      "details": {
+        "strength": "3x10^13VG/ML",
+        "dosage_form": "Suspension",
+        "route": "Intravenous",
+        "license_type": "351(a)",
+        "licensure": "Licensed",
+        "license_number": "2390"
+      }
+    }
+  ],
+  "next_cursor": "eyJyIjoiZmRhL3B1cnBsZV9ib29rX3Byb2R1Y3QiLCJzIjoiLWRvY3VtZW50X2RhdGUiLCJ2IjoiMjAyNi0wOC0xOSIsImsiOiJwdXJwbGVfYm9va19wcm9kdWN0Ojc2MTUwODowMDEifQ",
+  "total": 2242
+}
+```
+
+</ResponseExample>

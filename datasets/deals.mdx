@@ -1,149 +1,17 @@
 ---
-title: "Deals"
+title: "All Deals"
+openapi: "GET /v1/deals"
 description: "M&A, licensing, collaborations, options and joint ventures, with terms and sources."
-icon: "handshake"
 ---
 
+## Overview
+
 A deal is one transaction between companies. It carries the stated terms, the
-drugs covered, lifecycle events and source documents.
+drugs covered, lifecycle events and source documents. See [Fetching Data](/fetching-data) for filters, dates, sorting and paging.
 
-| Endpoint | Returns |
-| --- | --- |
-| `GET /v1/deals` | Deals that match your filters. |
-| `GET /v1/deals/{deal_id}` | One deal with full terms, events and sources. |
+The example lists oncology licensing deals announced in 2025 over $100M.
 
-## Fields
-
-The main fields on a deal. The [API reference](/api-reference/deals/list-deals)
-lists every field.
-
-<ResponseField name="deal_id" type="string">
-  Pav deal id.
-</ResponseField>
-
-<ResponseField name="deal_name" type="string">
-  Deal headline.
-</ResponseField>
-
-<ResponseField name="summary" type="string">
-  One-paragraph summary.
-</ResponseField>
-
-<ResponseField name="deal_type" type="string">
-  `acquisition`, `merger`, `asset_purchase`, `licensing`, `collaboration`,
-  `option`, `joint_venture`, `distribution` or `other`.
-</ResponseField>
-
-<ResponseField name="latest_event_type" type="string">
-  Current state: `proposed`, `announced`, `completed`, `amended`,
-  `terminated` or `update`. The `status` filter matches this field.
-</ResponseField>
-
-<ResponseField name="announced_at" type="string | null">
-  When the deal was announced.
-</ResponseField>
-
-<ResponseField name="completed_at" type="string | null">
-  When the deal closed.
-</ResponseField>
-
-<ResponseField name="activity_date" type="string | null">
-  The deal's most recent activity.
-</ResponseField>
-
-<ResponseField name="companies" type="object[]">
-  The parties. Each has a `company_id` and `roles`, such as `licensor` or
-  `acquirer`.
-</ResponseField>
-
-<ResponseField name="total_value" type="object | null">
-  Headline value as announced.
-</ResponseField>
-
-<ResponseField name="total_potential_value" type="object | null">
-  `total_value` when stated, otherwise upfront plus milestones.
-</ResponseField>
-
-<ResponseField name="upfront" type="object | null">
-  Upfront payment.
-</ResponseField>
-
-<ResponseField name="assets" type="object[]">
-  Drugs the deal covers.
-</ResponseField>
-
-<ResponseField name="targets" type="object[]">
-  Molecular targets of those drugs.
-</ResponseField>
-
-<ResponseField name="therapeutic_areas" type="string[]">
-  Therapeutic areas, such as `oncology`.
-</ResponseField>
-
-Each value object has `amount`, `currency`, the source wording in `raw_text`
-and the supporting sentence in `evidence`.
-
-## Filters
-
-See [Fetching data](/fetching-data) for how filters, dates, sorting and paging
-work.
-
-<ParamField query="company" type="string">
-  Ticker, company slug or exact company name. Matches any party. Example:
-  `abbvie`.
-</ParamField>
-
-<ParamField query="deal_type" type="string">
-  One or more values from `deal_type` above. Example: `licensing`.
-</ParamField>
-
-<ParamField query="status" type="string">
-  One or more values from `latest_event_type` above. Example: `completed`.
-</ParamField>
-
-<ParamField query="target" type="string">
-  Target name, gene symbol or term id. Example: `GLP-1R`.
-</ParamField>
-
-<ParamField query="modality" type="string">
-  Modality, subclass or format, as on [Programs](/datasets/programs).
-</ParamField>
-
-<ParamField query="therapeutic_area" type="string">
-  Therapeutic area. Example: `oncology`.
-</ParamField>
-
-<ParamField query="min_value_usd" type="number">
-  Minimum `total_potential_value` in US dollars. Deals with no stated value
-  are left out. Example: `100000000`.
-</ParamField>
-
-<ParamField query="company_id" type="string">
-  One or more Pav company ids.
-</ParamField>
-
-<ParamField query="drug_id" type="string">
-  One or more Pav drug ids.
-</ParamField>
-
-<ParamField query="from" type="date">
-  Deals with `announced_at` on or after this date.
-</ParamField>
-
-<ParamField query="to" type="date">
-  Deals with `announced_at` on or before this date.
-</ParamField>
-
-<ParamField query="sort" type="string" default="-activity_date">
-  `activity_date`, `announced_at`, `completed_at`, `total_value` or
-  `total_potential_value`. Prefix `-` for descending.
-</ParamField>
-
-## Example
-
-Oncology licensing deals announced in 2025 over $100M:
-
-<CodeGroup>
+<RequestExample>
 
 ```bash cURL icon="braces"
 curl "https://api.pav.bio/v1/deals?deal_type=licensing&therapeutic_area=oncology&from=2025-01-01&to=2025-12-31&min_value_usd=100000000&sort=-total_potential_value&limit=2" \
@@ -181,7 +49,9 @@ pav deals list \
   --limit 2
 ```
 
-</CodeGroup>
+</RequestExample>
+
+<ResponseExample>
 
 ```json Example response (trimmed)
 {
@@ -191,21 +61,85 @@ pav deals list \
       "deal_name": "Pfizer enters exclusive global ex-China license agreement with 3SBio for SSGJ-707",
       "deal_type": "licensing",
       "latest_event_type": "completed",
+      "latest_event_name": "Completion of global ex-China license for SSGJ-707 with 3SBio",
+      "activity_date": "2026-03-31T00:00:00Z",
       "announced_at": "2025-05-20T00:00:00Z",
+      "latest_update_at": "2026-03-31T00:00:00Z",
+      "summary": "3SBio reports successful delivery of the first batch of SSGJ-707 bulk drug substance for global clinical development under its existing Pfizer licensing collaboration. Pfizer holds exclusive global development and commercialization rights, while 3SBio retains clinical and commercial supply rights. No delivery date is stated.",
       "companies": [
-        { "company_id": 10427, "name": "3SBio", "roles": ["licensor"] },
-        { "company_id": 506, "name": "Pfizer", "roles": ["licensee"] }
+        {
+          "company_id": 10427,
+          "short_name": "3sbio",
+          "name": "3SBio",
+          "roles": ["licensor"]
+        },
+        {
+          "company_id": 506,
+          "short_name": "pfizer",
+          "name": "Pfizer",
+          "roles": ["licensee"]
+        }
       ],
-      "total_potential_value": {
-        "raw_text": "an upfront payment of $1.25 billion + milestone payments associated with certain development, regulatory and commercial milestones up to $4.8 billion",
-        "amount": 6050000000.0,
-        "currency": "USD"
+      "total_value": {
+        "raw_text": "total potential deal value exceeding US$6 billion",
+        "amount": 6000000000.0,
+        "currency": "USD",
+        "not_disclosed": false,
+        "evidence": "with the total potential deal value exceeding US$6 billion"
       },
-      "assets": [{ "drug_id": 12374, "name": "SSGJ-707", "modality": "antibody" }],
-      "therapeutic_areas": ["oncology"]
+      "total_potential_value": {
+        "raw_text": "total potential deal value exceeding US$6 billion",
+        "amount": 6000000000.0,
+        "currency": "USD",
+        "not_disclosed": false,
+        "evidence": "with the total potential deal value exceeding US$6 billion"
+      },
+      "upfront": {
+        "raw_text": "an upfront payment of $1.25 billion",
+        "amount": 1250000000.0,
+        "currency": "USD",
+        "not_disclosed": false,
+        "evidence": "3SBio will receive an upfront payment of $1.25 billion"
+      },
+      "development_milestones": {
+        "raw_text": "development milestones included in milestone payments up to $4.8 billion across development, regulatory and commercial milestones",
+        "not_disclosed": false,
+        "evidence": "milestone payments associated with certain development, regulatory and commercial milestones up to $4.8 billion"
+      },
+      "regulatory_milestones": {
+        "raw_text": "regulatory milestones included in milestone payments up to $4.8 billion across development, regulatory and commercial milestones",
+        "not_disclosed": false,
+        "evidence": "milestone payments associated with certain development, regulatory and commercial milestones up to $4.8 billion"
+      },
+      "commercial_milestones": {
+        "raw_text": "commercial milestones included in milestone payments up to $4.8 billion across development, regulatory and commercial milestones",
+        "not_disclosed": false,
+        "evidence": "milestone payments associated with certain development, regulatory and commercial milestones up to $4.8 billion"
+      },
+      "source_document_count": 3,
+      "event_count": 2,
+      "assets": [
+        {
+          "drug_id": 12374,
+          "name": "SSGJ-707",
+          "modality": "antibody",
+          "program_ids": [31972, 32301, 32306]
+        }
+      ],
+      "targets": [
+        {
+          "term_id": "NCIT:C20450",
+          "term_label": "Vascular Endothelial Growth Factor A",
+          "gene_symbol": "VEGFA"
+        }
+      ],
+      "modalities": ["antibody"],
+      "therapeutic_areas": ["gastroenterology", "oncology", "reproductive_womens_health"]
     }
   ],
   "next_cursor": "eyJyIjoiZGVhbHMiLCJzIjoiLXRvdGFsX3BvdGVudGlhbF92YWx1ZSIsInYiOiIyMDE1MDAwMDAwLjAiLCJrIjoiZmQ2NzZhZDQtYWQzNi00NzIzLTk5NmMtZDBjZDMzZGE2YzBkIn0",
-  "total": 17
+  "total": 22
 }
 ```
+
+</ResponseExample>

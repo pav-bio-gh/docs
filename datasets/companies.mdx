@@ -1,98 +1,17 @@
 ---
-title: "Companies"
+title: "All Companies"
+openapi: "GET /v1/companies"
 description: "Biopharma companies with owners, tickers and identifiers."
-icon: "building-2"
 ---
 
+## Overview
+
 A company is one biopharma organization. Filtering any other dataset by a
-company also includes the companies it owns.
+company also includes the companies it owns. See [Fetching Data](/fetching-data) for filters, dates, sorting and paging.
 
-| Endpoint | Returns |
-| --- | --- |
-| `GET /v1/companies` | Companies that match your filters. |
-| `GET /v1/companies/{company_id}` | One company with its tickers, owner and website. |
+The example finds a company by a name it is known by.
 
-## Fields
-
-The main fields on a company. The [API reference](/api-reference/companies/list-companies)
-lists every field.
-
-<ResponseField name="company_id" type="integer">
-  Pav company id.
-</ResponseField>
-
-<ResponseField name="name" type="string">
-  Company name.
-</ResponseField>
-
-<ResponseField name="company_type" type="string">
-  `public` or `private`.
-</ResponseField>
-
-<ResponseField name="parent_company_id" type="integer | null">
-  Pav id of the company that owns this one.
-</ResponseField>
-
-<ResponseField name="country" type="string | null">
-  Headquarters country.
-</ResponseField>
-
-<ResponseField name="website" type="string | null">
-  Company website.
-</ResponseField>
-
-<ResponseField name="tickers" type="object[]">
-  Current stock tickers. Empty for a private company.
-</ResponseField>
-
-<ResponseField name="cik" type="string | null">
-  SEC Central Index Key, for companies that file with the SEC.
-</ResponseField>
-
-<ResponseField name="asset_count" type="integer">
-  Number of programs Pav tracks for the company.
-</ResponseField>
-
-<ResponseField name="last_checked_at" type="string | null">
-  When Pav last read the company's pipeline.
-</ResponseField>
-
-## Filters
-
-See [Fetching data](/fetching-data) for how filters, sorting and paging work.
-
-<ParamField query="company" type="string">
-  Company slug or exact registered name or synonym. A value that matches more
-  than one company returns a `400` that lists the candidates. Example: `MSD`.
-</ParamField>
-
-<ParamField query="ticker" type="string">
-  Current stock ticker. Example: `PFE`.
-</ParamField>
-
-<ParamField query="company_type" type="string">
-  `public` or `private`.
-</ParamField>
-
-<ParamField query="country" type="string">
-  Headquarters country, exact name. Example: `United States`.
-</ParamField>
-
-<ParamField query="has_pipeline" type="boolean">
-  `true` for companies with a tracked pipeline, `false` for those without.
-</ParamField>
-
-<ParamField query="company_id" type="string">
-  One or more Pav company ids.
-</ParamField>
-
-<ParamField query="sort" type="string" default="-asset_count">
-  `asset_count` or `name`. Prefix `-` for descending.
-</ParamField>
-
-## Example
-
-<CodeGroup>
+<RequestExample>
 
 ```bash cURL icon="braces"
 curl "https://api.pav.bio/v1/companies?company=MSD" \
@@ -113,23 +32,28 @@ for company in companies.items:
 pav companies list --company MSD
 ```
 
-</CodeGroup>
+</RequestExample>
+
+<ResponseExample>
 
 ```json Example response (trimmed)
 {
   "data": [
     {
       "company_id": 313,
+      "short_name": "merck",
       "name": "Merck & Co., Inc.",
-      "company_type": "public",
       "country": "United States",
-      "asset_count": 140,
-      "tickers": [{ "ticker": "MRK" }],
+      "company_type": "public",
+      "asset_count": 126,
+      "last_checked_at": "2026-10-12T06:02:53.825690Z",
+      "tickers": [{"ticker": "MRK", "exchange": "NYSE"}],
       "cik": "0000310158",
       "website": "https://www.merck.com"
     }
   ],
-  "next_cursor": "eyJyIjoiY29tcGFuaWVzIiwicyI6Ii1hc3NldF9jb3VudCIsInYiOiIxMzYiLCJrIjoiMzEzIn0",
   "total": 1
 }
 ```
+
+</ResponseExample>

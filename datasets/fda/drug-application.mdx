@@ -1,0 +1,107 @@
+---
+title: "Drug Application"
+openapi: "GET /v1/drug-applications/{application_key}"
+description: "One NDA, ANDA or BLA, with every FDA record on it and its submissions."
+---
+
+## Overview
+
+One NDA, ANDA or BLA, by its `application_key` (such as `N:209637`), with
+every FDA record on it and its submissions. URL-encode the key.
+
+<RequestExample>
+
+```bash cURL icon="braces"
+curl https://api.pav.bio/v1/drug-applications/N:209637 \
+  -H "Authorization: Bearer $PAV_API_KEY"
+```
+
+```python Python SDK icon="python"
+from pav_bio import Pav
+
+client = Pav()  # reads PAV_API_KEY
+
+dossier = client.drug_applications.get("N:209637")
+print(dossier.application.title, dossier.records_total)
+```
+
+```bash CLI icon="terminal"
+pav drug-applications get --application-key N:209637
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json Example response (trimmed)
+{
+  "application": {
+    "record_key": "drug_application:N:209637",
+    "record_type": "drug_application",
+    "source": "drugs_at_fda",
+    "fda_organization_name": "NOVO NORDISK INC",
+    "company": {
+      "company_id": 76,
+      "short_name": "novo_nordisk",
+      "name": "Novo Nordisk"
+    },
+    "application_key": "N:209637",
+    "title": "OZEMPIC",
+    "document_date": "2017-12-05",
+    "event_date": "2026-08-27",
+    "event_date_type": "latest_action",
+    "status": "approved",
+    "source_url": "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=209637",
+    "details": {
+      "application_type": "NDA",
+      "products": "OZEMPIC",
+      "submission_count": 16,
+      "latest_submission": {
+        "submission_type": "SUPPL",
+        "submission_number": "44",
+        "status": "AP",
+        "status_date": "2026-08-27"
+      }
+    }
+  },
+  "records": [
+    {
+      "record_key": "orange_book_patent:N:209637:002:12295988:U-1852",
+      "record_type": "orange_book_patent",
+      "source": "orange_book",
+      "source_version": "2026-08",
+      "fda_organization_name": "NOVO NORDISK INC",
+      "company": {
+        "company_id": 76,
+        "short_name": "novo_nordisk",
+        "name": "Novo Nordisk"
+      },
+      "application_key": "N:209637",
+      "product_key": "N:209637:002",
+      "patent_number": "12295988",
+      "title": "OZEMPIC — Patent 12295988",
+      "description": "SEMAGLUTIDE",
+      "document_date": "2026-06-23",
+      "event_date": "2038-10-10",
+      "event_date_type": "patent_expiry",
+      "status": "listed",
+      "source_url": "https://www.accessdata.fda.gov/scripts/cder/ob/patent_info.cfm?Product_No=002&Appl_No=209637&Appl_type=N",
+      "details": { "patent_use_code": "U-1852", "pediatric_extension": false }
+    }
+  ],
+  "records_total": 103,
+  "submissions": [
+    {
+      "submission_type": "SUPPL",
+      "submission_number": "44",
+      "status": "AP",
+      "status_date": "2026-08-27",
+      "submission_class": "Labeling",
+      "review_priority": "STANDARD"
+    }
+  ],
+  "submissions_total": 16
+}
+```
+
+</ResponseExample>

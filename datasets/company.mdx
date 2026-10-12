@@ -1,0 +1,51 @@
+---
+title: "Company"
+openapi: "GET /v1/companies/{company_id}"
+description: "One company, with its tickers, website and owner (when known)."
+---
+
+## Overview
+
+One company, by the `company_id` from a list, with its tickers, website and owner
+(when known). An unknown id returns a `404`.
+
+<RequestExample>
+
+```bash cURL icon="braces"
+curl https://api.pav.bio/v1/companies/313 \
+  -H "Authorization: Bearer $PAV_API_KEY"
+```
+
+```python Python SDK icon="python"
+from pav_bio import Pav
+
+client = Pav()  # reads PAV_API_KEY
+
+company = client.companies.get(313)
+print(company.name, company.website)
+```
+
+```bash CLI icon="terminal"
+pav companies get --company-id 313
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json Example response (trimmed)
+{
+  "company_id": 313,
+  "short_name": "merck",
+  "name": "Merck & Co., Inc.",
+  "country": "United States",
+  "company_type": "public",
+  "asset_count": 126,
+  "last_checked_at": "2026-10-12T06:02:53.825690Z",
+  "tickers": [{"ticker": "MRK", "exchange": "NYSE"}],
+  "cik": "0000310158",
+  "website": "https://www.merck.com"
+}
+```
+
+</ResponseExample>

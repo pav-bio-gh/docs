@@ -1,0 +1,73 @@
+---
+title: "Accelerated Approvals"
+openapi: "GET /v1/accelerated-approvals"
+description: "Accelerated approvals and their confirmatory requirements."
+---
+
+## Overview
+
+Records are keyed by FDA identifiers and linked to a Pav company where
+possible. `from` and `to` filter on the approval date. `status` is `ongoing`, `verified` or `withdrawn`.
+
+To get one record, call `GET /v1/accelerated-approvals/{record_key}` with a `record_key`
+from this list. URL-encode the key. See [Fetching Data](/fetching-data) for filters, dates, sorting and paging.
+
+<RequestExample>
+
+```bash cURL icon="braces"
+curl "https://api.pav.bio/v1/accelerated-approvals?limit=2" \
+  -H "Authorization: Bearer $PAV_API_KEY"
+```
+
+```python Python SDK icon="python"
+from pav_bio import Pav
+
+client = Pav()  # reads PAV_API_KEY
+
+page = client.accelerated_approvals.list(limit=2)
+for record in page.items:
+    print(record.record_key, record.event_date, record.title)
+```
+
+```bash CLI icon="terminal"
+pav accelerated-approvals list --limit 2
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json Example response (trimmed)
+{
+  "data": [
+    {
+      "record_key": "accelerated_approval:f71cabc6a2b2c470",
+      "record_type": "accelerated_approval",
+      "source": "accelerated_approvals",
+      "fda_organization_name": "BAYER HEALTHCARE",
+      "company": { "company_id": 267, "short_name": "bayer", "name": "Bayer" },
+      "application_key": "N:219972",
+      "title": "Hyrnuo (sevabertinib)",
+      "description": "Treatment of adult patients with locally advanced or metastatic non-squamous non-small cell lung cancer (NSCLC) whose tumors have HER2 (ERBB2) tyrosine kinase domain (TKD) activating mutations, as detected by an FDA-authorized test",
+      "document_date": "2026-09-09",
+      "event_date": "2029-10-31",
+      "event_date_type": "projected_completion",
+      "status": "ongoing",
+      "source_url": "https://www.fda.gov/drugs/resources-information-approved-drugs/ongoing-cancer-accelerated-approvals",
+      "details": {
+        "category": "cancer",
+        "confirmatory_requirements": [
+          {
+            "requirement": "4933-1: Complete the ongoing multicenter, randomized clinical trial, Study SOHO-02, intended to verify and describe the clinical benefit of sevabertinib in adult patients with locally advanced or metastatic non-squamous NSCLC whose tumors have HER2 (ERBB2) tyrosine kinase domain activating mutations and who have not received prior therapy for advanced disease.",
+            "projected_completion": "2029-10-31"
+          }
+        ]
+      }
+    }
+  ],
+  "next_cursor": "eyJyIjoiZmRhL2FjY2VsZXJhdGVkX2FwcHJvdmFsIiwicyI6Ii1kb2N1bWVudF9kYXRlIiwidiI6IjIwMjYtMDktMDQiLCJrIjoiYWNjZWxlcmF0ZWRfYXBwcm92YWw6ZWVkNDZiMThjMzcyZTQ0NyJ9",
+  "total": 370
+}
+```
+
+</ResponseExample>

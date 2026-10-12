@@ -1,0 +1,66 @@
+---
+title: "Orphan Designations"
+openapi: "GET /v1/orphan-designations"
+description: "FDA orphan drug designations."
+---
+
+## Overview
+
+Records are keyed by FDA identifiers and linked to a Pav company where
+possible. `from` and `to` filter on the designation date. `status` takes values such as `Designated`.
+
+To get one record, call `GET /v1/orphan-designations/{record_key}` with a `record_key`
+from this list. URL-encode the key. See [Fetching Data](/fetching-data) for filters, dates, sorting and paging.
+
+<RequestExample>
+
+```bash cURL icon="braces"
+curl "https://api.pav.bio/v1/orphan-designations?limit=2" \
+  -H "Authorization: Bearer $PAV_API_KEY"
+```
+
+```python Python SDK icon="python"
+from pav_bio import Pav
+
+client = Pav()  # reads PAV_API_KEY
+
+page = client.orphan_designations.list(limit=2)
+for record in page.items:
+    print(record.record_key, record.event_date, record.title)
+```
+
+```bash CLI icon="terminal"
+pav orphan-designations list --limit 2
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json Example response (trimmed)
+{
+  "data": [
+    {
+      "record_key": "orphan_designation:1145626",
+      "record_type": "orphan_designation",
+      "source": "orphan_designations",
+      "source_version": "2026-10-12",
+      "fda_organization_name": "T-E Meds, Inc.",
+      "designation_id": "1145626",
+      "title": "trastuzumab-MMAF/exatecan dual-payload antibody-drug conjugate",
+      "description": "treatment of gastric cancer",
+      "document_date": "2026-10-06",
+      "status": "Designated",
+      "source_url": "https://www.accessdata.fda.gov/scripts/opdlisting/oopd/detailedIndex.cfm?cfgridkey=1145626",
+      "details": {
+        "generic_name": "trastuzumab-MMAF/exatecan dual-payload antibody-drug conjugate",
+        "approvals": []
+      }
+    }
+  ],
+  "next_cursor": "eyJyIjoiZmRhL29ycGhhbl9kZXNpZ25hdGlvbiIsInMiOiItZG9jdW1lbnRfZGF0ZSIsInYiOiIyMDI2LTEwLTA2IiwiayI6Im9ycGhhbl9kZXNpZ25hdGlvbjoxMTQ2MDI2In0",
+  "total": 7882
+}
+```
+
+</ResponseExample>

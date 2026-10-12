@@ -1,0 +1,76 @@
+---
+title: "Orange Book Patents"
+openapi: "GET /v1/orange-book-patents"
+description: "Patents listed against Orange Book products."
+---
+
+## Overview
+
+Records are keyed by FDA identifiers and linked to a Pav company where
+possible. `from` and `to` filter on the patent expiry date. `status` is `listed`. A patent appears once per use code it is listed
+with.
+
+To get one record, call `GET /v1/orange-book-patents/{record_key}` with a `record_key`
+from this list. URL-encode the key. See [Fetching Data](/fetching-data) for filters, dates, sorting and paging.
+
+<RequestExample>
+
+```bash cURL icon="braces"
+curl "https://api.pav.bio/v1/orange-book-patents?company=lilly&sort=-event_date&limit=2" \
+  -H "Authorization: Bearer $PAV_API_KEY"
+```
+
+```python Python SDK icon="python"
+from pav_bio import Pav
+
+client = Pav()  # reads PAV_API_KEY
+
+patents = client.orange_book_patents.list(
+    company=["lilly"],
+    sort="-event_date",
+    limit=2,
+)
+for patent in patents.items:
+    print(patent.patent_number, patent.event_date, patent.title)
+```
+
+```bash CLI icon="terminal"
+pav orange-book-patents list \
+  --company lilly \
+  --sort=-event_date \
+  --limit 2
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json Example response (trimmed)
+{
+  "data": [
+    {
+      "record_key": "orange_book_patent:N:215866:001:12295987:U-4192",
+      "record_type": "orange_book_patent",
+      "source": "orange_book",
+      "source_version": "2026-08",
+      "fda_organization_name": "ELI LILLY AND CO",
+      "company": { "company_id": 218, "short_name": "eli_lilly", "name": "Eli Lilly" },
+      "application_key": "N:215866",
+      "product_key": "N:215866:001",
+      "patent_number": "12295987",
+      "title": "MOUNJARO (AUTOINJECTOR) — Patent 12295987",
+      "description": "TIRZEPATIDE",
+      "document_date": "2025-06-11",
+      "event_date": "2041-12-30",
+      "event_date_type": "patent_expiry",
+      "status": "listed",
+      "source_url": "https://www.accessdata.fda.gov/scripts/cder/ob/patent_info.cfm?Product_No=001&Appl_No=215866&Appl_type=N",
+      "details": { "patent_use_code": "U-4192", "pediatric_extension": false }
+    }
+  ],
+  "next_cursor": "eyJyIjoiZmRhL29yYW5nZV9ib29rX3BhdGVudCIsInMiOiItZXZlbnRfZGF0ZSIsInYiOiIyMDQxLTEyLTMwIiwiayI6Im9yYW5nZV9ib29rX3BhdGVudDpOOjIxNTg2NjowMDE6MTIyOTU5ODc6VS00MTkzIn0",
+  "total": 1031
+}
+```
+
+</ResponseExample>

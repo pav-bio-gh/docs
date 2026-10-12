@@ -1,0 +1,71 @@
+---
+title: "Orange Book Exclusivities"
+openapi: "GET /v1/orange-book-exclusivities"
+description: "Marketing exclusivities on Orange Book products."
+---
+
+## Overview
+
+Records are keyed by FDA identifiers and linked to a Pav company where
+possible. `from` and `to` filter on the exclusivity expiry date. `status` is the exclusivity code, such as `NCE` (new chemical
+entity) or `NPP` (new patient population).
+
+To get one record, call `GET /v1/orange-book-exclusivities/{record_key}` with a `record_key`
+from this list. URL-encode the key. See [Fetching Data](/fetching-data) for filters, dates, sorting and paging.
+
+<RequestExample>
+
+```bash cURL icon="braces"
+curl "https://api.pav.bio/v1/orange-book-exclusivities?product_key=N:215866:001&sort=-event_date" \
+  -H "Authorization: Bearer $PAV_API_KEY"
+```
+
+```python Python SDK icon="python"
+from pav_bio import Pav
+
+client = Pav()  # reads PAV_API_KEY
+
+exclusivities = client.orange_book_exclusivities.list(
+    product_key="N:215866:001",
+    sort="-event_date",
+)
+for exclusivity in exclusivities.items:
+    print(exclusivity.status, exclusivity.event_date)
+```
+
+```bash CLI icon="terminal"
+pav orange-book-exclusivities list \
+  --product-key N:215866:001 \
+  --sort=-event_date
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json Example response (trimmed)
+{
+  "data": [
+    {
+      "record_key": "orange_book_exclusivity:N:215866:001:NPP:2028-12-19",
+      "record_type": "orange_book_exclusivity",
+      "source": "orange_book",
+      "source_version": "2026-08",
+      "fda_organization_name": "ELI LILLY AND CO",
+      "company": { "company_id": 218, "short_name": "eli_lilly", "name": "Eli Lilly" },
+      "application_key": "N:215866",
+      "product_key": "N:215866:001",
+      "title": "MOUNJARO (AUTOINJECTOR) — Exclusivity NPP",
+      "description": "TIRZEPATIDE",
+      "event_date": "2028-12-19",
+      "event_date_type": "exclusivity_expiry",
+      "status": "NPP",
+      "source_url": "https://www.accessdata.fda.gov/scripts/cder/ob/patent_info.cfm?Product_No=001&Appl_No=215866&Appl_type=N",
+      "details": {}
+    }
+  ],
+  "total": 2
+}
+```
+
+</ResponseExample>

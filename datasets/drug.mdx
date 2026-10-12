@@ -1,0 +1,86 @@
+---
+title: "Drug"
+openapi: "GET /v1/drugs/{drug_id}"
+description: "One drug, with every company and program that develops it."
+---
+
+## Overview
+
+One drug, by the `drug_id` from a list, with every company and program that
+develops it. An unknown id returns a `404`.
+
+<RequestExample>
+
+```bash cURL icon="braces"
+curl https://api.pav.bio/v1/drugs/869 \
+  -H "Authorization: Bearer $PAV_API_KEY"
+```
+
+```python Python SDK icon="python"
+from pav_bio import Pav
+
+client = Pav()  # reads PAV_API_KEY
+
+drug = client.drugs.get(869)
+print(drug.name, drug.highest_phase)
+```
+
+```bash CLI icon="terminal"
+pav drugs get --drug-id 869
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json Example response (trimmed)
+{
+  "drug_id": 869,
+  "name": "Inclisiran",
+  "inn": "Inclisiran",
+  "kind": "originator",
+  "aliases": [{"alias": "Leqvio", "kind": "brand"}],
+  "modality": "rna",
+  "modality_subclass": "sirna",
+  "modality_formats": [],
+  "highest_phase": "approved",
+  "program_count": 5,
+  "companies": [
+    {
+      "company_id": 101,
+      "name": "Alnylam Pharmaceuticals",
+      "short_name": "alnylam_pharmaceuticals",
+      "program_count": 1,
+      "highest_phase": "approved"
+    },
+    {
+      "company_id": 288,
+      "name": "Novartis",
+      "short_name": "novartis",
+      "program_count": 3,
+      "highest_phase": "approved"
+    }
+  ],
+  "programs": [
+    {
+      "program_id": 295,
+      "status": "active",
+      "basis": "company_pipeline",
+      "company_id": 101,
+      "short_name": "alnylam_pharmaceuticals",
+      "company": "Alnylam Pharmaceuticals",
+      "drug": "Leqvio®",
+      "drug_id": 869,
+      "indication": "Hypercholesterolemia",
+      "phase": "approved",
+      "modality": "rna",
+      "modality_subclass": "sirna",
+      "modality_formats": [],
+      "target": "PCSK9",
+      "trial_count": 19
+    }
+  ]
+}
+```
+
+</ResponseExample>

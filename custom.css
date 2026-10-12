@@ -1,3 +1,172 @@
+/* Geist, the Pav app's one UI face (SIL OFL), self-hosted from fonts/ with
+   the full 100-900 weight range. docs.json points `fonts` at the Latin file,
+   but Mintlify declares that face without a weight range, so these two rules
+   carry the range (and the Latin Extended file for accented names). */
+@font-face {
+  font-family: "Geist";
+  src: url("/fonts/Geist-LatinExt-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Geist";
+  src: url("/fonts/Geist-Latin-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Type scale, as in the app: every step 1px under Tailwind's default, line
+   heights kept. */
+:root {
+  --text-xs: 0.6875rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+  --text-lg: 1.0625rem;
+  --text-xl: 1.1875rem;
+  --text-2xl: 1.4375rem;
+  --text-3xl: 1.8125rem;
+}
+
+.prose {
+  font-size: 0.9375rem;
+}
+
+/* Wider page column on desktop. The theme caps it at 36rem (Mintlify's
+   documented --content-width) and gives the "On this page" rail 19rem; the
+   rail gets 15rem so the column can use the space. The #content-area rule
+   covers builds that cap it with a class instead of the variable. */
+@media (min-width: 1024px) {
+  :root {
+    --content-width: 46rem;
+  }
+
+  #content-area {
+    max-width: var(--content-width);
+  }
+}
+
+@media (min-width: 1280px) {
+  #content-side-layout > div:has(#table-of-contents) {
+    width: 15rem;
+    padding-left: 2rem;
+  }
+
+  #table-of-contents {
+    width: 13rem;
+  }
+}
+
+/* Black text, as in the app: hierarchy comes from size and weight, never
+   grey. The theme's grey text shades are set to black in light mode; the
+   lighter shades stay for borders and hover tints, and gray-400 becomes the
+   app's one hint grey (#71717A) for skippable hints like the search shortcut.
+   Dark mode keeps the theme's palette. */
+html:not(.dark) {
+  --gray-400: 113 113 122;
+  --gray-500: 0 0 0;
+  --gray-600: 0 0 0;
+  --gray-700: 0 0 0;
+  --gray-800: 0 0 0;
+  --gray-900: 0 0 0;
+  --gray-950: 0 0 0;
+}
+
+html:not(.dark) .prose {
+  --tw-prose-body: #000000;
+  --tw-prose-headings: #000000;
+  --tw-prose-lead: #000000;
+  --tw-prose-bold: #000000;
+  --tw-prose-counters: #000000;
+  --tw-prose-bullets: #000000;
+  --tw-prose-quotes: #000000;
+  --tw-prose-captions: #000000;
+  --tw-prose-code: #000000;
+  --tw-prose-kbd: #000000;
+  /* Table rules use the app's one hairline. */
+  --tw-prose-th-borders: #e4e4e7;
+  --tw-prose-td-borders: #e4e4e7;
+}
+
+html:not(.dark) #content-area :is(p, li, td, th, dd, dt, blockquote, a.link, code:not(pre code)),
+html:not(.dark) [data-component-part="field-content"],
+html:not(.dark) #header .prose {
+  color: #000000;
+}
+
+/* Field names and their type pills are black; blue stays on links, the
+   current page and the main button. The "default:" label drops its grey. */
+html:not(.dark) [data-component-part="field-name"],
+html:not(.dark) [data-component-part="field-info-pill"],
+html:not(.dark) [data-component-part="field-meta"] .text-stone-400 {
+  color: #000000;
+}
+
+html:not(.dark) header .eyebrow {
+  color: #000000;
+}
+
+/* Footer and breadcrumb links are half-transparent black in the theme. */
+html:not(.dark) footer a,
+html:not(.dark) [class*="text-gray-950/50"] {
+  color: #000000;
+}
+
+/* Notes and info callouts are black text with their icon on a neutral box, as
+   in the app: there is no blue "info" and blue is never a surface. */
+html:not(.dark) .callout:is([data-callout-type="note"], [data-callout-type="info"]) {
+  border-color: #e4e4e7;
+  background-color: #f7f7f8;
+}
+
+html:not(.dark) .callout:is([data-callout-type="note"], [data-callout-type="info"]),
+html:not(.dark) .callout:is([data-callout-type="note"], [data-callout-type="info"]) :is([data-component-part="callout-content"], [data-component-part="callout-content"] *, svg) {
+  color: #000000;
+}
+
+/* Endpoint pages: the GET badge in the sidebar and the endpoint bar is a quiet
+   grey chip with black text (every endpoint is a GET, so color says nothing),
+   and Try it is ink, so the navbar's Get API key stays the one blue button. */
+html:not(.dark) :is(.method-nav-pill > span, .method-pill) {
+  background-color: #ecedf0;
+  color: #000000;
+}
+
+html.dark :is(.method-nav-pill > span, .method-pill) {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #f3f4f6;
+}
+
+/* The "required" label and the path parameter in the endpoint bar drop their
+   red and green for the same grey chip. */
+html:not(.dark) [data-component-part="field-required-pill"],
+html:not(.dark) .method-pill ~ div [class*="text-[#2AB673]"] {
+  background-color: #ecedf0;
+  border-color: #e4e4e7;
+  color: #000000;
+}
+
+html:not(.dark) .tryit-button {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+html.dark .tryit-button {
+  background-color: #f3f4f6;
+  color: #000000;
+}
+
+/* Table column labels are light (300), as in the app's tables. */
+#content-area th {
+  font-weight: 300;
+}
+
 /* "Soon" badge on the Webhook Reference tab in the navbar tab strip. */
 a.nav-tabs-item[href="/webhooks/introduction"]::after {
   content: "Soon";
@@ -24,6 +193,7 @@ html.dark a.nav-tabs-item[href="/webhooks/introduction"]::after {
    tab (cURL) is the default. */
 [data-component-part="code-group-tab-bar"] [role="tablist"] {
   display: inline-flex !important;
+  flex: 0 1 auto;
   width: max-content;
   gap: 0;
   margin: 0.5rem 0 0.5rem 0.625rem;
@@ -82,6 +252,35 @@ html.dark a.nav-tabs-item[href="/webhooks/introduction"]::after {
 [data-component-part="code-group-tab-bar"] button[role="tab"][aria-selected="true"]::before,
 [data-component-part="code-group-tab-bar"] button[role="tab"][aria-selected="true"] + button[role="tab"]::before {
   display: none;
+}
+
+/* A click never paints blue; keyboard focus gets the app's black ring. */
+[data-component-part="code-group-tab-bar"] button[role="tab"]:focus {
+  outline: none;
+}
+
+[data-component-part="code-group-tab-bar"] button[role="tab"]:focus-visible > div:first-child {
+  outline: 2px solid #000000;
+  outline-offset: 1px;
+}
+
+html.dark [data-component-part="code-group-tab-bar"] button[role="tab"]:focus-visible > div:first-child {
+  outline-color: #f3f4f6;
+}
+
+/* On a phone the tabs drop their icons so they fit on one row. */
+@media (max-width: 640px) {
+  [data-component-part="code-group-tab-bar"] [role="tablist"] {
+    margin-left: 0.25rem;
+  }
+
+  [data-component-part="code-group-tab-bar"] button[role="tab"] svg.code-block-icon {
+    display: none;
+  }
+
+  [data-component-part="code-group-tab-bar"] button[role="tab"] > div:first-child {
+    padding: 0.25rem 0.375rem;
+  }
 }
 
 /* The raised segment replaces the underline marker. */

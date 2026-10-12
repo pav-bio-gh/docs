@@ -51,8 +51,9 @@ them by id.
 
     </CodeGroup>
 
-    The response holds one page of matches in `data`, the number of matches in
-    `total`, and a `next_cursor` for the next page.
+    The response holds one page of matches in `data` and the number of matches
+    in `total`. When there are more pages, it also has a `next_cursor` for the
+    next one.
 
     ```json Example response (trimmed)
     {
@@ -68,8 +69,7 @@ them by id.
           "target": "CDH17"
         }
       ],
-      "next_cursor": "eyJyIjoicHJvZ3JhbXMiLCJzIjoiY29tcGFueSIsInYiOiJFYXJlbmRpbCBMYWJzIiwiayI6IjY1NDQifQ",
-      "total": 16
+      "total": 22
     }
     ```
   </Step>
@@ -117,13 +117,13 @@ curl "https://api.pav.bio/v1/trials?indication=obesity&phase=2&status=recruiting
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Fetching data" icon="list-filter" href="/fetching-data">
+  <Card title="Fetching Data" icon="list-filter" href="/fetching-data">
     Filters, dates, sorting and paging.
   </Card>
   <Card title="Datasets" icon="database" href="/data-overview">
     What each dataset holds.
   </Card>
-  <Card title="MCP server" icon="bot" href="/mcp-server">
+  <Card title="MCP Server" icon="bot" href="/mcp-server">
     The same data as tools for AI assistants.
   </Card>
   <Card title="Guides" icon="book-open" href="/guides/competitive-landscape">

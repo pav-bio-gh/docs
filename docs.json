@@ -12,7 +12,9 @@
     "default": "light"
   },
   "fonts": {
-    "family": "IBM Plex Sans"
+    "family": "Geist",
+    "source": "/fonts/Geist-Latin-Variable.woff2",
+    "format": "woff2"
   },
   "icons": {
     "library": "lucide"
@@ -39,6 +41,7 @@
   },
   "favicon": "/favicon.svg",
   "api": {
+    "openapi": "openapi.json",
     "examples": {
       "languages": [
         "bash"
@@ -54,7 +57,7 @@
         "tab": "Documentation",
         "groups": [
           {
-            "group": "Get started",
+            "group": "Get Started",
             "pages": [
               "introduction",
               "quickstart",
@@ -70,24 +73,59 @@
                 "icon": "layers",
                 "pages": [
                   "datasets/programs",
+                  "datasets/program",
                   "datasets/drugs",
-                  "datasets/companies"
+                  "datasets/drug"
                 ]
               },
               {
-                "group": "Clinical and regulatory",
-                "icon": "shield-check",
-                "pages": [
-                  "datasets/clinical-trials",
-                  "datasets/fda"
-                ]
-              },
-              {
-                "group": "Deals and patents",
-                "icon": "briefcase",
+                "group": "Deals",
+                "icon": "handshake",
                 "pages": [
                   "datasets/deals",
-                  "datasets/patents"
+                  "datasets/deal"
+                ]
+              },
+              {
+                "group": "Patents",
+                "icon": "scroll-text",
+                "pages": [
+                  "datasets/patents",
+                  "datasets/patent-family"
+                ]
+              },
+              {
+                "group": "Companies",
+                "icon": "building-2",
+                "pages": [
+                  "datasets/companies",
+                  "datasets/company"
+                ]
+              },
+              {
+                "group": "Global Trials",
+                "icon": "stethoscope",
+                "pages": [
+                  "datasets/clinical-trials",
+                  "datasets/trial"
+                ]
+              },
+              {
+                "group": "FDA",
+                "icon": "landmark",
+                "pages": [
+                  "datasets/fda/accelerated-approvals",
+                  "datasets/fda/advisory-committee-meetings",
+                  "datasets/fda/complete-response-letters",
+                  "datasets/fda/drug-applications",
+                  "datasets/fda/drug-application",
+                  "datasets/fda/orange-book-exclusivities",
+                  "datasets/fda/orange-book-patents",
+                  "datasets/fda/orange-book-products",
+                  "datasets/fda/orphan-designations",
+                  "datasets/fda/purple-book-products",
+                  "datasets/fda/recalls",
+                  "datasets/fda/warning-letters"
                 ]
               }
             ]
@@ -100,16 +138,16 @@
             ]
           },
           {
-            "group": "SDK and CLI",
+            "group": "Clients",
             "pages": [
               "clients/python-sdk",
               "clients/cli"
             ]
           },
           {
-            "group": "AI agents",
+            "group": "AI Agents",
             "pages": [
-              "openapi-and-agents"
+              "openapi-spec"
             ]
           },
           {
@@ -129,18 +167,6 @@
         ]
       },
       {
-        "tab": "API Reference",
-        "openapi": "openapi.json",
-        "groups": [
-          {
-            "group": "Overview",
-            "pages": [
-              "api-reference/overview"
-            ]
-          }
-        ]
-      },
-      {
         "tab": "Webhook Reference",
         "pages": [
           "webhooks/introduction"
@@ -149,6 +175,10 @@
     ]
   },
   "redirects": [
+    {
+      "source": "/openapi-and-agents",
+      "destination": "/openapi-spec"
+    },
     {
       "source": "/concepts/entities",
       "destination": "/datasets/programs"
@@ -167,7 +197,7 @@
     },
     {
       "source": "/datasets/fda-applications",
-      "destination": "/datasets/fda"
+      "destination": "/datasets/fda/drug-applications"
     },
     {
       "source": "/conventions",
@@ -175,7 +205,7 @@
     },
     {
       "source": "/search",
-      "destination": "/api-reference/overview"
+      "destination": "/data-overview"
     },
     {
       "source": "/datasets/changes",
@@ -187,59 +217,203 @@
     },
     {
       "source": "/api-reference/fda/list-orange-book-products",
-      "destination": "/api-reference/orange-book-products/list-orange-book-products"
+      "destination": "/datasets/fda/orange-book-products"
     },
     {
       "source": "/api-reference/fda/list-orange-book-patents",
-      "destination": "/api-reference/orange-book-patents/list-orange-book-patents"
+      "destination": "/datasets/fda/orange-book-patents"
     },
     {
       "source": "/api-reference/fda/list-orange-book-exclusivities",
-      "destination": "/api-reference/orange-book-exclusivities/list-orange-book-exclusivities"
+      "destination": "/datasets/fda/orange-book-exclusivities"
     },
     {
       "source": "/api-reference/fda/list-purple-book-products",
-      "destination": "/api-reference/purple-book-products/list-purple-book-products"
+      "destination": "/datasets/fda/purple-book-products"
     },
     {
       "source": "/api-reference/fda/list-orphan-designations",
-      "destination": "/api-reference/orphan-designations/list-orphan-designations"
+      "destination": "/datasets/fda/orphan-designations"
     },
     {
       "source": "/api-reference/fda/list-warning-letters",
-      "destination": "/api-reference/warning-letters/list-warning-letters"
+      "destination": "/datasets/fda/warning-letters"
     },
     {
       "source": "/api-reference/fda/list-recalls",
-      "destination": "/api-reference/recalls/list-recalls"
+      "destination": "/datasets/fda/recalls"
     },
     {
       "source": "/api-reference/fda/list-drug-applications",
-      "destination": "/api-reference/drug-applications/list-drug-applications"
+      "destination": "/datasets/fda/drug-applications"
     },
     {
       "source": "/api-reference/fda/get-a-drug-application",
-      "destination": "/api-reference/drug-applications/get-a-drug-application"
+      "destination": "/datasets/fda/drug-application"
     },
     {
       "source": "/api-reference/fda/list-complete-response-letters",
-      "destination": "/api-reference/complete-response-letters/list-complete-response-letters"
+      "destination": "/datasets/fda/complete-response-letters"
     },
     {
       "source": "/api-reference/fda/list-accelerated-approvals",
-      "destination": "/api-reference/accelerated-approvals/list-accelerated-approvals"
+      "destination": "/datasets/fda/accelerated-approvals"
     },
     {
       "source": "/api-reference/fda/list-advisory-committee-meetings",
-      "destination": "/api-reference/advisory-committee-meetings/list-advisory-committee-meetings"
+      "destination": "/datasets/fda/advisory-committee-meetings"
     },
     {
       "source": "/api-reference/fda/get-an-fda-record",
-      "destination": "/datasets/fda"
+      "destination": "/data-overview"
     },
     {
       "source": "/concepts/coverage-and-sources",
       "destination": "/data-overview"
+    },
+    {
+      "source": "/api-reference/overview",
+      "destination": "/data-overview"
+    },
+    {
+      "source": "/datasets/fda",
+      "destination": "/data-overview"
+    },
+    {
+      "source": "/api-reference/programs/list-programs",
+      "destination": "/datasets/programs"
+    },
+    {
+      "source": "/api-reference/programs/get-a-program",
+      "destination": "/datasets/program"
+    },
+    {
+      "source": "/api-reference/drugs/list-drugs",
+      "destination": "/datasets/drugs"
+    },
+    {
+      "source": "/api-reference/drugs/get-a-drug",
+      "destination": "/datasets/drug"
+    },
+    {
+      "source": "/api-reference/companies/list-companies",
+      "destination": "/datasets/companies"
+    },
+    {
+      "source": "/api-reference/companies/get-a-company",
+      "destination": "/datasets/company"
+    },
+    {
+      "source": "/api-reference/trials/list-trials",
+      "destination": "/datasets/clinical-trials"
+    },
+    {
+      "source": "/api-reference/trials/get-a-trial",
+      "destination": "/datasets/trial"
+    },
+    {
+      "source": "/api-reference/deals/list-deals",
+      "destination": "/datasets/deals"
+    },
+    {
+      "source": "/api-reference/deals/get-a-deal",
+      "destination": "/datasets/deal"
+    },
+    {
+      "source": "/api-reference/patents/list-patent-families",
+      "destination": "/datasets/patents"
+    },
+    {
+      "source": "/api-reference/patents/get-a-patent-family",
+      "destination": "/datasets/patent-family"
+    },
+    {
+      "source": "/api-reference/orange-book-products/list-orange-book-products",
+      "destination": "/datasets/fda/orange-book-products"
+    },
+    {
+      "source": "/api-reference/orange-book-patents/list-orange-book-patents",
+      "destination": "/datasets/fda/orange-book-patents"
+    },
+    {
+      "source": "/api-reference/orange-book-exclusivities/list-orange-book-exclusivities",
+      "destination": "/datasets/fda/orange-book-exclusivities"
+    },
+    {
+      "source": "/api-reference/purple-book-products/list-purple-book-products",
+      "destination": "/datasets/fda/purple-book-products"
+    },
+    {
+      "source": "/api-reference/orphan-designations/list-orphan-designations",
+      "destination": "/datasets/fda/orphan-designations"
+    },
+    {
+      "source": "/api-reference/warning-letters/list-warning-letters",
+      "destination": "/datasets/fda/warning-letters"
+    },
+    {
+      "source": "/api-reference/recalls/list-recalls",
+      "destination": "/datasets/fda/recalls"
+    },
+    {
+      "source": "/api-reference/drug-applications/list-drug-applications",
+      "destination": "/datasets/fda/drug-applications"
+    },
+    {
+      "source": "/api-reference/drug-applications/get-a-drug-application",
+      "destination": "/datasets/fda/drug-application"
+    },
+    {
+      "source": "/api-reference/complete-response-letters/list-complete-response-letters",
+      "destination": "/datasets/fda/complete-response-letters"
+    },
+    {
+      "source": "/api-reference/accelerated-approvals/list-accelerated-approvals",
+      "destination": "/datasets/fda/accelerated-approvals"
+    },
+    {
+      "source": "/api-reference/advisory-committee-meetings/list-advisory-committee-meetings",
+      "destination": "/datasets/fda/advisory-committee-meetings"
+    },
+    {
+      "source": "/api-reference/orange-book-products/get-an-orange-book-product",
+      "destination": "/datasets/fda/orange-book-products"
+    },
+    {
+      "source": "/api-reference/orange-book-patents/get-an-orange-book-patent",
+      "destination": "/datasets/fda/orange-book-patents"
+    },
+    {
+      "source": "/api-reference/orange-book-exclusivities/get-an-orange-book-exclusivity",
+      "destination": "/datasets/fda/orange-book-exclusivities"
+    },
+    {
+      "source": "/api-reference/purple-book-products/get-a-purple-book-product",
+      "destination": "/datasets/fda/purple-book-products"
+    },
+    {
+      "source": "/api-reference/orphan-designations/get-an-orphan-designation",
+      "destination": "/datasets/fda/orphan-designations"
+    },
+    {
+      "source": "/api-reference/warning-letters/get-a-warning-letter",
+      "destination": "/datasets/fda/warning-letters"
+    },
+    {
+      "source": "/api-reference/recalls/get-a-recall",
+      "destination": "/datasets/fda/recalls"
+    },
+    {
+      "source": "/api-reference/complete-response-letters/get-a-complete-response-letter",
+      "destination": "/datasets/fda/complete-response-letters"
+    },
+    {
+      "source": "/api-reference/accelerated-approvals/get-an-accelerated-approval",
+      "destination": "/datasets/fda/accelerated-approvals"
+    },
+    {
+      "source": "/api-reference/advisory-committee-meetings/get-an-advisory-committee-meeting",
+      "destination": "/datasets/fda/advisory-committee-meetings"
     }
   ],
   "navbar": {
@@ -262,32 +436,32 @@
             "href": "/quickstart"
           },
           {
-            "label": "Fetching data",
+            "label": "Fetching Data",
             "href": "/fetching-data"
           },
           {
-            "label": "Data overview",
+            "label": "Data Overview",
             "href": "/data-overview"
           },
           {
-            "label": "MCP server",
+            "label": "MCP Server",
             "href": "/mcp-server"
           }
         ]
       },
       {
-        "header": "API Reference",
+        "header": "API",
         "items": [
           {
-            "label": "Overview",
-            "href": "/api-reference/overview"
+            "label": "Authentication",
+            "href": "/authentication"
           },
           {
-            "label": "Rate limits and errors",
+            "label": "Rate Limits and Errors",
             "href": "/rate-limits"
           },
           {
-            "label": "OpenAPI spec",
+            "label": "OpenAPI Spec",
             "href": "https://api.pav.bio/v1/openapi.json"
           }
         ]
