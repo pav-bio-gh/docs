@@ -13,14 +13,14 @@ drugs covered, lifecycle events and source documents. See [Fetching Data](/fetch
 
 - `upfront` is the cash paid at signing or closing, plus any equity investment at its
   purchase price (for example $875M cash and a $650M stock purchase is a $1.525B upfront).
-  An acquisition with no contingent payments shows its price; an enterprise-value price
-  is never used as the upfront.
+  An acquisition's announced price is never used as its upfront; the upfront is shown
+  only when the source states the cash paid at closing.
 - `total_potential_value` adds the upfront, fixed later payments, option fees and every
-  milestone, CVR or earn-out at its stated maximum. Royalties, profit shares and cost
-  sharing are not included.
+  milestone, CVR or earn-out at its stated maximum (an acquisition counts the largest of
+  these once). Royalties, profit shares and cost sharing are not included.
 - When a part has no stated amount, or is in another currency, it is not added and its
-  name is listed in `terms.total_excludes`. If the announcement states a larger total,
-  that stated total is shown instead of the partial sum.
+  name is listed in `terms.total_excludes`. If the announcement states a total, that
+  stated total is shown instead of the partial sum.
 - A larger stated total also wins over a complete sum, unless it is an enterprise value.
 - `total_value` is the total exactly as the announcement states it.
 
