@@ -9,6 +9,19 @@ description: "M&A, licensing, collaborations, options and joint ventures, with t
 A deal is one transaction between companies. It carries the stated terms, the
 drugs covered, lifecycle events and source documents. See [Fetching Data](/fetching-data) for filters, dates, sorting and paging.
 
+## Deal values
+
+- `upfront` is the cash paid at signing or closing, plus any equity investment at its
+  purchase price (for example $875M cash and a $650M stock purchase is a $1.525B upfront).
+  An acquisition with no contingent payments shows its price.
+- `total_potential_value` adds the upfront, fixed later payments, option fees and every
+  milestone, CVR or earn-out at its stated maximum. Royalties, profit shares and cost
+  sharing are not included.
+- When a part has no stated amount, or is in another currency, it is not added and its
+  name is listed in `terms.total_excludes`. If the announcement states a total, that
+  stated total is shown instead of a partial sum.
+- `total_value` is the total exactly as the announcement states it.
+
 The example lists oncology licensing deals announced in 2025 over $100M.
 
 <RequestExample>
