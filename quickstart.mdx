@@ -1,12 +1,12 @@
 ---
 title: "Quickstart"
-description: "Create an API key, list programs, then fetch one by id."
+description: "Create an API key, list programs, then fetch a program by id."
 icon: "rocket"
 ---
 
 This page takes you from a new API key to your first results. You will list
-preclinical antibody-drug conjugates at private companies, then fetch one of
-them by id.
+preclinical antibody-drug conjugates at private companies, then fetch a
+program by id.
 
 <Steps>
   <Step title="Create an API key">
@@ -51,9 +51,8 @@ them by id.
 
     </CodeGroup>
 
-    The response holds one page of matches in `data` and the number of matches
-    in `total`. When there are more pages, it also has a `next_cursor` for the
-    next one.
+    `data` holds this page of matches and `total` counts all of them. When
+    there are more pages, `next_cursor` points to the next page.
 
     ```json Example response (trimmed)
     {
@@ -73,7 +72,7 @@ them by id.
     }
     ```
   </Step>
-  <Step title="Fetch one program">
+  <Step title="Fetch a program">
     Use a `program_id` from the list to get the full record, with its trials
     and ontology terms.
 

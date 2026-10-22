@@ -1,12 +1,12 @@
 ---
 title: "Company"
 openapi: "GET /v1/companies/{company_id}"
-description: "One company, with its tickers, website and owner (when known)."
+description: "A company by id, with its tickers, website and owner (when known)."
 ---
 
 ## Overview
 
-One company, by the `company_id` from a list, with its tickers, website and owner
+Returns the company for a `company_id` from a list, with its tickers, website and owner
 (when known). An unknown id returns a `404`.
 
 <RequestExample>

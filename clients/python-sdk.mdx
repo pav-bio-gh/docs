@@ -35,7 +35,7 @@ client = Pav(api_key="<your_api_key>")
 for program in client.programs.list(company=["MRNA"], phase=["phase_3"]):
     print(program.drug, "|", program.indication)
 
-# One recall, by the record_key a list returned
+# A recall, by the record_key a list returned
 recall = next(iter(client.recalls.list(limit=1)))
 print(client.recalls.get(recall.record_key).title)
 

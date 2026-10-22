@@ -9,7 +9,7 @@ description: "Drug, biologic and device recalls."
 Records are keyed by FDA identifiers and linked to a Pav company where
 possible. `from` and `to` filter on the recall date. `status` takes values such as `active`.
 
-To get one record, call `GET /v1/recalls/{record_key}` with a `record_key`
+To fetch a record, call `GET /v1/recalls/{record_key}` with a `record_key`
 from this list. URL-encode the key. See [Fetching Data](/fetching-data) for filters, dates, sorting and paging.
 
 Many recall recipients are not linked to a Pav company, so a `company`

@@ -10,7 +10,7 @@ Records are keyed by FDA identifiers and linked to a Pav company where
 possible. `from` and `to` filter on the exclusivity expiry date. `status` is the exclusivity code, such as `NCE` (new chemical
 entity) or `NPP` (new patient population).
 
-To get one record, call `GET /v1/orange-book-exclusivities/{record_key}` with a `record_key`
+To fetch a record, call `GET /v1/orange-book-exclusivities/{record_key}` with a `record_key`
 from this list. URL-encode the key. See [Fetching Data](/fetching-data) for filters, dates, sorting and paging.
 
 <RequestExample>

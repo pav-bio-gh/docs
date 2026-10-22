@@ -1,12 +1,12 @@
 ---
 title: "Program"
 openapi: "GET /v1/programs/{program_id}"
-description: "One program, with its trials and ontology terms."
+description: "A program by id, with its trials and ontology terms."
 ---
 
 ## Overview
 
-One program, by the `program_id` from a list. It also carries the linked
+Returns the program for a `program_id` from a list. It also carries the linked
 clinical trials and the ontology terms for its indication and target. An
 unknown id returns a `404`.
 

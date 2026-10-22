@@ -1,12 +1,12 @@
 ---
 title: "Drug"
 openapi: "GET /v1/drugs/{drug_id}"
-description: "One drug, with every company and program that develops it."
+description: "A drug by id, with every company and program that develops it."
 ---
 
 ## Overview
 
-One drug, by the `drug_id` from a list, with every company and program that
+Returns the drug for a `drug_id` from a list, with every company and program that
 develops it. An unknown id returns a `404`.
 
 <RequestExample>

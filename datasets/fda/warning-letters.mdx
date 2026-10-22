@@ -9,7 +9,7 @@ description: "FDA warning letters."
 Records are keyed by FDA identifiers and linked to a Pav company where
 possible. `from` and `to` filter on the letter date. `status` takes values such as `issued`.
 
-To get one record, call `GET /v1/warning-letters/{record_key}` with a `record_key`
+To fetch a record, call `GET /v1/warning-letters/{record_key}` with a `record_key`
 from this list. URL-encode the key. See [Fetching Data](/fetching-data) for filters, dates, sorting and paging.
 
 Many warning letter recipients are not linked to a Pav company, so a
