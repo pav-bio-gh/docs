@@ -1,12 +1,12 @@
 ---
 title: "Patent Family"
 openapi: "GET /v1/patents/{family_id}"
-description: "One patent family, by family id or a member's patent number."
+description: "A patent family by family id or by a member's patent number."
 ---
 
 ## Overview
 
-One family, by Pav `family_id` or by a member's patent, publication or
+Returns the family for a Pav `family_id` or for a member's patent, publication or
 application number. `statutory_term_end` is the earliest nonprovisional
 filing plus 20 years, without extensions.
 

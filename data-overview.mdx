@@ -4,18 +4,18 @@ description: "What each dataset holds and how the datasets join through Pav ids.
 icon: "network"
 ---
 
-| Dataset | Grain | Joins on |
-| --- | --- | --- |
-| [Programs](/datasets/programs) | One drug in one indication at one company | `program_id`, `company_id`, `drug_id`, `nct_id` |
-| [Drugs](/datasets/drugs) | One product across every company | `drug_id`, `company_id` |
-| [Deals](/datasets/deals) | One transaction | `deal_id`, `company_id`, `drug_id` |
-| [Patents](/datasets/patents) | One US patent family | `family_id`, `company_id` |
-| [Companies](/datasets/companies) | One company; owners via `parent_company_id` | `company_id` |
-| [Global Trials](/datasets/clinical-trials) | One ClinicalTrials.gov study | `nct_id`, `company_id`, `program_id` |
-| [FDA records](#fda-records) | One FDA record | `record_key`, `application_key`, `company_id` |
+| Dataset | Contents | Id | Links to |
+| --- | --- | --- | --- |
+| [Programs](/datasets/programs) | Drugs in development, by company and indication, with phase, modality, target and status | `program_id` | `company_id`, `drug_id`, `nct_id` |
+| [Drugs](/datasets/drugs) | Products under their INN, research codes and brand names, with every company developing them | `drug_id` | `company_id` |
+| [Deals](/datasets/deals) | M&A, licensing, collaborations, options and joint ventures, with terms and sources | `deal_id` | `company_id`, `drug_id` |
+| [Patents](/datasets/patents) | US patent families with owners, members and FDA-listed drugs | `family_id` | `company_id` |
+| [Companies](/datasets/companies) | Biopharma companies with tickers, websites and owners | `company_id` | `parent_company_id` |
+| [Global Trials](/datasets/clinical-trials) | ClinicalTrials.gov studies with sponsors and linked programs | `nct_id` | `company_id`, `program_id` |
+| [FDA Records](#fda-records) | Approvals, applications, orphan designations, letters, advisory meetings, recalls, and Orange Book and Purple Book listings | `record_key` | `application_key`, `company_id` |
 
-The ids in the last column appear in responses. Use them to move from one
-dataset to another, for example from a program to its trials by `nct_id`.
+Responses carry these ids. A program lists its trials by `nct_id`, for
+example, and `GET /v1/trials/{nct_id}` returns each of them.
 
 ## FDA records
 
@@ -37,5 +37,5 @@ on the date in the second column.
 | [Recalls](/datasets/fda/recalls) | Recall | `active`, … |
 | [Warning Letters](/datasets/fda/warning-letters) | Letter | `issued`, … |
 
-[Drug Application](/datasets/fda/drug-application) returns one application
+[Drug Application](/datasets/fda/drug-application) returns an application
 with every FDA record on it and its submissions.

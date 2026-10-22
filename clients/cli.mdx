@@ -32,7 +32,7 @@ pav drug-applications get --application-key N:209637
 ```
 
 Output is a table in a terminal and JSON when piped. `--format json|jsonl|csv|yaml`
-picks one; `--query` takes a JMESPath expression:
+sets the format; `--query` takes a JMESPath expression:
 
 ```bash
 pav programs list --company MRNA --format json --query "data[].{drug: drug, phase: phase}"
@@ -48,8 +48,8 @@ pav programs list --modality adc --limit 200
 pav programs list --modality adc --limit 200 --cursor <next_cursor>
 ```
 
-To pull every row in one go, use the [Python SDK](/clients/python-sdk), which
-follows the pages for you.
+To pull every page, use the [Python SDK](/clients/python-sdk), which follows
+`next_cursor` for you.
 
 ## For agents
 

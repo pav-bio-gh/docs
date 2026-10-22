@@ -1,12 +1,12 @@
 ---
 title: "Deal"
 openapi: "GET /v1/deals/{deal_id}"
-description: "One deal, with full terms, events and sources."
+description: "A deal by id, with full terms, events and sources."
 ---
 
 ## Overview
 
-One deal, by the `deal_id` from a list, with its full terms, events and source
+Returns the deal for a `deal_id` from a list, with its full terms, events and source
 documents. Each value object has `amount`, `currency`, the source wording in
 `raw_text` and the supporting sentence in `evidence`. Read `raw_text` and
 `evidence` for qualifiers such as "up to".

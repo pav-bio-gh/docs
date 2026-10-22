@@ -1,12 +1,13 @@
 ---
 title: "Trial"
 openapi: "GET /v1/trials/{nct_id}"
-description: "One ClinicalTrials.gov study."
+description: "A ClinicalTrials.gov study by NCT ID, with its linked programs and companies."
 ---
 
 ## Overview
 
-One trial, by its ClinicalTrials.gov `nct_id`. An unknown id returns a
+Returns the study for a ClinicalTrials.gov `nct_id`, with its linked Pav
+programs and companies. An unknown id returns a
 `404`.
 
 <RequestExample>
