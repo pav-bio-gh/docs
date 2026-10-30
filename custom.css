@@ -318,7 +318,7 @@ html.dark [data-component-part="code-group-tab-bar"] button[role="tab"] + button
   --pav-mcp-border: #e4e4e7;
   --pav-mcp-muted: #000000;
   --pav-mcp-ink: #000000;
-  --pav-mcp-accent: #002fa7;
+  --pav-mcp-accent: #1518b5;
   --pav-mcp-raised: #f3f4f6;
   --pav-mcp-code-bg: #f7f7f8;
   margin: 1.25rem 0;
@@ -543,13 +543,13 @@ html.dark .pav-mcp {
   --pav-mcp-border: rgba(255, 255, 255, 0.1);
   --pav-mcp-muted: #f3f4f6;
   --pav-mcp-ink: #f3f4f6;
-  --pav-mcp-accent: #8fa6e8;
+  --pav-mcp-accent: #8a8cda;
   --pav-mcp-raised: rgba(255, 255, 255, 0.04);
   --pav-mcp-code-bg: rgba(255, 255, 255, 0.04);
 }
 
 html.dark .pav-mcp-install {
-  background: #002fa7;
+  background: #1518b5;
 }
 
 html.dark .pav-mcp-copy:hover {
