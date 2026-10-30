@@ -81,9 +81,9 @@ Guides and the other pages are ordinary pages with an "On this page" list.
 ## Design conventions
 
 - Theme `almond`, light by default, with the light/dark toggle kept. It
-  follows the Pav app: black text, Yves Klein Blue `#002FA7` as the one accent
+  follows the Pav app: black text, the logo blue `#1518B5` as the one accent
   (links, the current page and section, the main button), Geist. Dark mode
-  uses the lighter blue `#8FA6E8` for text accents.
+  uses the lighter blue `#8A8CDA` for text accents.
 - Geist is self-hosted from `fonts/` (the app's files). `docs.json` points
   `fonts` at the Latin file, and two `@font-face` rules in `custom.css` give it
   the 100–900 weight range, which Mintlify's own rule leaves out.
@@ -99,8 +99,10 @@ Guides and the other pages are ordinary pages with an "On this page" list.
   right-hand space instead. Check a change at 1440px and 375px.
 - On endpoint pages the GET badge is a grey chip with black text, and Try it
   is ink, so the navbar's Get API key stays the one blue button.
-- The logo and `favicon.svg` use the blue iso-cube mark in `#002FA7` (a
-  lighter `#5A7FE0` in the dark logo).
+- The logo is the pav lockup from the logo kit (emblem and "pav" wordmark)
+  with "API" after it: `#1518B5` in `logo/pav-api-light.svg`, white in
+  `logo/pav-api-dark.svg`. `favicon.svg` is the kit emblem in `#1518B5` on a
+  white tile. The shapes are copied unchanged from the kit's `Logo_2.svg`.
 - Every page except an endpoint page (which shows its GET badge instead) sets
   a [Lucide](https://lucide.dev) `icon:` in its frontmatter, and so does every
   card and every Datasets sub-group. `icons.library` is `lucide`, so Font Awesome names
